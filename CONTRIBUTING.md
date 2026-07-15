@@ -1,4 +1,4 @@
-# Flujo de Git — Equipo Ithaka (versión corta)
+# Guía de contribución — Flujo de Git
 
 ## Ramas del repo
 - `main` → versión estable, la que se muestra en la demo.
