@@ -32,5 +32,5 @@ function ErrorState({
     </Box>
   )
 }
-
+  
 export default ErrorState
