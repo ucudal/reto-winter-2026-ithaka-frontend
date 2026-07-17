@@ -1,8 +1,7 @@
 import HelloWorld from './components/HelloWorld.jsx'
-import LoadingStateComponent from './components/LoadingStateComponent.jsx'
 
 function App() {
-  return <LoadingStateComponent />
+  return <HelloWorld />
 }
 
 export default App
