@@ -6,16 +6,14 @@ import ProtectedRoute from './ProtectedRoute.jsx'
 import Login from '../pages/Auth/Login.jsx'
 import Register from '../pages/Auth/Register.jsx'
 import Dashboard from '../pages/sections/Dashboard.jsx'
-import Alumnos from '../pages/sections/Alumnos.jsx'
-import Cohortes from '../pages/sections/Cohortes.jsx'
-import Grupos from '../pages/sections/Grupos.jsx'
+import Students from '../pages/sections/Students.jsx'
+import Cohorts from '../pages/sections/Cohorts.jsx'
+import Groups from '../pages/sections/Groups.jsx'
 import Templates from '../pages/sections/Templates.jsx'
-import Tutores from '../pages/sections/Tutores.jsx'
-import Error404 from '../pages/sections/Error404.jsx'
+import Tutors from '../pages/sections/Tutors.jsx'
+import NotFoundPage from '../pages/sections/NotFoundPage.jsx'
 
-// Rutas públicas: no requieren sesión iniciada.
-// Rutas protegidas: van agrupadas bajo ProtectedRoute + MainLayout,
-const router = createBrowserRouter([
+const appRouter = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
@@ -31,19 +29,19 @@ const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
           { path: '/dashboard', element: <Dashboard /> },
-          { path: '/alumnos', element: <Alumnos /> },
-          { path: '/cohortes', element: <Cohortes /> },
-          { path: '/grupos', element: <Grupos /> },
+          { path: '/alumnos', element: <Students /> },
+          { path: '/cohortes', element: <Cohorts /> },
+          { path: '/grupos', element: <Groups /> },
           { path: '/templates', element: <Templates /> },
-          { path: '/tutores', element: <Tutores /> },
+          { path: '/tutores', element: <Tutors /> },
         ],
       },
     ],
   },
   {
     path: '*',
-    element: <Error404 />,
+    element: <NotFoundPage />,
   },
 ])
 
-export default router
+export default appRouter

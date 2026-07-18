@@ -1,6 +1,6 @@
 import { Typography, Box } from '@mui/material'
 
-function Tutores() {
+function Tutors() {
   return (
     <Box>
       <Typography variant="h4">Tutores</Typography>
@@ -8,4 +8,4 @@ function Tutores() {
   )
 }
 
-export default Tutores
+export default Tutors

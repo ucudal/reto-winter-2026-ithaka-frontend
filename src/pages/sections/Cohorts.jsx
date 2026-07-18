@@ -1,6 +1,6 @@
 import { Typography, Box } from '@mui/material'
 
-function Cohortes() {
+function Cohorts() {
   return (
     <Box>
       <Typography variant="h4">Cohortes</Typography>
@@ -8,4 +8,4 @@ function Cohortes() {
   )
 }
 
-export default Cohortes
+export default Cohorts

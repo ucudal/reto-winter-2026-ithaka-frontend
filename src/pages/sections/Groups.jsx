@@ -1,6 +1,6 @@
 import { Typography, Box } from '@mui/material'
 
-function Grupos() {
+function Groups() {
   return (
     <Box>
       <Typography variant="h4">Grupos</Typography>
@@ -8,4 +8,4 @@ function Grupos() {
   )
 }
 
-export default Grupos
+export default Groups

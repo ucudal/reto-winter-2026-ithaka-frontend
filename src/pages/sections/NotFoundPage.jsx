@@ -1,6 +1,6 @@
 import { Typography, Box } from '@mui/material'
 
-function Error404() {
+function NotFoundPage() {
   return (
     <Box>
       <Typography variant="h4">Error404</Typography>
@@ -8,4 +8,4 @@ function Error404() {
   )
 }
 
-export default Error404
+export default NotFoundPage

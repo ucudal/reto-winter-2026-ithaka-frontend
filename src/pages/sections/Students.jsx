@@ -1,6 +1,6 @@
 import { Typography, Box } from '@mui/material'
 
-function Alumnos() {
+function Students() {
   return (
     <Box>
       <Typography variant="h4">Alumnos</Typography>
@@ -8,4 +8,4 @@ function Alumnos() {
   )
 }
 
-export default Alumnos
+export default Students
