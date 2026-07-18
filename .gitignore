@@ -2,5 +2,7 @@ node_modules
 dist
 dist-ssr
 *.local
-.env
 .idea/
+.env
+.env.*
+!.env.example

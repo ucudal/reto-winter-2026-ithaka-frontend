@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 
 import MainLayout from '../layouts/MainLayout.jsx'
 import ProtectedRoute from './ProtectedRoute.jsx'
@@ -29,18 +29,18 @@ const appRouter = createBrowserRouter([
         element: <MainLayout />,
         children: [
           { path: '/dashboard', element: <Dashboard /> },
-          { path: '/alumnos', element: <Students /> },
-          { path: '/cohortes', element: <Cohorts /> },
-          { path: '/grupos', element: <Groups /> },
+          { path: '/students', element: <Students /> },
+          { path: '/cohorts', element: <Cohorts /> },
+          { path: '/groups', element: <Groups /> },
           { path: '/templates', element: <Templates /> },
-          { path: '/tutores', element: <Tutors /> },
+          { path: '/tutors', element: <Tutors /> },
         ],
       },
     ],
   },
   {
   path: '/',
-  element: <Login />,
+    element: <Navigate to="/login" replace />,
   },
   {
     path: '*',
