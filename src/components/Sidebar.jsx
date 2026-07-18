@@ -14,19 +14,20 @@ import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { DRAWER_WIDTH } from "../theme/constants";
 
-const drawerWidth = 240;
 
 export default function Sidebar() {
+  const location = useLocation();
   return (
     <Drawer
       variant="permanent"
       sx={{
-        width: drawerWidth,
+        width: DRAWER_WIDTH,
         flexShrink: 0,
         "& .MuiDrawer-paper": {
-          width: drawerWidth,
+          width: DRAWER_WIDTH,
           boxSizing: "border-box",
         },
       }}
@@ -40,7 +41,10 @@ export default function Sidebar() {
         }
       >
        
-        <ListItemButton component={Link} to="/">
+        <ListItemButton 
+        component={Link} to="/"
+        selected={location.pathname === "/"}
+        >
           <ListItemIcon>
             <DashboardIcon />
           </ListItemIcon>
@@ -48,7 +52,10 @@ export default function Sidebar() {
           <ListItemText primary="Resumen" />
         </ListItemButton>
 
-        <ListItemButton component={Link} to="/teams">
+        <ListItemButton 
+        component={Link} to="/teams"
+        selected={location.pathname === "/teams"}
+        >
           <ListItemIcon>
             <GroupsIcon />
           </ListItemIcon>
@@ -65,7 +72,10 @@ export default function Sidebar() {
           </ListSubheader>
         }
       >
-        <ListItemButton component={Link} to="/tutors">
+        <ListItemButton 
+        component={Link} to="/tutors"
+        selected={location.pathname === "/tutors"}
+        >
           <ListItemIcon>
             <PeopleIcon />
           </ListItemIcon>
@@ -73,7 +83,10 @@ export default function Sidebar() {
           <ListItemText primary="Tutores" />
         </ListItemButton>
 
-        <ListItemButton component={Link} to="/students">
+        <ListItemButton 
+        component={Link} to="/students"
+        selected={location.pathname === "/students"}
+        >
           <ListItemIcon>
             <SchoolIcon />
           </ListItemIcon>
@@ -89,7 +102,10 @@ export default function Sidebar() {
           </ListSubheader>
         }
       >
-        <ListItemButton component={Link} to="/templates">
+        <ListItemButton
+         component={Link} to="/templates"
+         selected={location.pathname === "/templates"}
+        >
           <ListItemIcon>
             <AssignmentOutlinedIcon />
           </ListItemIcon>

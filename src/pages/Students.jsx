@@ -1,3 +1,3 @@
-export default function Alumnos() {
+export default function Students() {
   return <h1>Alumnos</h1>;
 }
