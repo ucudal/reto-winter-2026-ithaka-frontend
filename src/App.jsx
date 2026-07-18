@@ -1,7 +1,8 @@
-import HelloWorld from './components/HelloWorld.jsx'
+import { RouterProvider } from 'react-router-dom'
+import router from './routes/AppRouter.jsx'
 
 function App() {
-  return <HelloWorld />
+  return <RouterProvider router={router} />
 }
 
 export default App
