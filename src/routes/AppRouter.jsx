@@ -39,6 +39,10 @@ const appRouter = createBrowserRouter([
     ],
   },
   {
+  path: '/',
+  element: <Login />,
+  },
+  {
     path: '*',
     element: <NotFoundPage />,
   },
