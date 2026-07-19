@@ -1,16 +1,15 @@
-import { createContext, useState } from 'react'
-import { Navigate, Outlet } from 'react-router-dom'
-
-export const AuthContext = createContext()
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 
 function ProtectedRoute() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const { isAuthenticated } = useAuth()
+  const location = useLocation();
 
-  return (
-    <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
-      {isLoggedIn ? <Outlet /> : <Navigate to="/login" replace />}
-    </AuthContext.Provider>
-  )
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location }} />
+  }
+
+  return <Outlet />
 }
 
 export default ProtectedRoute
