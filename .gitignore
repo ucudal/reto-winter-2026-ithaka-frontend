@@ -24,3 +24,12 @@ npm-debug.log*
 
 # vite
 .vite/
+=======
+node_modules
+dist
+dist-ssr
+*.local
+.idea/
+.env
+.env.*
+!.env.example
