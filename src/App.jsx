@@ -1,7 +1,13 @@
-import HelloWorld from './components/HelloWorld.jsx'
+import { RouterProvider } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext.jsx'
+import router from './routes/AppRouter.jsx'
 
 function App() {
-  return <HelloWorld />
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  );
 }
 
 export default App

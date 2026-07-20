@@ -1,5 +1,35 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+
+# typescript incremental build cache
+*.tsbuildinfo
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# vite
+.vite/
+=======
 node_modules
 dist
 dist-ssr
 *.local
+.idea/
 .env
+.env.*
+!.env.example
