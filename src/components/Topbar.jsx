@@ -11,14 +11,24 @@ import {
   Toolbar,
   ListItemText,
 } from '@mui/material'
+import { DRAWER_WIDTH } from '../theme/constants'
 
-function Topbar({ userName, onMenuClick, userMenuAnchor, onUserMenuOpen, onUserMenuClose, onLogout }) {
+function Topbar({
+  userName,
+  onMenuClick,
+  userMenuAnchor,
+  onUserMenuOpen,
+  onUserMenuClose,
+  onLogout,
+}) {
   return (
     <>
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
+          width: `calc(100% - ${DRAWER_WIDTH}px)`,
+          ml: `${DRAWER_WIDTH}px`,
           zIndex: (theme) => theme.zIndex.drawer + 1,
           bgcolor: 'primary.dark',
         }}
@@ -34,6 +44,7 @@ function Topbar({ userName, onMenuClick, userMenuAnchor, onUserMenuOpen, onUserM
             >
               <MenuIcon />
             </IconButton>
+
             <Box
               component="img"
               src="/assets/img/logo.png"
@@ -43,7 +54,11 @@ function Topbar({ userName, onMenuClick, userMenuAnchor, onUserMenuOpen, onUserM
           </Box>
 
           <Box>
-            <IconButton color="inherit" onClick={onUserMenuOpen} aria-label="Abrir menú de usuario">
+            <IconButton
+              color="inherit"
+              onClick={onUserMenuOpen}
+              aria-label="Abrir menú de usuario"
+            >
               <AccountCircle />
             </IconButton>
           </Box>
@@ -60,7 +75,9 @@ function Topbar({ userName, onMenuClick, userMenuAnchor, onUserMenuOpen, onUserM
         <MenuItem disabled sx={{ minWidth: 220, opacity: 1 }}>
           <ListItemText primary={userName} secondary="Usuario mockeado" />
         </MenuItem>
+
         <Divider />
+
         <MenuItem onClick={onLogout}>
           <Logout fontSize="small" style={{ marginRight: 8 }} />
           Logout
