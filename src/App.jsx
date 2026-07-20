@@ -1,13 +1,14 @@
-import { RouterProvider } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext.jsx'
-import router from './routes/AppRouter.jsx'
+import { RouterProvider } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.jsx';
+import { ToastProvider } from './ToastContext.jsx';
+import router from './routes/AppRouter.jsx';
 
-function App() {
+export default function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </AuthProvider>
   );
 }
-
-export default App
