@@ -1,0 +1,46 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+}
+
+.login-container{
+    width:100vw;
+    min-height:100vh;
+    margin:0;
+    padding:0;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:
+        linear-gradient(rgba(86,180,235,.55),rgba(86,180,235,.55)),
+        url("../../assets/backround.jpg");
+
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    box-sizing:border-box;
+    overflow:hidden;
+}
+
+.login-card{
+
+    width:420px;
+
+    padding:40px;
+
+    border-radius:8px;
+
+    display:flex;
+    flex-direction:column;
+}
+
+.login-logo{
+    width: 172;
+    height: 31;
+    opacity: 1;
+    margin:0 auto 30px auto;
+}
