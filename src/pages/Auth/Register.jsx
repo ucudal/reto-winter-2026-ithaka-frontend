@@ -1,11 +1,64 @@
 import { Box } from '@mui/material'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import loginBackground from '../../assets/login-background.jpg'
 import ithakaLogo from '../../assets/ithaka-ucu.png'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
+
 function Register() {
+  const navigate = useNavigate()
+  const [formValues, setFormValues] = useState({
+    name: '',
+    email: '',
+    password: '',
+  })
+  const [errors, setErrors] = useState({})
+
+  const handleChange = (event) => {
+    const { name, value } = event.target
+
+    if (name === 'name' && /\d/.test(value)) return // Validación para que el campo de nombre no acepte números
+
+    setFormValues((currentValues) => ({
+      ...currentValues,
+      [name]: value,
+    }))
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      [name]: '',
+    }))
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+    const fullNamePattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$/ // Validación para que el nombre completo tenga al menos dos palabras y no contenga números
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // Validación para correo electrónico
+
+    if (!fullNamePattern.test(formValues.name.trim())) {
+      newErrors.name = 'Debes ingresar un nombre completo válido.'
+    }
+    if (!emailPattern.test(formValues.email.trim())) {
+      newErrors.email = 'Debes ingresar un correo electrónico válido.'
+    }
+    if (formValues.password.length < 8) {
+      newErrors.password = 'La contraseña debe tener al menos 8 caracteres.'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+
+    if (validateForm()) {
+      navigate('/login')
+    }
+  }
+
   return (
     <Box
       sx={{
@@ -20,12 +73,14 @@ function Register() {
         backgroundColor: '#56B4EB',
         backgroundImage: `linear-gradient(rgba(86, 180, 235, 0.88), rgba(86, 180, 235, 0.88)), url(${loginBackground})`,
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        backgroundRepeat: 'no-repeat',/*  */
         backgroundSize: 'cover',
       }}
     >
       <Box
-        component="section"
+        component="form"
+        onSubmit={handleSubmit}
+        noValidate
         sx={{
           width: '100%',
           maxWidth: 460,
@@ -52,17 +107,28 @@ function Register() {
           Crear una cuenta
         </Typography>
         <TextField
+          name="name"
           label="Nombre"
           variant="outlined"
           fullWidth
           margin="normal"
+          value={formValues.name}
+          onChange={handleChange}
+          error={Boolean(errors.name)}
+          helperText={errors.name}
         />
 
         <TextField
+          name="email"
           label="Usuario"
           variant="outlined"
           fullWidth
           margin="normal"
+          type="email"
+          value={formValues.email}
+          onChange={handleChange}
+          error={Boolean(errors.email)}
+          helperText={errors.email}
         />
         
         <TextField
@@ -71,8 +137,13 @@ function Register() {
           fullWidth
           margin="normal"
           type="password"
+          name="password"
+          value={formValues.password}
+          onChange={handleChange}
+          error={Boolean(errors.password)}
+          helperText={errors.password}
         />
-        <Button variant="contained" sx={{ mt: 2, height: 45}} fullWidth>
+        <Button type="submit" variant="contained" sx={{ mt: 2, height: 45}} fullWidth>
           Continuar
         </Button>
 
