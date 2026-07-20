@@ -1,12 +1,8 @@
-import { Box } from '@mui/material'
+import { Box, Button, Typography, TextField } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import loginBackground from '../../assets/login-background.jpg'
 import ithakaLogo from '../../assets/ithaka-ucu.png'
-import TextField from '@mui/material/TextField'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
-
 
 function Register() {
   const navigate = useNavigate()
