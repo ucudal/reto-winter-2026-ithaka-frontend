@@ -1,15 +1,31 @@
-import { Box,Toolbar } from '@mui/material'
-import { Outlet } from 'react-router-dom'
+import { useState } from "react";
+import { Box, Toolbar } from "@mui/material";
+import { Outlet } from "react-router-dom";
+
 import Sidebar from "../components/Sidebar.jsx";
-import { DRAWER_WIDTH } from "../theme/constants";
+import Topbar from "../components/Topbar.jsx";
 
 function MainLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = () => {
+    setSidebarOpen((prev) => !prev);
+  };
+
   return (
     <Box sx={{ display: "flex" }}>
-      <Sidebar />
+      <Topbar 
+        onMenuClick={handleSidebarToggle}
+      />
+
+      <Sidebar open={sidebarOpen} />
+
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: `calc(100% - ${DRAWER_WIDTH}px)` }}
+        sx={{
+          flexGrow: 1,
+          p: 3,
+        }}
       >
         <Toolbar />
         <Outlet />
@@ -18,4 +34,4 @@ function MainLayout() {
   );
 }
 
-export default MainLayout
+export default MainLayout;

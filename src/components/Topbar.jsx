@@ -1,6 +1,6 @@
-import MenuIcon from '@mui/icons-material/Menu'
-import AccountCircle from '@mui/icons-material/AccountCircle'
-import Logout from '@mui/icons-material/Logout'
+import MenuIcon from "@mui/icons-material/Menu";
+import Logout from "@mui/icons-material/Logout";
+
 import {
   AppBar,
   Box,
@@ -10,8 +10,10 @@ import {
   MenuItem,
   Toolbar,
   ListItemText,
-} from '@mui/material'
-import { DRAWER_WIDTH } from '../theme/constants'
+} from "@mui/material";
+
+import logo from "../assets/img/logo.png";
+import personFilled from "../assets/img/personFilled.png";
 
 function Topbar({
   userName,
@@ -27,14 +29,13 @@ function Topbar({
         position="fixed"
         elevation={0}
         sx={{
-          width: `calc(100% - ${DRAWER_WIDTH}px)`,
-          ml: `${DRAWER_WIDTH}px`,
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          bgcolor: 'primary.dark',
+          bgcolor: "primary.dark",
         }}
       >
-        <Toolbar sx={{ justifyContent: 'space-between', gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Toolbar sx={{ justifyContent: "space-between", gap: 2 }}>
+          
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton
               color="inherit"
               edge="start"
@@ -47,44 +48,74 @@ function Topbar({
 
             <Box
               component="img"
-              src="/assets/img/logo.png"
+              src={logo}
               alt="Ithaka"
-              sx={{ display: 'block', height: 34, width: 'auto' }}
+              sx={{
+                display: "block",
+                height: 34,
+                width: "auto",
+              }}
             />
           </Box>
 
-          <Box>
-            <IconButton
-              color="inherit"
-              onClick={onUserMenuOpen}
-              aria-label="Abrir menú de usuario"
-            >
-              <AccountCircle />
-            </IconButton>
-          </Box>
+
+          <IconButton
+            onClick={onUserMenuOpen}
+            aria-label="Abrir menú de usuario"
+            sx={{
+              bgcolor: "grey.300",
+              borderRadius: "50%",
+              width: 32,
+              height: 32,
+              "&:hover": {
+                bgcolor: "grey.400",
+              },
+            }}
+          >
+            <Box
+              component="img"
+              src={personFilled}
+              alt="Usuario"
+              sx={{
+                width: 20,
+                height: 20,
+              }}
+            />
+          </IconButton>
+
         </Toolbar>
       </AppBar>
+
 
       <Menu
         anchorEl={userMenuAnchor}
         open={Boolean(userMenuAnchor)}
         onClose={onUserMenuClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
       >
         <MenuItem disabled sx={{ minWidth: 220, opacity: 1 }}>
-          <ListItemText primary={userName} secondary="Usuario mockeado" />
+          <ListItemText
+            primary={userName}
+            secondary="Usuario mockeado"
+          />
         </MenuItem>
 
         <Divider />
 
         <MenuItem onClick={onLogout}>
-          <Logout fontSize="small" style={{ marginRight: 8 }} />
+          <Logout sx={{ mr: 1 }} fontSize="small" />
           Logout
         </MenuItem>
       </Menu>
     </>
-  )
+  );
 }
 
-export default Topbar
+export default Topbar;
