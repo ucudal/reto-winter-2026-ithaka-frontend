@@ -3,6 +3,7 @@ html, body {
     padding: 0;
     width: 100%;
     min-height: 100%;
+    font-family: inherit;
 }
 
 .login-container{
@@ -16,31 +17,67 @@ html, body {
     align-items:center;
 
     background:
-        linear-gradient(rgba(86,180,235,.55),rgba(86,180,235,.55)),
-        url("../../assets/backround.jpg");
+        url("../../assets/background.jpg");
 
     background-size:cover;
     background-position:center;
     background-repeat:no-repeat;
     box-sizing:border-box;
     overflow:hidden;
+    padding: 24px;
 }
 
 .login-card{
-
-    width:420px;
-
-    padding:40px;
-
-    border-radius:8px;
-
+    width: 100%;
+    max-width: 420px;
+    padding: 28px 32px 24px;
+    border-radius: 20px;
+    box-shadow: 0 20px 45px rgba(17, 39, 77, 0.18);
     display:flex;
     flex-direction:column;
+    gap: 18px;
+    background: rgba(255, 255, 255, 0.97);
+}
+
+.login-logo-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 4px;
 }
 
 .login-logo{
-    width: 172;
-    height: 31;
-    opacity: 1;
-    margin:0 auto 30px auto;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+.login-title {
+    margin-bottom: 0;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.login-alert {
+    margin-bottom: 0;
+}
+
+.login-button {
+    margin-top: 16px !important;
+    height: 48px;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em;
+}
+
+.login-register {
+    margin-top: 14px !important;
+}
+
+.login-register-link {
+    text-decoration: underline;
+    color: #1976d2;
+    font-weight: 500;
 }

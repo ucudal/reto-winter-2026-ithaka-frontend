@@ -7,7 +7,7 @@ import {
   Typography,
   Alert,
 } from "@mui/material";
-import {Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 import "./Login.css";
@@ -62,14 +62,16 @@ export default function Login() {
   return (
     <Box className="login-container">
       <Paper className="login-card" elevation={5}>
-        <img src={logo} alt="ITHAKA" className="login-logo" />
+        <div className="login-logo-wrap">
+          <img src={logo} alt="ITHAKA" className="login-logo" />
+        </div>
 
-        <Typography variant="h5" mb={3}>
+        <Typography variant="h5" className="login-title">
           Iniciar sesión
         </Typography>
 
         {loginError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" className="login-alert">
             {loginError}
           </Alert>
         )}
@@ -100,20 +102,18 @@ export default function Login() {
             fullWidth
             variant="contained"
             type="submit"
-            sx={{
-              mt: 2,
-              height: 45,
-            }}
+            className="login-button"
           >
             CONTINUAR
           </Button>
-          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+          <Typography
+            variant="body2"
+            align="center"
+            className="login-register"
+          >
             <Link
               to="/register"
-              style={{
-                textDecoration: "underline",
-                color: "#1976d2",
-              }}
+              className="login-register-link"
             >
               Registrarse
             </Link>
