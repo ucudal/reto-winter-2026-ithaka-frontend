@@ -12,7 +12,7 @@ import {
   ListItemText,
 } from "@mui/material";
 
-import logo from "../assets/img/logo.png";
+import logo from "../assets/logo.png";
 import personFilled from "../assets/img/userFilled.png";
 
 function Topbar({

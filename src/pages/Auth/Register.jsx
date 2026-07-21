@@ -1,8 +1,8 @@
 import { Box, Button, Typography, TextField } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import loginBackground from '../../assets/login-background.jpg'
-import ithakaLogo from '../../assets/ithaka-ucu.png'
+import background from '../../assets/background.jpg'
+import logo from '../../assets/logo.png'
 
 function Register() {
   const navigate = useNavigate()
@@ -67,7 +67,7 @@ function Register() {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#56B4EB',
-        backgroundImage: `linear-gradient(rgba(86, 180, 235, 0.88), rgba(86, 180, 235, 0.88)), url(${loginBackground})`,
+        backgroundImage: `linear-gradient(rgba(86, 180, 235, 0.88), rgba(86, 180, 235, 0.88)), url(${background})`,
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',/*  */
         backgroundSize: 'cover',
@@ -88,8 +88,8 @@ function Register() {
       >
         <Box
           component="img"
-          src={ithakaLogo}
-          alt="Ithaka UCU"
+          src={logo}
+          alt="ITHAKA"
           sx={{
             display: 'block',
             width: 250,
