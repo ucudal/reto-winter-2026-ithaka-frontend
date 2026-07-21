@@ -1,5 +1,5 @@
 import React from 'react';
-import { Drawer, Avatar, Box, Typography, Button } from '@mui/material';
+import { Drawer, Avatar, Box, Typography, Button,Divider} from '@mui/material';
 import ProfileDetails from "../utils/ProfileDetails";
 
 const ROLE_LABELS = {
@@ -19,24 +19,29 @@ export default function UserProfileDrawer({ user, open, onClose }) {
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: 380,
-          p: 4,
+          width: 360,
+          height: '100vh',
+          p: 3,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
+          boxSizing: 'border-box',
         },
       }}
     >
-      <Box>
-        <Typography variant="h6" fontWeight="bold" mb={3}>
+      <Box sx={{ overflowY: 'auto', pr: 1 }}>
+        <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
           Mi Perfil
         </Typography>
 
-        {/* Encabezado testing*/}
-        <Box display="flex" alignItems="center" gap={2} mb={4}>
-          <Avatar alt={user.name} src={user.avatarUrl} sx={{ width: 64, height: 64 }} />
+        <Box display="flex" alignItems="center" gap={2} mb={2.5}>
+          <Avatar 
+            alt={user.name} 
+            src={user.avatarUrl} 
+            sx={{ width: 64, height: 64 }} 
+          />
           <Box>
-            <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1.1rem' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1.1rem', lineHeight: 1.2 }}>
               {user.name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -45,16 +50,24 @@ export default function UserProfileDrawer({ user, open, onClose }) {
           </Box>
         </Box>
 
-        {/* Formulario condicional por Rol */}
+        <Divider sx={{ mb: 3, borderColor: '#f0f0f0' }} />
+
         <ProfileDetails user={user} />
       </Box>
 
-      {/* Botones */}
-      <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
-        <Button variant="text" onClick={onClose} sx={{ fontWeight: 'bold' }}>
+      <Box display="flex" justifyContent="flex-end" gap={2} pt={2} sx={{ backgroundColor: '#fff' }}>
+        <Button 
+          variant="text" 
+          onClick={onClose} 
+          sx={{ fontWeight: 'bold', color: '#1976d2' }}
+        >
           CERRAR
         </Button>
-        <Button variant="contained" disableElevation>
+        <Button 
+          variant="contained" 
+          disableElevation
+          sx={{ textTransform: 'uppercase', px: 3, borderRadius: 1 }}
+        >
           EDITAR
         </Button>
       </Box>
