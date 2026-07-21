@@ -33,3 +33,7 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Kanban
+Kanban_Frontend_Ithaka.md
+
