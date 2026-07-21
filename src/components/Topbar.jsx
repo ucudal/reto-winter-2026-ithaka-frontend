@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 
 import logo from "../assets/img/logo.png";
-import personFilled from "../assets/img/personFilled.png";
+import personFilled from "../assets/img/userFilled.png";
 
 function Topbar({
   userName,
@@ -34,7 +34,7 @@ function Topbar({
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between", gap: 2 }}>
-          
+
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton
               color="inherit"
