@@ -6,7 +6,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import notFoundImg from "../../assets/NotFoundTroy.png";
+import notFoundImg from "../../assets/img/NotFoundTroy.png";
 
 function NotFoundPage() {
   const navigate = useNavigate();
