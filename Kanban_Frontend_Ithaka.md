@@ -316,12 +316,24 @@ export const mockDashboardSummary = {
 ### [FRONTEND] Control de Acceso por Roles (RBAC) en el Enrutamiento (Frontend Route Guard)
 **Labels:** `mid` `security`
 
-* **Descripción:** Tarea de seguridad y middleware en frontend. Aunque no tengamos el backend completo, contamos con un `AuthContext` y un enum de roles (`Coordinator`, `BusinessTutor`, `TechnicalTutor`, `Student`). Se necesita un middleware/componente de protección de rutas que verifique si el usuario tiene el rol permitido para acceder a ciertas vistas. Si no lo tiene, debe redirigir a una pantalla de "No Autorizado (403)".
+* **Descripción:** Tarea de seguridad y middleware en frontend. Se debe implementar un sistema de control de acceso basado en roles para las distintas vistas de la aplicación. Conforme a `api-spec-en (1).md`, el objeto de usuario autenticado proviene de `POST /api/auth/login` (o se rehidrata con `GET /api/users/me`) con la siguiente estructura:
+  ```json
+  {
+    "id": 8,
+    "name": "María Pérez",
+    "role": "BusinessTutor" // Rol del usuario
+  }
+  ```
+  Los roles posibles definidos en el enum `UserRole` del contrato son:
+  * `Coordinator`: Acceso completo a toda la plataforma (Cohortes, creación/edición de Grupos, asignación de Tutores, etc.).
+  * `BusinessTutor` y `TechnicalTutor`: Acceso a ver listados generales de tutores/grupos, ver el detalle de sus grupos asignados, programar reuniones (`Meetings`) y dejar comentarios (`Comments`) en entregables.
+  * `Student`: Acceso restringido únicamente a la vista de su propio Grupo (`Group`), sus entregables (`Deliverables`), minutas de reuniones y subir links/documentos de entregas.
+  Se necesita un middleware/componente en el frontend que proteja las rutas según estos roles. Si un usuario intenta acceder a una ruta sin el rol permitido (ej. un estudiante queriendo ver `/cohorts`), debe ser redirigido a una vista estética de "Acceso Denegado (403)".
 * **Tareas específicas:**
-   * Crear el componente `RoleProtectedRoute` (o extender el `ProtectedRoute` existente).
-   * Definir los roles permitidos en la configuración de rutas de React Router (por ejemplo, la ruta de gestión de cohortes `/cohorts` solo debe ser accesible para `Coordinator`).
-   * Diseñar una pantalla de "Acceso Denegado (403)" con una interfaz clara y estética para guiar al usuario de regreso a un área segura.
-   * Probar la redirección de manera local cambiando manualmente el rol en el estado del mock de sesión.
+   * Crear el componente `RoleProtectedRoute` (o extender el `ProtectedRoute` existente) que reciba los roles autorizados como propiedad (ej. `allowedRoles={['Coordinator']}`).
+   * Definir y mapear los roles permitidos en la configuración de rutas de React Router.
+   * Diseñar una pantalla de "Acceso Denegado (403)" (`Forbidden.jsx`) con una interfaz de usuario clara, pulida y un botón de redirección segura a su dashboard o inicio.
+   * Probar el flujo de redirecciones alternando manualmente el `role` del usuario en el mock de la sesión.
 
 ---
 
