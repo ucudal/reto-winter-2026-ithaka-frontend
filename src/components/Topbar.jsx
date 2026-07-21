@@ -25,7 +25,7 @@ import { usersMock } from "../utils/userData";
 function Topbar({ onMenuClick, onLogout }) {
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const currentUser = usersMock.coordinator;
+  const currentUser = usersMock.student;
 
   const handleOpenUserMenu = (event) => {
     setUserMenuAnchor(event.currentTarget);
