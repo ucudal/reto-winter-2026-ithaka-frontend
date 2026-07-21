@@ -1,6 +1,6 @@
 import React from 'react';
 import { Drawer, Avatar, Box, Typography, Button } from '@mui/material';
-import ProfileDetails from './ProfileDetails';
+import ProfileDetails from "../utils/ProfileDetails";
 
 const ROLE_LABELS = {
   Student: 'Estudiante',

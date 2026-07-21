@@ -20,7 +20,7 @@ import {
 import logo from "../assets/img/logo-bw.png";
 import personFilled from "../assets/img/userFilled.png";
 import UserProfileDrawer from "./UserProfileDrawer";
-import { usersMock } from "../userData";
+import { usersMock } from "../utils/userData";
 
 function Topbar({ onMenuClick, onLogout }) {
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
