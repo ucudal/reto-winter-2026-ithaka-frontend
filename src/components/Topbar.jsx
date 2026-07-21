@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from "../context/AuthContext";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -25,7 +26,9 @@ import { usersMock } from "../utils/userData";
 function Topbar({ onMenuClick, onLogout }) {
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const currentUser = usersMock.student;
+  const { user } = useAuth();
+
+   const currentUser = user || usersMock?.tutor{};
 
   const handleOpenUserMenu = (event) => {
     setUserMenuAnchor(event.currentTarget);
@@ -119,10 +122,10 @@ function Topbar({ onMenuClick, onLogout }) {
         <Box sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle2" fontWeight="bold">
             
-            {currentUser.name}
+            {currentUser?.name}
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
-            {currentUser.email}
+            {currentUser?.email}
           </Typography>
         </Box>
 
