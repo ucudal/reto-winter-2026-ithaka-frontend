@@ -28,6 +28,7 @@ import GridViewIcon from '@mui/icons-material/GridView'
 import ViewListIcon from '@mui/icons-material/ViewList'
 
 // import { apiClient } from '../../api/client' // Línea para llamar a la API real, actualmente comentada para usar datos mockeados
+import ConfirmModal from '../../components/ConfirmModal'
 import EmptyState from '../../components/common/EmptyState'
 import ErrorState from '../../components/common/ErrorState'
 
@@ -68,6 +69,7 @@ function Knowledge() {
   const [selectedView, setSelectedView] = useState('list')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterBy, setFilterBy] = useState('all')
+  const [materialToDelete, setMaterialToDelete] = useState(null)
 
   const filteredMaterials = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLocaleLowerCase('es')
@@ -110,6 +112,20 @@ function Knowledge() {
   useEffect(() => {
     loadMaterials()
   }, [loadMaterials])
+
+  const handleDeleteMaterial = () => {
+    if (!materialToDelete) return
+
+    const materialId = materialToDelete.id
+
+    // Llamada real a la API:
+    // await apiClient.delete(`/materials/${materialId}`)
+
+    // Eliminación mockeada en el estado local:
+    setMaterials((currentMaterials) =>
+      currentMaterials.filter((material) => material.id !== materialId),
+    )
+  }
 
   return (
     <Box>
@@ -317,6 +333,7 @@ function Knowledge() {
                         <IconButton
                           size="small"
                           aria-label={`Eliminar ${material.id}`}
+                          onClick={() => setMaterialToDelete(material)}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -329,6 +346,20 @@ function Knowledge() {
           </Table>
         </TableContainer>
       )}
+
+      <ConfirmModal
+        open={Boolean(materialToDelete)}
+        title="Eliminar material"
+        message={
+          materialToDelete
+            ? `¿Estás seguro de que querés eliminar el material “${materialToDelete.title}”? Esta acción no se puede deshacer.`
+            : ''
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={handleDeleteMaterial}
+        onClose={() => setMaterialToDelete(null)}
+      />
     </Box>
   )
 }
