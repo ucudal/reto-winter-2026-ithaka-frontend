@@ -313,7 +313,7 @@ export const mockDashboardSummary = {
 
 ---
 
-### [SEC-1] Control de Acceso por Roles (RBAC) en el Enrutamiento (Frontend Route Guard)
+### [FRONTEND] Control de Acceso por Roles (RBAC) en el Enrutamiento (Frontend Route Guard)
 **Labels:** `mid` `security`
 
 * **Descripción:** Tarea de seguridad y middleware en frontend. Aunque no tengamos el backend completo, contamos con un `AuthContext` y un enum de roles (`Coordinator`, `BusinessTutor`, `TechnicalTutor`, `Student`). Se necesita un middleware/componente de protección de rutas que verifique si el usuario tiene el rol permitido para acceder a ciertas vistas. Si no lo tiene, debe redirigir a una pantalla de "No Autorizado (403)".
@@ -325,7 +325,7 @@ export const mockDashboardSummary = {
 
 ---
 
-### [PERF-1] Middleware de Caché en el Cliente para Datos Semiestáticos
+### [FRONTEND] Middleware de Caché en el Cliente para Datos Semiestáticos
 **Labels:** `mid` `refactor`
 
 * **Descripción:** Tarea de optimización y middleware. Para evitar llamadas redundantes al backend (o al mock) para catálogos y datos semiestáticos que cambian con muy poca frecuencia durante la sesión (como la lista de etapas del proceso `Stages`, la lista de cohortes disponibles, o la información del perfil del usuario), se debe implementar un mecanismo de caché en memoria o persistente (`localStorage`/`sessionStorage`) con tiempo de expiración (TTL).
@@ -336,7 +336,7 @@ export const mockDashboardSummary = {
 
 ---
 
-### [UI-10] Sistema de Captura de Errores Global (Error Boundary)
+### [FRONTEND] Sistema de Captura de Errores Global (Error Boundary)
 **Labels:** `mid` `chore`
 
 * **Descripción:** Tarea de robustez y resiliencia en frontend. Para evitar pantallas en blanco completas cuando un componente de React falla en producción debido a datos inesperados o fallos de renderizado, se debe implementar un componente `ErrorBoundary` global y a nivel de rutas clave.
@@ -347,7 +347,7 @@ export const mockDashboardSummary = {
 
 ---
 
-### [UI-11] Implementación de Tema Oscuro/Claro (Dark/Light Mode)
+### [FRONTEND] Implementación de Tema Oscuro/Claro (Dark/Light Mode)
 **Labels:** `mid` `design`
 
 * **Descripción:** Tarea de diseño y accesibilidad. Diseñar y aplicar un selector de tema (Dark/Light mode) persistiendo la elección del usuario en `localStorage` y usando variables CSS o el ThemeProvider de Material UI (MUI), según lo que use el proyecto.
@@ -359,7 +359,7 @@ export const mockDashboardSummary = {
 
 ---
 
-### [SEC-2] Sanitización de Inputs y Prevención de XSS en Formularios
+### [FRONTEND] Sanitización de Inputs y Prevención de XSS en Formularios
 **Labels:** `easy` `security`
 
 * **Descripción:** Tarea de seguridad en frontend. Dado que los usuarios introducen URLs de repositorios, links a minutas y texto en notas de reuniones, se requiere asegurar que el contenido ingresado no contenga scripts maliciosos (Cross-Site Scripting) antes de renderizarlo o guardarlo.
@@ -370,7 +370,7 @@ export const mockDashboardSummary = {
 
 ---
 
-### [DEV-2] Entorno de Pruebas Unitarias y Componentes (Vitest + React Testing Library)
+### [FRONTEND] Entorno de Pruebas Unitarias y Componentes (Vitest + React Testing Library)
 **Labels:** `mid` `chore`
 
 * **Descripción:** Tarea de infraestructura de desarrollo. El equipo de frontend necesita una base sólida de pruebas para garantizar que el refactor no rompa la interfaz de usuario al momento de realizar la conexión real con el backend.
