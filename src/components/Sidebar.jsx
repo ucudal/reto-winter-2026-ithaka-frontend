@@ -14,27 +14,38 @@ import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
 
-export default function Sidebar() {
+export default function Sidebar({ open }) {
   const location = useLocation();
+
   return (
     <Drawer
       variant="permanent"
       sx={{
-        width: DRAWER_WIDTH,
+        width: open ? DRAWER_WIDTH : 0,
         flexShrink: 0,
+
         "& .MuiDrawer-paper": {
-          width: DRAWER_WIDTH,
+          width: open ? DRAWER_WIDTH : 0,
           boxSizing: "border-box",
+          overflowX: "hidden",
+          transition: "width 0.3s",
+          visibility: open ? "visible" : "hidden",
         },
       }}
     >
       <Toolbar />
+
       <List
-        subheader={<ListSubheader component="div">Proyectos</ListSubheader>}
+        subheader={
+          <ListSubheader component="div">
+            Proyectos
+          </ListSubheader>
+        }
       >
         <ListItemButton
           component={Link}
@@ -73,7 +84,13 @@ export default function Sidebar() {
         </ListItemButton>
       </List>
 
-      <List subheader={<ListSubheader component="div">Equipo</ListSubheader>}>
+      <List
+        subheader={
+          <ListSubheader component="div">
+            Equipo
+          </ListSubheader>
+        }
+      >
         <ListItemButton
           component={Link}
           to="/tutors"
@@ -100,7 +117,11 @@ export default function Sidebar() {
       </List>
 
       <List
-        subheader={<ListSubheader component="div">Herramientas</ListSubheader>}
+        subheader={
+          <ListSubheader component="div">
+            Herramientas
+          </ListSubheader>
+        }
       >
         <ListItemButton
           component={Link}
@@ -112,6 +133,18 @@ export default function Sidebar() {
           </ListItemIcon>
 
           <ListItemText primary="Templates" />
+        </ListItemButton>
+
+        <ListItemButton
+          component={Link}
+          to="/knowledge"
+          selected={location.pathname === "/knowledge"}
+        >
+          <ListItemIcon>
+            <MenuBookIcon />
+          </ListItemIcon>
+
+          <ListItemText primary="Materiales" />
         </ListItemButton>
       </List>
     </Drawer>
