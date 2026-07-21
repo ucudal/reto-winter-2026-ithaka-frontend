@@ -10,7 +10,8 @@ import Students from '../pages/sections/Students.jsx'
 import Cohorts from '../pages/sections/Cohorts.jsx'
 import Groups from '../pages/sections/Groups.jsx'
 import Templates from '../pages/sections/Templates.jsx'
-import Tutors from '../pages/Tutors.jsx'
+import Tutors from '../pages/sections/Tutors.jsx'
+import Knowledge from '../pages/sections/Knowledge.jsx'
 import NotFoundPage from '../pages/sections/NotFoundPage.jsx'
 
 const appRouter = createBrowserRouter([
@@ -34,6 +35,7 @@ const appRouter = createBrowserRouter([
           { path: '/groups', element: <Groups /> },
           { path: '/templates', element: <Templates /> },
           { path: '/tutors', element: <Tutors /> },
+          { path: '/knowledge', element: <Knowledge /> },
         ],
       },
     ],
