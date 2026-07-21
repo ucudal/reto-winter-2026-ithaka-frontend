@@ -66,10 +66,9 @@ function Register() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#56B4EB',
-        backgroundImage: `linear-gradient(rgba(86, 180, 235, 0.88), rgba(86, 180, 235, 0.88)), url(${background})`,
+        backgroundImage: `url(${background})`,
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',/*  */
+        backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
       }}
     >
