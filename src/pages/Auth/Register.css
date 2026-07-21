@@ -25,15 +25,18 @@ html, body {
 
 .login-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 430px;
   padding: 28px 32px 24px;
-  border-radius: 20px;
-  box-shadow: 0 20px 45px rgba(17, 39, 77, 0.18);
+  border-radius: 22px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  background: rgba(255, 255, 255, 0.97);
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .login-logo-wrap {
@@ -45,33 +48,65 @@ html, body {
 
 .login-logo {
   width: 100%;
-  max-width: 240px;
+  max-width: 230px;
   height: auto;
   display: block;
   object-fit: contain;
 }
 
 .login-title {
-  margin-bottom: 0;
-  font-weight: 600;
+  margin-bottom: 2px;
+  font-weight: 700;
   color: #0f172a;
   text-align: center;
+  letter-spacing: 0.01em;
 }
 
 .login-alert {
   margin-bottom: 0;
 }
 
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-card .MuiTextField-root {
+  margin: 0;
+}
+
+.login-card .MuiOutlinedInput-root {
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.login-card .MuiOutlinedInput-root:hover fieldset {
+  border-color: #1976d2;
+}
+
+.login-card .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: #1976d2;
+  border-width: 2px;
+}
+
 .login-button {
-  margin-top: 16px !important;
+  margin-top: 12px !important;
   height: 48px;
   border-radius: 12px !important;
   font-weight: 700 !important;
   letter-spacing: 0.03em;
+  box-shadow: 0 10px 20px rgba(25, 118, 210, 0.2) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(25, 118, 210, 0.25) !important;
 }
 
 .login-register {
-  margin-top: 14px !important;
+  margin-top: 12px !important;
 }
 
 .login-register-link {
@@ -80,13 +115,24 @@ html, body {
   font-weight: 500;
 }
 
+@media (max-width: 600px) {
+  .login-card {
+    max-width: 100%;
+    padding: 24px 20px 20px;
+  }
+
+  .login-logo {
+    max-width: 200px;
+  }
+}
+
 @media (max-width: 380px) {
   .login-container {
     padding: 12px;
   }
 
   .login-card {
-    padding: 20px 18px 18px;
+    padding: 20px 16px 18px;
     border-radius: 16px;
     gap: 12px;
   }
@@ -97,6 +143,10 @@ html, body {
 
   .login-title {
     font-size: 1.1rem;
+  }
+
+  .login-button {
+    height: 44px;
   }
 }
 
