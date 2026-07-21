@@ -7,24 +7,23 @@ html, body {
 }
 
 .login-container{
-    width:100vw;
-    min-height:100vh;
-    margin:0;
-    padding:0;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
 
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-    background:
-        url("../../assets/img/background.jpg");
+    background: url("../../assets/img/background.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 
-    background-size:cover;
-    background-position:center;
-    background-repeat:no-repeat;
-    box-sizing:border-box;
-    overflow:hidden;
+    box-sizing: border-box;
     padding: 24px;
+    overflow-y: auto;
 }
 
 .login-card{
@@ -33,10 +32,11 @@ html, body {
     padding: 28px 32px 24px;
     border-radius: 20px;
     box-shadow: 0 20px 45px rgba(17, 39, 77, 0.18);
-    display:flex;
-    flex-direction:column;
+    display: flex;
+    flex-direction: column;
     gap: 18px;
     background: rgba(255, 255, 255, 0.97);
+    box-sizing: border-box;
 }
 
 .login-logo-wrap {
@@ -58,6 +58,7 @@ html, body {
     margin-bottom: 0;
     font-weight: 600;
     color: #0f172a;
+    text-align: center;
 }
 
 .login-alert {
@@ -80,4 +81,44 @@ html, body {
     text-decoration: underline;
     color: #1976d2;
     font-weight: 500;
+}
+
+@media (max-width: 380px) {
+    .login-container {
+        padding: 12px;
+    }
+
+    .login-card {
+        padding: 20px 18px 18px;
+        border-radius: 16px;
+        gap: 12px;
+    }
+
+    .login-logo {
+        max-width: 180px;
+    }
+
+    .login-title {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+    .login-container {
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    .login-card {
+        gap: 10px;
+        padding: 16px 24px;
+    }
+
+    .login-logo {
+        max-width: 140px;
+    }
+
+    .login-logo-wrap {
+        padding-top: 0;
+    }
 }

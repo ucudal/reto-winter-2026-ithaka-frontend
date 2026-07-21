@@ -19,8 +19,64 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
 
-export default function Sidebar({ open }) {
+export default function Sidebar({ open, variant = "permanent", onClose, onNavigate }) {
   const location = useLocation();
+  const isTemporary = variant === "temporary";
+
+  const navItem = (to, label, Icon) => (
+    <ListItemButton
+      component={Link}
+      to={to}
+      selected={location.pathname === to}
+      onClick={onNavigate}
+    >
+      <ListItemIcon>
+        <Icon />
+      </ListItemIcon>
+      <ListItemText primary={label} />
+    </ListItemButton>
+  );
+
+  const content = (
+    <>
+      <Toolbar />
+
+      <List subheader={<ListSubheader component="div">Proyectos</ListSubheader>}>
+        {navItem("/dashboard", "Resumen", DashboardIcon)}
+        {navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
+        {navItem("/groups", "Grupos", GroupsIcon)}
+      </List>
+
+      <List subheader={<ListSubheader component="div">Equipo</ListSubheader>}>
+        {navItem("/tutors", "Tutores", PeopleIcon)}
+        {navItem("/students", "Alumnos", SchoolIcon)}
+      </List>
+
+      <List subheader={<ListSubheader component="div">Herramientas</ListSubheader>}>
+        {navItem("/templates", "Templates", AssignmentOutlinedIcon)}
+        {navItem("/knowledge", "Materiales", MenuBookIcon)}
+      </List>
+    </>
+  );
+
+  if (isTemporary) {
+    return (
+      <Drawer
+        variant="temporary"
+        open={open}
+        onClose={onClose}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          "& .MuiDrawer-paper": {
+            width: DRAWER_WIDTH,
+            boxSizing: "border-box",
+          },
+        }}
+      >
+        {content}
+      </Drawer>
+    );
+  }
 
   return (
     <Drawer
@@ -28,7 +84,6 @@ export default function Sidebar({ open }) {
       sx={{
         width: open ? DRAWER_WIDTH : 0,
         flexShrink: 0,
-
         "& .MuiDrawer-paper": {
           width: open ? DRAWER_WIDTH : 0,
           boxSizing: "border-box",
@@ -38,115 +93,7 @@ export default function Sidebar({ open }) {
         },
       }}
     >
-      <Toolbar />
-
-      <List
-        subheader={
-          <ListSubheader component="div">
-            Proyectos
-          </ListSubheader>
-        }
-      >
-        <ListItemButton
-          component={Link}
-          to="/dashboard"
-          selected={location.pathname === "/dashboard"}
-        >
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-
-          <ListItemText primary="Resumen" />
-        </ListItemButton>
-
-        <ListItemButton
-          component={Link}
-          to="/cohorts"
-          selected={location.pathname === "/cohorts"}
-        >
-          <ListItemIcon>
-            <CalendarMonthIcon />
-          </ListItemIcon>
-
-          <ListItemText primary="Cohortes" />
-        </ListItemButton>
-
-        <ListItemButton
-          component={Link}
-          to="/groups"
-          selected={location.pathname === "/groups"}
-        >
-          <ListItemIcon>
-            <GroupsIcon />
-          </ListItemIcon>
-
-          <ListItemText primary="Grupos" />
-        </ListItemButton>
-      </List>
-
-      <List
-        subheader={
-          <ListSubheader component="div">
-            Equipo
-          </ListSubheader>
-        }
-      >
-        <ListItemButton
-          component={Link}
-          to="/tutors"
-          selected={location.pathname === "/tutors"}
-        >
-          <ListItemIcon>
-            <PeopleIcon />
-          </ListItemIcon>
-
-          <ListItemText primary="Tutores" />
-        </ListItemButton>
-
-        <ListItemButton
-          component={Link}
-          to="/students"
-          selected={location.pathname === "/students"}
-        >
-          <ListItemIcon>
-            <SchoolIcon />
-          </ListItemIcon>
-
-          <ListItemText primary="Alumnos" />
-        </ListItemButton>
-      </List>
-
-      <List
-        subheader={
-          <ListSubheader component="div">
-            Herramientas
-          </ListSubheader>
-        }
-      >
-        <ListItemButton
-          component={Link}
-          to="/templates"
-          selected={location.pathname === "/templates"}
-        >
-          <ListItemIcon>
-            <AssignmentOutlinedIcon />
-          </ListItemIcon>
-
-          <ListItemText primary="Templates" />
-        </ListItemButton>
-
-        <ListItemButton
-          component={Link}
-          to="/knowledge"
-          selected={location.pathname === "/knowledge"}
-        >
-          <ListItemIcon>
-            <MenuBookIcon />
-          </ListItemIcon>
-
-          <ListItemText primary="Materiales" />
-        </ListItemButton>
-      </List>
+      {content}
     </Drawer>
   );
 }
