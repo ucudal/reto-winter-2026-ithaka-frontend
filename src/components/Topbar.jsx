@@ -25,7 +25,7 @@ import { usersMock } from "../utils/userData";
 function Topbar({ onMenuClick, onLogout }) {
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const currentUser = usersMock.tutor;
+  const currentUser = usersMock.coordinator;
 
   const handleOpenUserMenu = (event) => {
     setUserMenuAnchor(event.currentTarget);
@@ -149,8 +149,6 @@ function Topbar({ onMenuClick, onLogout }) {
           <ListItemText primary="Sign out" />
         </MenuItem>
       </Menu>
-
-        {/* testing*/}
 
       <UserProfileDrawer
         user={currentUser}

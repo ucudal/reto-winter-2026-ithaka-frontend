@@ -6,7 +6,7 @@ export const usersMock = {
     role: "Student",
     major: "Ingeniería en Sistemas",
     groupName: "EcoRoute",
-    avatarUrl: "https://i.pravatar.cc/150?img=5",
+    avatarUrl: "https://i.pravatar.cc/150?img=8",
   },
   tutor: {
     id: 8,
@@ -17,12 +17,11 @@ export const usersMock = {
     availability: "Lunes y Miércoles de tarde",
     avatarUrl: "https://i.pravatar.cc/150?img=9",
   },
-    /*  testing*/
   coordinator: {
     id: 1,
     name: "Carlos Rodríguez",
     email: "carlos.rodriguez@ucu.edu.uy",
     role: "Coordinator",
-    avatarUrl: "https://i.pravatar.cc/150?img=3",
+    avatarUrl: "https://i.pravatar.cc/150?img=11",
   },
 };
