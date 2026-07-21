@@ -14,6 +14,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
@@ -132,6 +133,18 @@ export default function Sidebar({ open }) {
           </ListItemIcon>
 
           <ListItemText primary="Templates" />
+        </ListItemButton>
+
+        <ListItemButton
+          component={Link}
+          to="/knowledge"
+          selected={location.pathname === "/knowledge"}
+        >
+          <ListItemIcon>
+            <MenuBookIcon />
+          </ListItemIcon>
+
+          <ListItemText primary="Materiales" />
         </ListItemButton>
       </List>
     </Drawer>
