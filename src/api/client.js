@@ -44,7 +44,7 @@ function messageForStatus(status, data) {
   )
 }
 
-function normalizeError(error) {
+export function normalizeError(error) {
   if (error.response) {
     const { status, data } = error.response
     return new ApiError({ status, message: messageForStatus(status, data), data })
