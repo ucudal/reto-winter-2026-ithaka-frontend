@@ -1,5 +1,8 @@
+import React, { useState } from 'react';
 import MenuIcon from "@mui/icons-material/Menu";
-import Logout from "@mui/icons-material/Logout";
+import LogoutIcon from "@mui/icons-material/Logout";
+import SettingsIcon from '@mui/icons-material/Settings';
+import PersonIcon from '@mui/icons-material/Person';
 
 import {
   AppBar,
@@ -10,19 +13,37 @@ import {
   MenuItem,
   Toolbar,
   ListItemText,
+  ListItemIcon,
+  Typography,
 } from "@mui/material";
 
 import logo from "../assets/img/logo-bw.png";
 import personFilled from "../assets/img/userFilled.png";
+import UserProfileDrawer from "./UserProfileDrawer";
+import { usersMock } from "../userData";
 
-function Topbar({
-  userName,
-  onMenuClick,
-  userMenuAnchor,
-  onUserMenuOpen,
-  onUserMenuClose,
-  onLogout,
-}) {
+function Topbar({ onMenuClick, onLogout }) {
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const currentUser = usersMock.tutor;
+
+  const handleOpenUserMenu = (event) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleOpenProfileDrawer = () => {
+    handleCloseUserMenu();
+    setIsDrawerOpen(true); 
+  };
+
+  const handleCloseProfileDrawer = () => {
+    setIsDrawerOpen(false);
+  };
+
   return (
     <>
       <AppBar
@@ -58,9 +79,8 @@ function Topbar({
             />
           </Box>
 
-
           <IconButton
-            onClick={onUserMenuOpen}
+            onClick={handleOpenUserMenu}
             aria-label="Abrir menú de usuario"
             sx={{
               bgcolor: "grey.300",
@@ -86,34 +106,57 @@ function Topbar({
         </Toolbar>
       </AppBar>
 
-
       <Menu
         anchorEl={userMenuAnchor}
         open={Boolean(userMenuAnchor)}
-        onClose={onUserMenuClose}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
+        onClose={handleCloseUserMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        PaperProps={{
+          sx: { width: 220, mt: 1 }
         }}
       >
-        <MenuItem disabled sx={{ minWidth: 220, opacity: 1 }}>
-          <ListItemText
-            primary={userName}
-            secondary="Usuario mockeado"
-          />
-        </MenuItem>
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography variant="subtitle2" fontWeight="bold">
+            
+            {currentUser.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" display="block">
+            {currentUser.email}
+          </Typography>
+        </Box>
 
         <Divider />
 
-        <MenuItem onClick={onLogout}>
-          <Logout sx={{ mr: 1 }} fontSize="small" />
-          Logout
+        <MenuItem onClick={handleCloseUserMenu}>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Settings" />
+        </MenuItem>
+
+        <MenuItem onClick={handleOpenProfileDrawer}>
+          <ListItemIcon>
+            <PersonIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Profile" />
+        </MenuItem>
+
+        <MenuItem onClick={() => { handleCloseUserMenu(); if (onLogout) onLogout(); }}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Sign out" />
         </MenuItem>
       </Menu>
+
+        {/* testing*/}
+
+      <UserProfileDrawer
+        user={currentUser}
+        open={isDrawerOpen}
+        onClose={handleCloseProfileDrawer}
+      />
     </>
   );
 }
