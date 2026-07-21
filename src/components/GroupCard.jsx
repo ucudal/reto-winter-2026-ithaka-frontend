@@ -8,16 +8,28 @@ import {
   Box,
   Divider,
   LinearProgress,
+  getLinearProgressUtilityClass,
 } from "@mui/material";
 
 export default function GroupCard({ group }) {
   
-  const getInitials = (name) =>
-    name
-      .split(" ")
-      .slice(0, 2)
-      .map((part) => part[0].toUpperCase())
-      .join("");
+    const getInitials = (name) => {
+        if (!name) return "?";
+
+        return name
+            .split(" ")
+            .slice(0, 2)
+            .map((part) => part[0].toUpperCase())
+            .join("");
+    };
+
+  const technicalTutorName = group.technicalTutor?.name;
+  const businessTutorName = group.businessTutor?.name;
+
+
+  // TODO: Reemplazar este valor por el porcentaje real cuando
+  // el backend exponga el progreso del grupo.
+  const progress = 40;
 
   return (
     <Card
@@ -136,11 +148,11 @@ export default function GroupCard({ group }) {
               }}
             >
               <Avatar>
-                {getInitials(group.technicalTutor.name)}
+                {technicalTutorName ? getInitials(technicalTutorName) : "?"}
               </Avatar>
 
               <Avatar>
-                {getInitials(group.businessTutor.name)}
+                {businessTutorName ? getInitials(businessTutorName) : "?"}
               </Avatar>
             </AvatarGroup>
 
@@ -148,7 +160,9 @@ export default function GroupCard({ group }) {
               variant="body2"
               ml={2}
             >
-              {group.technicalTutor.name}, {group.businessTutor.name}
+              {technicalTutorName || "Sin asignar"}
+              {" • "}
+              {businessTutorName || "Sin asignar"}
             </Typography>
           </Box>
         </Box>
@@ -168,7 +182,7 @@ export default function GroupCard({ group }) {
 
         <LinearProgress
           variant="determinate"
-          value={40}
+          value={progress}
           sx={{ mt: 1 }}
         />
       </CardContent>

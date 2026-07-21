@@ -117,7 +117,7 @@ function Groups() {
         <TextField
           select
           label="Filtrar por"
-          defaultValue="property"
+          defaultValue=""
           variant="filled"
           sx={{
             width: 280,
@@ -152,7 +152,7 @@ function Groups() {
             },
           }}
         >
-          <MenuItem value="property">Property</MenuItem>
+          <MenuItem value="">Todos</MenuItem>
           <MenuItem value="progress">En progreso</MenuItem>
           <MenuItem value="finished">Finalizados</MenuItem>
         </TextField>
