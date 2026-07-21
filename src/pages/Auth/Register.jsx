@@ -1,8 +1,8 @@
 import { Box, Button, Typography, TextField } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import background from '../../assets/background.jpg'
-import logo from '../../assets/logo.png'
+import background from '../../assets/img/background.jpg'
+import logo from '../../assets/img/logo.png'
 
 function Register() {
   const navigate = useNavigate()
