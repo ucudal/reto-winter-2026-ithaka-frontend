@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Box,
   Button,
@@ -17,6 +17,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from '@mui/material'
 import GridViewIcon from '@mui/icons-material/GridView'
@@ -59,6 +60,27 @@ function Knowledge() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedView, setSelectedView] = useState('list')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterBy, setFilterBy] = useState('all')
+
+  const filteredMaterials = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase('es')
+
+    if (!normalizedSearch) return materials
+
+    const fieldsToSearch =
+      filterBy === 'all'
+        ? columns.map((column) => column.id)
+        : [filterBy]
+
+    return materials.filter((material) =>
+      fieldsToSearch.some((field) =>
+        String(material[field] ?? '')
+          .toLocaleLowerCase('es')
+          .includes(normalizedSearch),
+      ),
+    )
+  }, [filterBy, materials, searchTerm])
 
   const loadMaterials = useCallback(async () => {
     setIsLoading(true)
@@ -138,6 +160,43 @@ function Knowledge() {
         </Box>
       </Box>
 
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 1.5,
+          mb: 2,
+        }}
+      >
+        <TextField
+          id="materials-search"
+          label="Buscar"
+          placeholder="Ingrese un dato"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          size="small"
+          fullWidth
+        />
+
+        <FormControl size="small" sx={{ minWidth: 210 }}>
+          <InputLabel id="materials-filter-label">Filtrar por</InputLabel>
+          <Select
+            labelId="materials-filter-label"
+            id="materials-filter"
+            value={filterBy}
+            label="Filtrar por"
+            onChange={(event) => setFilterBy(event.target.value)}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            {columns.map((column) => (
+              <MenuItem key={column.id} value={column.id}>
+                {column.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
       {error ? (
         <ErrorState
           title="No se pudieron cargar los materiales"
@@ -187,17 +246,25 @@ function Knowledge() {
                     />
                   </TableCell>
                 </TableRow>
-              ) : materials.length === 0 ? (
+              ) : filteredMaterials.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={columns.length} sx={{ p: 0 }}>
                     <EmptyState
-                      title="No hay materiales para mostrar"
-                      description="Los materiales que se agreguen aparecerán en esta tabla."
+                      title={
+                        materials.length === 0
+                          ? 'No hay materiales para mostrar'
+                          : 'No se encontraron materiales'
+                      }
+                      description={
+                        materials.length === 0
+                          ? 'Los materiales que se agreguen aparecerán en esta tabla.'
+                          : 'Probá con otro término o criterio de búsqueda.'
+                      }
                     />
                   </TableCell>
                 </TableRow>
               ) : (
-                materials.map((material) => (
+                filteredMaterials.map((material) => (
                   <TableRow key={material.id} hover>
                     <TableCell>{material.id}</TableCell>
                     <TableCell>{material.stage_id}</TableCell>
