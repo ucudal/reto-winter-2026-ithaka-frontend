@@ -313,7 +313,71 @@ export const mockDashboardSummary = {
 
 ---
 
-*(vacío)*
+### [SEC-1] Control de Acceso por Roles (RBAC) en el Enrutamiento (Frontend Route Guard)
+**Labels:** `mid` `security`
+
+* **Descripción:** Tarea de seguridad y middleware en frontend. Aunque no tengamos el backend completo, contamos con un `AuthContext` y un enum de roles (`Coordinator`, `BusinessTutor`, `TechnicalTutor`, `Student`). Se necesita un middleware/componente de protección de rutas que verifique si el usuario tiene el rol permitido para acceder a ciertas vistas. Si no lo tiene, debe redirigir a una pantalla de "No Autorizado (403)".
+* **Tareas específicas:**
+   * Crear el componente `RoleProtectedRoute` (o extender el `ProtectedRoute` existente).
+   * Definir los roles permitidos en la configuración de rutas de React Router (por ejemplo, la ruta de gestión de cohortes `/cohorts` solo debe ser accesible para `Coordinator`).
+   * Diseñar una pantalla de "Acceso Denegado (403)" con una interfaz clara y estética para guiar al usuario de regreso a un área segura.
+   * Probar la redirección de manera local cambiando manualmente el rol en el estado del mock de sesión.
+
+---
+
+### [PERF-1] Middleware de Caché en el Cliente para Datos Semiestáticos
+**Labels:** `mid` `refactor`
+
+* **Descripción:** Tarea de optimización y middleware. Para evitar llamadas redundantes al backend (o al mock) para catálogos y datos semiestáticos que cambian con muy poca frecuencia durante la sesión (como la lista de etapas del proceso `Stages`, la lista de cohortes disponibles, o la información del perfil del usuario), se debe implementar un mecanismo de caché en memoria o persistente (`localStorage`/`sessionStorage`) con tiempo de expiración (TTL).
+* **Tareas específicas:**
+   * Diseñar una utilidad de almacenamiento en caché que maneje tiempo de vida (TTL) para invalidación automática.
+   * Integrar la caché en el cliente de API base (`src/api/client.js`) o a través de un hook de servicio para interceptar consultas a estos endpoints específicos.
+   * Proveer un mecanismo para invalidar o limpiar la caché de forma manual al realizar una acción de mutación (ej. limpiar la caché de cohortes inmediatamente después de crear uno nuevo).
+
+---
+
+### [UI-10] Sistema de Captura de Errores Global (Error Boundary)
+**Labels:** `mid` `chore`
+
+* **Descripción:** Tarea de robustez y resiliencia en frontend. Para evitar pantallas en blanco completas cuando un componente de React falla en producción debido a datos inesperados o fallos de renderizado, se debe implementar un componente `ErrorBoundary` global y a nivel de rutas clave.
+* **Tareas específicas:**
+   * Implementar un componente `ErrorBoundary` usando la API de React (pudiendo usar también `react-error-boundary` si se desea).
+   * Diseñar una interfaz de "Fallback" estética y limpia que permita al usuario reintentar/recargar la sección o volver al dashboard principal.
+   * Integrar el `ErrorBoundary` en el layout general de la aplicación (`AppLayout`) y alrededor de secciones dinámicas propensas a fallos (como gráficos del dashboard o tablas complejas).
+
+---
+
+### [UI-11] Implementación de Tema Oscuro/Claro (Dark/Light Mode)
+**Labels:** `mid` `design`
+
+* **Descripción:** Tarea de diseño y accesibilidad. Diseñar y aplicar un selector de tema (Dark/Light mode) persistiendo la elección del usuario en `localStorage` y usando variables CSS o el ThemeProvider de Material UI (MUI), según lo que use el proyecto.
+* **Tareas específicas:**
+   * Configurar las paletas de colores armónicas para ambos temas (oscuro y claro) alineadas con la estética premium de Ithaka.
+   * Implementar un contexto de tema (`ThemeContext`) y un hook (`useTheme`) para gestionar el estado del tema.
+   * Añadir un control interactivo (toggle con microanimaciones) en el `Topbar`.
+   * Asegurar que todo el layout y componentes existentes (Sidebar, Dashboard cards, Tablas) respondan correctamente al cambio de tema de forma fluida.
+
+---
+
+### [SEC-2] Sanitización de Inputs y Prevención de XSS en Formularios
+**Labels:** `easy` `security`
+
+* **Descripción:** Tarea de seguridad en frontend. Dado que los usuarios introducen URLs de repositorios, links a minutas y texto en notas de reuniones, se requiere asegurar que el contenido ingresado no contenga scripts maliciosos (Cross-Site Scripting) antes de renderizarlo o guardarlo.
+* **Tareas específicas:**
+   * Integrar o implementar funciones de validación y sanitización seguras en los inputs de formularios dinámicos.
+   * Asegurar que cualquier campo donde el usuario ingrese URLs (ej: repositorio de grupo, links de minutas) sea validado con expresiones regulares estrictas en el frontend.
+   * En las vistas donde se renderice texto de notas u opiniones (que puedan admitir formato), sanitizar la salida si se usa renderizado HTML directo o Markdown.
+
+---
+
+### [DEV-2] Entorno de Pruebas Unitarias y Componentes (Vitest + React Testing Library)
+**Labels:** `mid` `chore`
+
+* **Descripción:** Tarea de infraestructura de desarrollo. El equipo de frontend necesita una base sólida de pruebas para garantizar que el refactor no rompa la interfaz de usuario al momento de realizar la conexión real con el backend.
+* **Tareas específicas:**
+   * Configurar Vitest y React Testing Library en el proyecto Vite.
+   * Escribir pruebas unitarias para las funciones de utilidad, formateadores de fechas, y el cliente de API (manejo de errores de FastAPI, etc.).
+   * Escribir pruebas de componentes simples (como el `ConfirmModal`, `Topbar` o las redirecciones de `ProtectedRoute`).
 
 ---
 
