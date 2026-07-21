@@ -18,23 +18,33 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
 
-export default function Sidebar() {
+export default function Sidebar({ open }) {
   const location = useLocation();
+
   return (
     <Drawer
       variant="permanent"
       sx={{
-        width: DRAWER_WIDTH,
+        width: open ? DRAWER_WIDTH : 0,
         flexShrink: 0,
+
         "& .MuiDrawer-paper": {
-          width: DRAWER_WIDTH,
+          width: open ? DRAWER_WIDTH : 0,
           boxSizing: "border-box",
+          overflowX: "hidden",
+          transition: "width 0.3s",
+          visibility: open ? "visible" : "hidden",
         },
       }}
     >
       <Toolbar />
+
       <List
-        subheader={<ListSubheader component="div">Proyectos</ListSubheader>}
+        subheader={
+          <ListSubheader component="div">
+            Proyectos
+          </ListSubheader>
+        }
       >
         <ListItemButton
           component={Link}
@@ -73,7 +83,13 @@ export default function Sidebar() {
         </ListItemButton>
       </List>
 
-      <List subheader={<ListSubheader component="div">Equipo</ListSubheader>}>
+      <List
+        subheader={
+          <ListSubheader component="div">
+            Equipo
+          </ListSubheader>
+        }
+      >
         <ListItemButton
           component={Link}
           to="/tutors"
@@ -100,7 +116,11 @@ export default function Sidebar() {
       </List>
 
       <List
-        subheader={<ListSubheader component="div">Herramientas</ListSubheader>}
+        subheader={
+          <ListSubheader component="div">
+            Herramientas
+          </ListSubheader>
+        }
       >
         <ListItemButton
           component={Link}
