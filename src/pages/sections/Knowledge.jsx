@@ -29,6 +29,7 @@ import ViewListIcon from '@mui/icons-material/ViewList'
 
 // import { apiClient } from '../../api/client' // Línea para llamar a la API real, actualmente comentada para usar datos mockeados
 import ConfirmModal from '../../components/ConfirmModal'
+import EditMaterialModal from '../../components/EditMaterialModal'
 import EmptyState from '../../components/common/EmptyState'
 import ErrorState from '../../components/common/ErrorState'
 
@@ -70,6 +71,7 @@ function Knowledge() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterBy, setFilterBy] = useState('all')
   const [materialToDelete, setMaterialToDelete] = useState(null)
+  const [materialToEdit, setMaterialToEdit] = useState(null)
 
   const filteredMaterials = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLocaleLowerCase('es')
@@ -124,6 +126,29 @@ function Knowledge() {
     // Eliminación mockeada en el estado local:
     setMaterials((currentMaterials) =>
       currentMaterials.filter((material) => material.id !== materialId),
+    )
+  }
+
+  const handleEditMaterial = (updatedFields) => {
+    if (!materialToEdit) return
+
+    const materialId = materialToEdit.id
+
+    // Llamada real a la API:
+    // const { data } = await apiClient.put(`/materials/${materialId}`, updatedFields)
+    // setMaterials((currentMaterials) =>
+    //   currentMaterials.map((material) =>
+    //     material.id === materialId ? data : material,
+    //   ),
+    // )
+
+    // Edición mockeada en el estado local:
+    setMaterials((currentMaterials) =>
+      currentMaterials.map((material) =>
+        material.id === materialId
+          ? { ...material, ...updatedFields }
+          : material,
+      ),
     )
   }
 
@@ -325,6 +350,7 @@ function Knowledge() {
                         <IconButton
                           size="small"
                           aria-label={`Editar ${material.id}`}
+                          onClick={() => setMaterialToEdit(material)}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -359,6 +385,13 @@ function Knowledge() {
         cancelText="Cancelar"
         onConfirm={handleDeleteMaterial}
         onClose={() => setMaterialToDelete(null)}
+      />
+
+      <EditMaterialModal
+        open={Boolean(materialToEdit)}
+        material={materialToEdit}
+        onSave={handleEditMaterial}
+        onClose={() => setMaterialToEdit(null)}
       />
     </Box>
   )
