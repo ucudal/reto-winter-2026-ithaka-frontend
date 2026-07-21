@@ -10,7 +10,7 @@ import Students from '../pages/sections/Students.jsx'
 import Cohorts from '../pages/sections/Cohorts.jsx'
 import Groups from '../pages/sections/Groups.jsx'
 import Templates from '../pages/sections/Templates.jsx'
-import Tutors from '../pages/sections/Tutors.jsx'
+import Tutors from '../pages/Tutors.jsx'
 import NotFoundPage from '../pages/sections/NotFoundPage.jsx'
 
 const appRouter = createBrowserRouter([
@@ -39,7 +39,7 @@ const appRouter = createBrowserRouter([
     ],
   },
   {
-  path: '/',
+    path: '/',
     element: <Navigate to="/login" replace />,
   },
   {
