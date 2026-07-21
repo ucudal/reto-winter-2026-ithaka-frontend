@@ -4,6 +4,7 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  IconButton,
   InputLabel,
   Link,
   ListItemIcon,
@@ -18,8 +19,11 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
+import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
 import GridViewIcon from '@mui/icons-material/GridView'
 import ViewListIcon from '@mui/icons-material/ViewList'
 
@@ -30,9 +34,11 @@ import ErrorState from '../../components/common/ErrorState'
 const columns = [
   { id: 'id', label: 'ID', width: '10%' },
   { id: 'stage_id', label: 'Etapa', width: '15%' },
-  { id: 'title', label: 'Título', width: '35%' },
-  { id: 'url', label: 'URL', width: '40%' },
+  { id: 'title', label: 'Título', width: '30%' },
+  { id: 'url', label: 'URL', width: '35%' },
 ]
+
+const tableColumnCount = columns.length + 1
 
 const mockMaterials = [
   {
@@ -229,6 +235,18 @@ function Knowledge() {
                     {column.label}
                   </TableCell>
                 ))}
+                <TableCell
+                  align="center"
+                  sx={{
+                    width: '10%',
+                    py: 1.5,
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    bgcolor: 'grey.50',
+                  }}
+                >
+                  
+                </TableCell>
               </TableRow>
             </TableHead>
 
@@ -236,7 +254,7 @@ function Knowledge() {
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length}
+                    colSpan={tableColumnCount}
                     align="center"
                     sx={{ py: 6 }}
                   >
@@ -248,7 +266,7 @@ function Knowledge() {
                 </TableRow>
               ) : filteredMaterials.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} sx={{ p: 0 }}>
+                  <TableCell colSpan={tableColumnCount} sx={{ p: 0 }}>
                     <EmptyState
                       title={
                         materials.length === 0
@@ -285,6 +303,24 @@ function Knowledge() {
                       >
                         {material.url}
                       </Link>
+                    </TableCell>
+                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                      <Tooltip title="Editar">
+                        <IconButton
+                          size="small"
+                          aria-label={`Editar ${material.id}`}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Eliminar">
+                        <IconButton
+                          size="small"
+                          aria-label={`Eliminar ${material.id}`}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))
