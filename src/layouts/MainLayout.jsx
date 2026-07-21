@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { Box, Toolbar } from "@mui/material";
-import { Outlet, useLocation } from "react-router-dom";
-import { ErrorBoundary } from "react-error-boundary";
+import { Outlet } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar.jsx";
 import Topbar from "../components/Topbar.jsx";
-import ErrorFallback from "../components/ErrorFallback.jsx";
 
 function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
-  const location = useLocation();
 
   const handleSidebarToggle = () => {
     setSidebarOpen((prev) => !prev);
@@ -50,12 +47,7 @@ function MainLayout() {
         }}
       >
         <Toolbar />
-        <ErrorBoundary
-          FallbackComponent={ErrorFallback}
-          resetKeys={[location.pathname]}
-        >
-          <Outlet />
-        </ErrorBoundary>
+        <Outlet />
       </Box>
     </Box>
   );

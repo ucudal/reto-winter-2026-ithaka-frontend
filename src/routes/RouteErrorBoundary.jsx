@@ -1,15 +1,11 @@
 import { Box, Typography, Button, Stack } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import HomeIcon from "@mui/icons-material/Home";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useRouteError } from "react-router-dom";
 
-function ErrorFallback({ error, resetErrorBoundary }) {
+function RouteErrorBoundary() {
+  const error = useRouteError();
   const navigate = useNavigate();
-
-  const handleGoHome = () => {
-    resetErrorBoundary();
-    navigate("/");
-  };
 
   return (
     <Box
@@ -31,14 +27,14 @@ function ErrorFallback({ error, resetErrorBoundary }) {
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
-          onClick={resetErrorBoundary}
+          onClick={() => window.location.reload()}
         >
           Reintentar
         </Button>
         <Button
           variant="contained"
           startIcon={<HomeIcon />}
-          onClick={handleGoHome}
+          onClick={() => navigate("/dashboard")}
         >
           Ir al dashboard
         </Button>
@@ -47,4 +43,4 @@ function ErrorFallback({ error, resetErrorBoundary }) {
   );
 }
 
-export default ErrorFallback;
+export default RouteErrorBoundary;
