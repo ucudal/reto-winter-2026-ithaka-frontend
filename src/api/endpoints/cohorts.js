@@ -14,3 +14,13 @@ export async function getCohortById(id) {
   const response = await apiClient.get(`/api/cohorts/${id}`);
   return response.data;
 }
+
+export async function getCohortGroups(cohortId) {
+  const response = await apiClient.get(`/api/cohorts/${cohortId}/groups`);
+  return response.data;
+}
+
+export async function getCohortStages(cohortId) {
+  const response = await apiClient.get(`/api/cohorts/${cohortId}/stages`);
+  return response.data;
+}
