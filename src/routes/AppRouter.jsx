@@ -9,6 +9,7 @@ import Register from "../pages/Auth/Register.jsx";
 import Dashboard from "../pages/sections/Dashboard.jsx";
 import Students from "../pages/sections/Students.jsx";
 import Cohorts from "../pages/sections/Cohorts.jsx";
+import CohortDetail from "../pages/sections/CohortDetail.jsx";
 import Groups from "../pages/sections/Groups.jsx";
 import Templates from "../pages/sections/Templates.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
@@ -39,6 +40,7 @@ const appRouter = createBrowserRouter([
                   { path: "/dashboard", element: <Dashboard /> },
                   { path: "/students", element: <Students /> },
                   { path: "/cohorts", element: <Cohorts /> },
+                  { path: "/cohorts/:id", element: <CohortDetail /> },
                   { path: "/groups", element: <Groups /> },
                   { path: "/templates", element: <Templates /> },
                   { path: "/tutors", element: <Tutors /> },

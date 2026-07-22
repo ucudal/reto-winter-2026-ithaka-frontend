@@ -4,9 +4,11 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Avatar, Chip, IconButton, Breadcrumbs, Link
 } from '@mui/material';
+import { Link as RouterLink } from "react-router-dom";
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 const initialTutorsData = [
   {
@@ -49,45 +51,94 @@ export default function Tutors() {
   });
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Breadcrumbs sx={{ mb: 1 }}>
-        <Link underline="hover" color="inherit" href="#">
-          Home
+    <Box sx={{ width: "100%" }}>
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 1 }}
+      >
+        <Link
+          component={RouterLink}
+          to="/"
+          underline="hover"
+          color="inherit"
+        >
+          Inicio
         </Link>
-        <Typography color="text.primary">Tutors</Typography>
+        <Typography color="text.primary">Tutores</Typography>
       </Breadcrumbs>
 
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold">
-          Tutors
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          mb: 3,
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Typography variant="h4">
+          Tutores
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />}>
-          NEW TUTOR
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          sx={{ height: 40 }}
+        >
+          Agregar tutor
         </Button>
       </Box>
 
       <Paper sx={{ p: 2, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'stretch' }}>
           <TextField
-            label="Search"
-            placeholder="Enter value"
+            label="Buscar"
+            placeholder="Ingrese un dato"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ flexGrow: 1 }}
-            size="small"
+            fullWidth
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: 60,
+              },
+            }}
           />
           <TextField
             select
-            label="Filter by"
+            label="Filtrar por"
             value={filterProperty}
             onChange={(e) => setFilterProperty(e.target.value)}
-            sx={{ minWidth: 180 }}
-            size="small"
+            variant="filled"
+            sx={{
+              width: 280,
+              "& .MuiFilledInput-root": {
+                height: 60,
+                backgroundColor: "#f5f5f5",
+                "&:hover": {
+                  backgroundColor: "#f5f5f5",
+                },
+                "&.Mui-focused": {
+                  backgroundColor: "#f5f5f5",
+                },
+                "&:before": {
+                  borderBottom: "1px solid #BDBDBD",
+                },
+                "&:after": {
+                  borderBottom: "2px solid #1976d2",
+                },
+              },
+              "& .MuiInputLabel-root": {
+                color: "#1976d2",
+              },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#1976d2",
+              },
+            }}
           >
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="role">Role</MenuItem>
-            <MenuItem value="specialty">Specialty</MenuItem>
-            <MenuItem value="status">Status</MenuItem>
+            <MenuItem value="name">Nombre</MenuItem>
+            <MenuItem value="role">Rol</MenuItem>
+            <MenuItem value="specialty">Especialidad</MenuItem>
+            <MenuItem value="status">Estado</MenuItem>
           </TextField>
         </Box>
 
@@ -95,12 +146,12 @@ export default function Tutors() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Specialty</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Availability</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Usuario</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Rol</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Especialidad</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Disponibilidad</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -116,12 +167,12 @@ export default function Tutors() {
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>{tutor.role}</TableCell>
+                  <TableCell>{tutor.role === 'Business' ? 'Negocio' : 'Técnico'}</TableCell>
                   <TableCell>{tutor.specialty}</TableCell>
                   <TableCell>{tutor.availability}</TableCell>
                   <TableCell>
                     <Chip 
-                      label={tutor.status} 
+                      label={tutor.status === 'Active' ? 'Activo' : 'Inactivo'} 
                       size="small"
                       color={tutor.status === 'Active' ? 'success' : 'default'}
                     />
