@@ -1,8 +1,8 @@
-import { Box, Button, Typography, TextField } from '@mui/material'
+import { Box, Button, Typography, TextField, Paper } from '@mui/material'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import background from '../../assets/img/background.jpg'
+import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../assets/img/logo.png'
+import './Register.css'
 
 function Register() {
   const navigate = useNavigate()
@@ -56,51 +56,22 @@ function Register() {
   }
 
   return (
-    <Box
-      sx={{
-        position: 'fixed',
-        inset: 0,
-        height: '100vh',
-        width: '100vw',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundImage: `url(${background})`,
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
-      }}
-    >
-      <Box
+    <Box className="login-container">
+      <Paper
         component="form"
         onSubmit={handleSubmit}
         noValidate
-        sx={{
-          width: '100%',
-          maxWidth: 460,
-          minHeight: 100,
-          backgroundColor: '#FFFFFF',
-          boxShadow: '0 16px 40px rgba(0, 0, 0, 0.18)',
-          p: { xs: 3, sm: 5 },
-        }}
+        className="login-card"
+        elevation={5}
       >
-        <Box
-          component="img"
-          src={logo}
-          alt="ITHAKA"
-          sx={{
-            display: 'block',
-            width: 250,
-            maxWidth: '70%',
-            height: 'auto',
-            mx: 'auto',
-            mb: 3,
-          }}
-        />
-        <Typography variant="h6" sx={{ mb: 2 }}>
+        <div className="login-logo-wrap">
+          <img src={logo} alt="ITHAKA" className="login-logo" />
+        </div>
+
+        <Typography variant="h5" className="login-title">
           Crear una cuenta
         </Typography>
+
         <TextField
           name="name"
           label="Nombre"
@@ -125,7 +96,7 @@ function Register() {
           error={Boolean(errors.email)}
           helperText={errors.email}
         />
-        
+
         <TextField
           label="Contraseña"
           variant="outlined"
@@ -138,15 +109,18 @@ function Register() {
           error={Boolean(errors.password)}
           helperText={errors.password}
         />
-        <Button type="submit" variant="contained" sx={{ mt: 2, height: 45}} fullWidth>
-          Continuar
+
+        <Button type="submit" variant="contained" fullWidth className="login-button">
+          CONTINUAR
         </Button>
 
-        <Typography variant="body2" sx={{ mt: 3 }} fontSize={14} textAlign="center" color="text.secondary">
-          ¿Ya tienes una cuenta? <a href="/login">Iniciar sesión</a>
+        <Typography variant="body2" align="center" className="login-register">
+          ¿Ya tienes una cuenta?{' '}
+          <Link to="/login" className="login-register-link">
+            Iniciar sesión
+          </Link>
         </Typography>
-        
-      </Box>
+      </Paper>
     </Box>
   )
 }
