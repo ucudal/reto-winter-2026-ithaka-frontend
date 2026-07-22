@@ -29,6 +29,7 @@ import ViewListIcon from '@mui/icons-material/ViewList'
 
 // import { apiClient } from '../../api/client' // Línea para llamar a la API real, actualmente comentada para usar datos mockeados
 import ConfirmModal from '../../components/ConfirmModal'
+import CreateMaterialModal from '../../components/CreateMaterialModal'
 import EditMaterialModal from '../../components/EditMaterialModal'
 import EmptyState from '../../components/common/EmptyState'
 import ErrorState from '../../components/common/ErrorState'
@@ -72,6 +73,7 @@ function Knowledge() {
   const [filterBy, setFilterBy] = useState('all')
   const [materialToDelete, setMaterialToDelete] = useState(null)
   const [materialToEdit, setMaterialToEdit] = useState(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const filteredMaterials = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLocaleLowerCase('es')
@@ -152,6 +154,10 @@ function Knowledge() {
     )
   }
 
+  const handleCreateMaterial = (newMaterial) => {
+    setMaterials((currentMaterials) => [newMaterial, ...currentMaterials])
+  }
+
   return (
     <Box>
       <Box
@@ -203,7 +209,12 @@ function Knowledge() {
             </Select>
           </FormControl>
 
-          <Button variant="contained">+ Crear Material</Button>
+          <Button
+            variant="contained"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            + Crear Material
+          </Button>
         </Box>
       </Box>
 
@@ -392,6 +403,12 @@ function Knowledge() {
         material={materialToEdit}
         onSave={handleEditMaterial}
         onClose={() => setMaterialToEdit(null)}
+      />
+
+      <CreateMaterialModal
+        open={isCreateModalOpen}
+        onCreate={handleCreateMaterial}
+        onClose={() => setIsCreateModalOpen(false)}
       />
     </Box>
   )
