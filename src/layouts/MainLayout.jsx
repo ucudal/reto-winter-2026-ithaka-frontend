@@ -1,32 +1,44 @@
 import { useState } from "react";
 import { Box, Toolbar } from "@mui/material";
 import { Outlet } from "react-router-dom";
-
 import Sidebar from "../components/Sidebar.jsx";
 import Topbar from "../components/Topbar.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 function MainLayout() {
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
 
   const handleSidebarToggle = () => {
     setSidebarOpen((prev) => !prev);
   };
 
+  const handleUserMenuOpen = (event) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleLogout = () => {
+    handleUserMenuClose();
+    logout();
+  };
+
   return (
     <Box sx={{ display: "flex" }}>
-      <Topbar 
+      <Topbar
+        userName={user?.name ?? "Usuario"}
         onMenuClick={handleSidebarToggle}
+        userMenuAnchor={userMenuAnchor}
+        onUserMenuOpen={handleUserMenuOpen}
+        onUserMenuClose={handleUserMenuClose}
+        onLogout={handleLogout}
       />
-
       <Sidebar open={sidebarOpen} />
-
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-        }}
-      >
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Toolbar />
         <Outlet />
       </Box>

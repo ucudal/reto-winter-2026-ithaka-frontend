@@ -30,6 +30,7 @@ function NotFoundPage() {
         <Typography variant="h2" color="text.secondary">
           Error 404
         </Typography>
+
         <Typography variant="h4" sx={{ mt: 1 }}>
           Página no encontrada
         </Typography>
