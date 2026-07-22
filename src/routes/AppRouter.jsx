@@ -15,6 +15,8 @@ import Templates from "../pages/sections/Templates.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
 import Knowledge from "../pages/sections/Knowledge.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
+import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
+import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
 
 const appRouter = createBrowserRouter([
   {
@@ -37,14 +39,99 @@ const appRouter = createBrowserRouter([
               {
                 errorElement: <RouteErrorBoundary />,
                 children: [
-                  { path: "/dashboard", element: <Dashboard /> },
-                  { path: "/students", element: <Students /> },
-                  { path: "/cohorts", element: <Cohorts /> },
-                  { path: "/cohorts/:id", element: <CohortDetail /> },
-                  { path: "/groups", element: <Groups /> },
-                  { path: "/templates", element: <Templates /> },
-                  { path: "/tutors", element: <Tutors /> },
-                  { path: "/knowledge", element: <Knowledge /> },
+                  {
+                    path: "/dashboard",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                          "Student",
+                        ]}
+                      >
+                        <Dashboard />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/students",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <Students />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/cohorts",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <Cohorts />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/cohorts/:id",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <CohortDetail />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/groups",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                        ]}
+                      >
+                        <Groups />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/templates",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <Templates />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/tutors",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                        ]}
+                      >
+                        <Tutors />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/knowledge",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                        ]}
+                      >
+                        <Knowledge />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/forbidden",
+                    element: <ForbiddenPage />,
+                  },
                 ],
               },
             ],
@@ -60,14 +147,6 @@ const appRouter = createBrowserRouter([
         element: <NotFoundPage />,
       },
     ],
-  },
-  {
-    path: '/',
-    element: <Navigate to="/login" replace />,
-  },
-  {
-    path: '*',
-    element: <NotFoundPage />,
   },
 ]);
 
