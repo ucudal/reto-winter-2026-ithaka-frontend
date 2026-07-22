@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Toolbar, useMediaQuery, useTheme } from "@mui/material";
 import { Outlet, useNavigate } from "react-router-dom";
-
 import Sidebar from "../components/Sidebar.jsx";
 import Topbar from "../components/Topbar.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -10,7 +9,7 @@ function MainLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
@@ -21,7 +20,6 @@ function MainLayout() {
 
   const handleSidebarToggle = () => setSidebarOpen((prev) => !prev);
   const handleSidebarClose = () => setSidebarOpen(false);
-
   const handleUserMenuOpen = (event) => setUserMenuAnchor(event.currentTarget);
   const handleUserMenuClose = () => setUserMenuAnchor(null);
 
@@ -34,21 +32,19 @@ function MainLayout() {
   return (
     <Box sx={{ display: "flex" }}>
       <Topbar
-        userName="Usuario"
+        userName={user?.name ?? "Usuario"}
         onMenuClick={handleSidebarToggle}
         userMenuAnchor={userMenuAnchor}
         onUserMenuOpen={handleUserMenuOpen}
         onUserMenuClose={handleUserMenuClose}
         onLogout={handleLogout}
       />
-
       <Sidebar
         open={sidebarOpen}
         variant={isMobile ? "temporary" : "permanent"}
         onClose={handleSidebarClose}
         onNavigate={isMobile ? handleSidebarClose : undefined}
       />
-
       <Box
         component="main"
         sx={{
