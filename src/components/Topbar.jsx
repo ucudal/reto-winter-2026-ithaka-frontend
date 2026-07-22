@@ -10,6 +10,7 @@ import {
   Box,
   Divider,
   IconButton,
+  ListItemIcon,
   Menu,
   MenuItem,
   Toolbar,
@@ -58,7 +59,6 @@ function Topbar({ onMenuClick, onLogout }) {
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between", gap: 2 }}>
-
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton
               color="inherit"
@@ -105,7 +105,6 @@ function Topbar({ onMenuClick, onLogout }) {
               }}
             />
           </IconButton>
-
         </Toolbar>
       </AppBar>
 
@@ -119,37 +118,36 @@ function Topbar({ onMenuClick, onLogout }) {
           sx: { width: 220, mt: 1 }
         }}
       >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            
-            {currentUser?.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" display="block">
-            {currentUser?.email}
-          </Typography>
-        </Box>
+        <MenuItem disabled sx={{ minWidth: 220, opacity: 1 }}>
+          <ListItemText
+            primary={userName}
+            secondary="Usuario mockeado"
+            primaryTypographyProps={{ color: "text.primary" }}
+            secondaryTypographyProps={{ color: "text.secondary" }}
+          />
+        </MenuItem>
 
         <Divider />
 
-        <MenuItem onClick={handleCloseUserMenu}>
+        <MenuItem onClick={onUserMenuClose}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Settings" />
+          Ajustes
         </MenuItem>
 
-        <MenuItem onClick={handleOpenProfileDrawer}>
+        <MenuItem onClick={onUserMenuClose}>
           <ListItemIcon>
             <PersonIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Profile" />
+          Perfil
         </MenuItem>
 
-        <MenuItem onClick={() => { handleCloseUserMenu(); if (onLogout) onLogout(); }}>
+        <MenuItem onClick={onLogout}>
           <ListItemIcon>
-            <LogoutIcon fontSize="small" />
+            <Logout fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Sign out" />
+          Cerrar sesión
         </MenuItem>
       </Menu>
 

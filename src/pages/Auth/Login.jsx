@@ -14,8 +14,8 @@ import "./Login.css";
 import logo from "../../assets/img/logo.png";
 
 const USER = {
-  email: "user@gmail.com",
-  password: "123456",
+  email: import.meta.env.VITE_MOCK_USER_EMAIL,
+  password: import.meta.env.VITE_MOCK_USER_PASSWORD,
 };
 
 export default function Login() {
@@ -51,8 +51,24 @@ export default function Login() {
 
     if (!validate()) return;
 
-    if (email === USER.email && password === USER.password) {
-      login();
+    if (password === USER.password) {
+      let role = "Coordinator";
+      let name = "Carlos Rodríguez";
+
+      if (email === "tutor@gmail.com") {
+        role = "BusinessTutor";
+        name = "María Pérez";
+      } else if (email === "student@gmail.com") {
+        role = "Student";
+        name = "Juan Pérez";
+      }
+
+      login({
+        id: role === "Coordinator" ? 1 : role === "Student" ? 101 : 8,
+        name,
+        email,
+        role,
+      });
       navigate("/dashboard");
     } else {
       setLoginError("Usuario o contraseña incorrectos");
