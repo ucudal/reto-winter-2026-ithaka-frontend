@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -19,43 +19,43 @@ import {
   TextField,
   Typography,
   Button,
-} from '@mui/material'
-import AddIcon from '@mui/icons-material/Add'
-import SearchIcon from '@mui/icons-material/Search'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
-import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 
-import { getStudents } from '../../api/endpoints/students'
+import { getStudents } from "../../api/endpoints/students";
 
 function Students() {
-  const [students, setStudents] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    loadStudents()
-  }, [])
+    loadStudents();
+  }, []);
 
   async function loadStudents() {
     try {
-      setLoading(true)
-      setError('')
+      setLoading(true);
+      setError("");
 
-      const data = await getStudents()
-      const items = Array.isArray(data) ? data : data?.items ?? []
-      setStudents(items)
+      const data = await getStudents();
+      const items = Array.isArray(data) ? data : (data?.items ?? []);
+      setStudents(items);
     } catch (err) {
-      setError(err?.message || 'No se pudieron cargar los alumnos.')
+      setError(err?.message || "No se pudieron cargar los alumnos.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   const filteredStudents = useMemo(() => {
-    const term = search.toLowerCase().trim()
+    const term = search.toLowerCase().trim();
 
     return students.filter((student) => {
       const matchesSearch =
@@ -64,25 +64,25 @@ function Students() {
           student?.name,
           student?.email,
           student?.major,
-          String(student?.group_id ?? ''),
-          String(student?.id ?? ''),
+          String(student?.group_id ?? ""),
+          String(student?.id ?? ""),
         ]
-          .join(' ')
+          .join(" ")
           .toLowerCase()
-          .includes(term)
+          .includes(term);
 
-      const matchesFilter = filter === 'all' || filter === 'active'
+      const matchesFilter = filter === "all" || filter === "active";
 
-      return matchesSearch && matchesFilter
-    })
-  }, [students, search, filter])
+      return matchesSearch && matchesFilter;
+    });
+  }, [students, search, filter]);
 
   return (
     <Box sx={{ p: 3 }}>
       <Stack
-        direction={{ xs: 'column', sm: 'row' }}
+        direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
         spacing={2}
         sx={{ mb: 3 }}
       >
@@ -98,14 +98,18 @@ function Students() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          sx={{ px: 2.5, boxShadow: 2, textTransform: 'uppercase' }}
+          sx={{ px: 2.5, boxShadow: 2, textTransform: "uppercase" }}
         >
           Nuevo alumno
         </Button>
       </Stack>
 
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="stretch">
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          alignItems="stretch"
+        >
           <TextField
             fullWidth
             label="Buscar"
@@ -143,9 +147,9 @@ function Students() {
         </Alert>
       ) : null}
 
-      <Paper sx={{ overflow: 'hidden' }}>
+      <Paper sx={{ overflow: "hidden" }}>
         {loading ? (
-          <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ py: 8, display: "flex", justifyContent: "center" }}>
             <CircularProgress />
           </Box>
         ) : (
@@ -156,40 +160,65 @@ function Students() {
                   <TableCell sx={{ fontWeight: 600 }}>Alumno</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Carrera</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Estado de cuenta</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    Estado de cuenta
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                  <TableCell align="right" />
+                  <TableCell align="right" sx={{ fontWeight: "bold" }}>
+                    Acciones
+                  </TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody>
                 {filteredStudents.length > 0 ? (
                   filteredStudents.map((student) => {
-                    const initials = (student?.name || 'U')
-                      .split(' ')
+                    const initials = (student?.name || "U")
+                      .split(" ")
                       .filter(Boolean)
                       .slice(0, 2)
                       .map((part) => part[0])
-                      .join('')
-                      .toUpperCase()
+                      .join("")
+                      .toUpperCase();
 
                     return (
                       <TableRow key={student.id} hover>
                         <TableCell>
-                          <Stack direction="row" spacing={1.5} alignItems="center">
-                            <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: 'grey.400' }}>
+                          <Stack
+                            direction="row"
+                            spacing={1.5}
+                            alignItems="center"
+                          >
+                            <Avatar
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                fontSize: 12,
+                                bgcolor: "grey.400",
+                              }}
+                            >
                               {initials}
                             </Avatar>
-                            <Typography variant="body2">{student.name || '-'}</Typography>
+                            <Typography variant="body2">
+                              {student.name || "-"}
+                            </Typography>
                           </Stack>
                         </TableCell>
 
-                        <TableCell>{student.email || '-'}</TableCell>
+                        <TableCell>{student.email || "-"}</TableCell>
 
                         <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <SchoolOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                            <Typography variant="body2">{student.major || '-'}</Typography>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <SchoolOutlinedIcon
+                              sx={{ fontSize: 18, color: "text.secondary" }}
+                            />
+                            <Typography variant="body2">
+                              {student.major || "-"}
+                            </Typography>
                           </Stack>
                         </TableCell>
 
@@ -200,30 +229,38 @@ function Students() {
                             sx={{
                               height: 24,
                               borderRadius: 999,
-                              bgcolor: 'grey.100',
-                              color: 'text.primary',
+                              bgcolor: "grey.100",
+                              color: "text.primary",
                             }}
                           />
                         </TableCell>
 
-                        <TableCell>{student.id ?? '-'}</TableCell>
+                        <TableCell>{student.id ?? "-"}</TableCell>
 
                         <TableCell align="right">
-                          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                            <IconButton size="small" aria-label="Editar alumno">
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            justifyContent="flex-end"
+                          >
+                            <IconButton
+                              size="small"
+                              aria-label="Editar alumno"
+                              color="primary"
+                            >
                               <EditIcon fontSize="small" />
                             </IconButton>
                             <IconButton
                               size="small"
                               aria-label="Eliminar alumno"
-                              color="default"
+                              color="error"
                             >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Stack>
                         </TableCell>
                       </TableRow>
-                    )
+                    );
                   })
                 ) : (
                   <TableRow>
@@ -238,7 +275,7 @@ function Students() {
         )}
       </Paper>
     </Box>
-  )
+  );
 }
 
-export default Students
+export default Students;
