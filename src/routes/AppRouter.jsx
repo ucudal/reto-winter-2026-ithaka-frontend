@@ -9,15 +9,13 @@ import Register from "../pages/Auth/Register.jsx";
 import Dashboard from "../pages/sections/Dashboard.jsx";
 import Students from "../pages/sections/Students.jsx";
 import Cohorts from "../pages/sections/Cohorts.jsx";
+import CohortDetail from "../pages/sections/CohortDetail.jsx";
 import Groups from "../pages/sections/Groups.jsx";
 import Templates from "../pages/sections/Templates.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
 import Knowledge from "../pages/sections/Knowledge.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
-
-// TODO: Descomentar este import una vez que se haga merge del PR que agrega
-// RoleProtectedRoute.jsx.
-// import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
+import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
 
 const appRouter = createBrowserRouter([
@@ -42,7 +40,7 @@ const appRouter = createBrowserRouter([
                 errorElement: <RouteErrorBoundary />,
                 children: [
                   {
-                    path: '/dashboard',
+                    path: "/dashboard",
                     element: (
                       <RoleProtectedRoute
                         allowedRoles={[
@@ -56,29 +54,33 @@ const appRouter = createBrowserRouter([
                       </RoleProtectedRoute>
                     ),
                   },
-                  { 
-                    path: '/students',
+                  {
+                    path: "/students",
                     element: (
-                      <RoleProtectedRoute
-                        allowedRoles={["Coordinator"]}
-                      >
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <Students />
                       </RoleProtectedRoute>
                     ),
                   },
-                  { 
-                    path: '/cohorts',
+                  {
+                    path: "/cohorts",
                     element: (
-                      <RoleProtectedRoute
-                        allowedRoles={["Coordinator"]}
-                      >
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <Cohorts />
                       </RoleProtectedRoute>
                     ),
                   },
-                  { 
-                    path: '/groups',
-                   element: (
+                  {
+                    path: "/cohorts/:id",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <CohortDetail />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/groups",
+                    element: (
                       <RoleProtectedRoute
                         allowedRoles={[
                           "Coordinator",
@@ -90,18 +92,16 @@ const appRouter = createBrowserRouter([
                       </RoleProtectedRoute>
                     ),
                   },
-                  { 
-                    path: '/templates',
+                  {
+                    path: "/templates",
                     element: (
-                      <RoleProtectedRoute
-                        allowedRoles={["Coordinator"]}
-                      >
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <Templates />
                       </RoleProtectedRoute>
                     ),
                   },
-                  { 
-                    path: '/tutors',
+                  {
+                    path: "/tutors",
                     element: (
                       <RoleProtectedRoute
                         allowedRoles={[
@@ -114,8 +114,8 @@ const appRouter = createBrowserRouter([
                       </RoleProtectedRoute>
                     ),
                   },
-                  { 
-                    path: '/knowledge',
+                  {
+                    path: "/knowledge",
                     element: (
                       <RoleProtectedRoute
                         allowedRoles={[
@@ -129,7 +129,7 @@ const appRouter = createBrowserRouter([
                     ),
                   },
                   {
-                    path: '/forbidden',
+                    path: "/forbidden",
                     element: <ForbiddenPage />,
                   },
                 ],
