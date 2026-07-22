@@ -59,6 +59,14 @@ const appRouter = createBrowserRouter([
       },
     ],
   },
+  {
+    path: '/',
+    element: <Navigate to="/login" replace />,
+  },
+  {
+    path: '*',
+    element: <NotFoundPage />,
+  },
 ]);
 
 export default appRouter;
