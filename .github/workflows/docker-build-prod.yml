@@ -54,6 +54,8 @@ jobs:
           load: true
           push: false
           tags: ${{ env.LOCAL_IMAGE }}
+          build-args: |
+            VITE_API_URL=${{ vars.VITE_API_URL || 'https://ithaka-backend.reto-ucu.net' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

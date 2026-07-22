@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ithaka-frontend
+  namespace: ithaka-frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: ithaka-frontend
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
