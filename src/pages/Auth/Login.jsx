@@ -14,8 +14,8 @@ import "./Login.css";
 import logo from "../../assets/img/logo.png";
 
 const USER = {
-  email: "user@gmail.com",
-  password: "123456",
+  email: import.meta.env.VITE_MOCK_USER_EMAIL,
+  password: import.meta.env.VITE_MOCK_USER_PASSWORD,
 };
 
 export default function Login() {
@@ -51,7 +51,7 @@ export default function Login() {
 
     if (!validate()) return;
 
-    if (password === "123456") {
+    if (password === USER.password) {
       let role = "Coordinator";
       let name = "Carlos Rodríguez";
 
