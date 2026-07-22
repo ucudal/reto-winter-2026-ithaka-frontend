@@ -28,6 +28,7 @@ import RouteIcon from "@mui/icons-material/Route";
 
 import { getCohortById, getCohortGroups, getCohortStages } from "../../api/endpoints/cohorts";
 import EmptyState from "../../components/common/EmptyState";
+import { sanitizeText } from "../../utils/sanitize";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -64,7 +65,7 @@ export default function CohortDetail() {
     try {
       setLoading(true);
       setError("");
-      
+
       const [cohortData, groupsData, stagesData] = await Promise.all([
         getCohortById(cohortId),
         getCohortGroups(cohortId),
@@ -73,7 +74,7 @@ export default function CohortDetail() {
 
       setCohort(cohortData);
       setGroups(groupsData);
-      
+
       // Sort stages by order
       const sortedStages = (stagesData || []).sort((a, b) => a.order - b.order);
       setStages(sortedStages);
@@ -196,7 +197,9 @@ export default function CohortDetail() {
                 Notas / Descripción
               </Typography>
               <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
-                {cohort.notes || "Sin notas adicionales."}
+                {cohort.notes
+                  ? sanitizeText(cohort.notes)
+                  : "Sin notas adicionales."}
               </Typography>
             </Grid>
           </Grid>
