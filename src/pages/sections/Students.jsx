@@ -24,7 +24,7 @@ import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 
 import { getStudents } from '../../api/endpoints/students'
 
@@ -153,10 +153,10 @@ function Students() {
             <Table sx={{ minWidth: 750 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Alumno</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Account status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Carrera</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Estado de cuenta</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
                   <TableCell align="right" />
                 </TableRow>
@@ -188,14 +188,14 @@ function Students() {
 
                         <TableCell>
                           <Stack direction="row" spacing={1} alignItems="center">
-                            <LocationOnOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                            <SchoolOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                             <Typography variant="body2">{student.major || '-'}</Typography>
                           </Stack>
                         </TableCell>
 
                         <TableCell>
                           <Chip
-                            label="Active"
+                            label="Activo"
                             size="small"
                             sx={{
                               height: 24,
