@@ -132,26 +132,14 @@ function Topbar({ onMenuClick, onLogout }) {
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Settings" />
+          <ListItemText primary="Ajustes"/>
         </MenuItem>
 
         <MenuItem onClick={handleOpenProfileDrawer}>
           <ListItemIcon>
             <PersonIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Profile" />
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            handleCloseUserMenu();
-            if (onLogout) onLogout();
-          }}
-        >
-          <ListItemIcon>
-            <Logout fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="Sign out" />
+          <ListItemText primary="Perfil"/>
         </MenuItem>
       </Menu>
 

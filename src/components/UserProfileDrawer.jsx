@@ -63,9 +63,11 @@ export default function UserProfileDrawer({ user, open, onClose }) {
         >
           CERRAR
         </Button>
+
         <Button 
           variant="contained" 
           disableElevation
+          disabled
           sx={{ textTransform: 'uppercase', px: 3, borderRadius: 1 }}
         >
           EDITAR
