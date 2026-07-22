@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ithaka-frontend-config
+  namespace: ithaka-frontend
+data:
+  APP_ENV: "production"
