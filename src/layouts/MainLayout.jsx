@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Box, Toolbar } from "@mui/material";
 import { Outlet } from "react-router-dom";
-
 import Sidebar from "../components/Sidebar.jsx";
 import Topbar from "../components/Topbar.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -38,9 +37,7 @@ function MainLayout() {
         onUserMenuClose={handleUserMenuClose}
         onLogout={handleLogout}
       />
-
       <Sidebar open={sidebarOpen} />
-
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Toolbar />
         <Outlet />
