@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import MenuIcon from "@mui/icons-material/Menu";
-import LogoutIcon from "@mui/icons-material/Logout";
-import SettingsIcon from '@mui/icons-material/Settings';
-import PersonIcon from '@mui/icons-material/Person';
+import Logout from "@mui/icons-material/Logout";
+import SettingsIcon from "@mui/icons-material/Settings";
+import PersonIcon from "@mui/icons-material/Person";
 
 import {
   AppBar,
   Box,
   Divider,
   IconButton,
+  ListItemIcon,
   Menu,
   MenuItem,
   Toolbar,
   ListItemText,
-  ListItemIcon,
   Typography,
 } from "@mui/material";
 
@@ -28,7 +28,7 @@ function Topbar({ onMenuClick, onLogout }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { user } = useAuth();
 
-   const currentUser = user || usersMock?.tutor{};
+  const currentUser = user || usersMock?.tutor;
 
   const handleOpenUserMenu = (event) => {
     setUserMenuAnchor(event.currentTarget);
@@ -40,7 +40,7 @@ function Topbar({ onMenuClick, onLogout }) {
 
   const handleOpenProfileDrawer = () => {
     handleCloseUserMenu();
-    setIsDrawerOpen(true); 
+    setIsDrawerOpen(true);
   };
 
   const handleCloseProfileDrawer = () => {
@@ -58,7 +58,6 @@ function Topbar({ onMenuClick, onLogout }) {
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between", gap: 2 }}>
-
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton
               color="inherit"
@@ -105,7 +104,6 @@ function Topbar({ onMenuClick, onLogout }) {
               }}
             />
           </IconButton>
-
         </Toolbar>
       </AppBar>
 
@@ -116,12 +114,11 @@ function Topbar({ onMenuClick, onLogout }) {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         PaperProps={{
-          sx: { width: 220, mt: 1 }
+          sx: { width: 220, mt: 1 },
         }}
       >
         <Box sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle2" fontWeight="bold">
-            
             {currentUser?.name}
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
@@ -145,9 +142,14 @@ function Topbar({ onMenuClick, onLogout }) {
           <ListItemText primary="Profile" />
         </MenuItem>
 
-        <MenuItem onClick={() => { handleCloseUserMenu(); if (onLogout) onLogout(); }}>
+        <MenuItem
+          onClick={() => {
+            handleCloseUserMenu();
+            if (onLogout) onLogout();
+          }}
+        >
           <ListItemIcon>
-            <LogoutIcon fontSize="small" />
+            <Logout fontSize="small" />
           </ListItemIcon>
           <ListItemText primary="Sign out" />
         </MenuItem>
