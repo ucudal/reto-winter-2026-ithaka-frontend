@@ -63,7 +63,7 @@ export default function Cohorts() {
       setLoading(true);
       setError("");
       const data = await getCohorts();
-      const items = Array.isArray(data) ? data : data?.items ?? [];
+      const items = Array.isArray(data) ? data : (data?.items ?? []);
       setCohorts(items);
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los cohortes.");
@@ -77,11 +77,7 @@ export default function Cohorts() {
     return cohorts.filter((cohort) => {
       const matchesSearch =
         !term ||
-        [
-          String(cohort.year),
-          String(cohort.semester),
-          cohort.notes || "",
-        ]
+        [String(cohort.year), String(cohort.semester), cohort.notes || ""]
           .join(" ")
           .toLowerCase()
           .includes(term);
@@ -147,12 +143,7 @@ export default function Cohorts() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">
           Inicio
         </Link>
         <Typography color="text.primary">Cohortes</Typography>
@@ -255,30 +246,49 @@ export default function Cohorts() {
                 <TableRow>
                   <TableCell sx={{ fontWeight: "bold" }}>Año</TableCell>
                   <TableCell sx={{ fontWeight: "bold" }}>Semestre</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>Fecha de Inicio</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>Fecha de Fin</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>
+                    Fecha de Inicio
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>
+                    Fecha de Fin
+                  </TableCell>
                   <TableCell sx={{ fontWeight: "bold" }}>Grupos</TableCell>
                   <TableCell sx={{ fontWeight: "bold" }}>Estado</TableCell>
                   <TableCell sx={{ fontWeight: "bold" }}>Notas</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: "bold" }}>Acciones</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: "bold" }}>
+                    Acciones
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredCohorts.map((cohort) => (
                   <TableRow key={cohort.id} hover>
-                    <TableCell fontWeight="medium">{cohort.year}</TableCell>
+                    <TableCell sx={{ fontWeight: "medium" }}>
+                      {cohort.year}
+                    </TableCell>
                     <TableCell>{cohort.semester}° semestre</TableCell>
                     <TableCell>{cohort.start_date}</TableCell>
                     <TableCell>{cohort.end_date || "-"}</TableCell>
                     <TableCell>{cohort.group_count ?? 0}</TableCell>
                     <TableCell>
                       <Chip
-                        label={cohort.status === "Active" ? "Activo" : "Inactivo"}
+                        label={
+                          cohort.status === "Active" ? "Activo" : "Inactivo"
+                        }
                         size="small"
-                        color={cohort.status === "Active" ? "success" : "default"}
+                        color={
+                          cohort.status === "Active" ? "success" : "default"
+                        }
                       />
                     </TableCell>
-                    <TableCell sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <TableCell
+                      sx={{
+                        maxWidth: 200,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {cohort.notes || "-"}
                     </TableCell>
                     <TableCell align="right">
@@ -301,7 +311,12 @@ export default function Cohorts() {
       </Paper>
 
       {/* Create Cohort Dialog */}
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+      >
         <form onSubmit={handleCreateCohortSubmit}>
           <DialogTitle>Nuevo Cohorte</DialogTitle>
           <DialogContent dividers>

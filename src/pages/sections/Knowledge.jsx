@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -23,82 +23,80 @@ import {
   TextField,
   Tooltip,
   Typography,
-} from '@mui/material'
-import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
-import GridViewIcon from '@mui/icons-material/GridView'
-import ViewListIcon from '@mui/icons-material/ViewList'
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import GridViewIcon from "@mui/icons-material/GridView";
+import ViewListIcon from "@mui/icons-material/ViewList";
 
 // import { apiClient } from '../../api/client' // Línea para llamar a la API real, actualmente comentada para usar datos mockeados
-import ConfirmModal from '../../components/ConfirmModal'
-import CreateMaterialModal from '../../components/CreateMaterialModal'
-import EditMaterialModal from '../../components/EditMaterialModal'
-import EmptyState from '../../components/common/EmptyState'
-import ErrorState from '../../components/common/ErrorState'
+import ConfirmModal from "../../components/ConfirmModal";
+import CreateMaterialModal from "../../components/CreateMaterialModal";
+import EditMaterialModal from "../../components/EditMaterialModal";
+import EmptyState from "../../components/common/EmptyState";
+import ErrorState from "../../components/common/ErrorState";
 
 const columns = [
-  { id: 'id', label: 'ID', width: '10%' },
-  { id: 'stage_id', label: 'Etapa', width: '15%' },
-  { id: 'title', label: 'Título', width: '30%' },
-  { id: 'url', label: 'URL', width: '35%' },
-]
+  { id: "id", label: "ID", width: "10%" },
+  { id: "stage_id", label: "Etapa", width: "15%" },
+  { id: "title", label: "Título", width: "30%" },
+  { id: "url", label: "URL", width: "35%" },
+];
 
-const tableColumnCount = columns.length + 1
+const tableColumnCount = columns.length + 1;
 
 const mockMaterials = [
   {
     id: 12,
     stage_id: 2,
-    title: 'Business Model Canvas Template',
-    url: 'https://drive.google.com/bmc-template',
+    title: "Business Model Canvas Template",
+    url: "https://drive.google.com/bmc-template",
   },
   {
     id: 13,
     stage_id: 1,
-    title: 'Guía para definir el problema',
-    url: 'https://drive.google.com/problem-guide',
+    title: "Guía para definir el problema",
+    url: "https://drive.google.com/problem-guide",
   },
   {
     id: 14,
     stage_id: 3,
-    title: 'Plantilla de propuesta de valor',
-    url: 'https://drive.google.com/value-proposition',
+    title: "Plantilla de propuesta de valor",
+    url: "https://drive.google.com/value-proposition",
   },
-]
+];
 
 function Knowledge() {
-  const [materials, setMaterials] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [selectedView, setSelectedView] = useState('list')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterBy, setFilterBy] = useState('all')
-  const [materialToDelete, setMaterialToDelete] = useState(null)
-  const [materialToEdit, setMaterialToEdit] = useState(null)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [materials, setMaterials] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedView, setSelectedView] = useState("list");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterBy, setFilterBy] = useState("all");
+  const [materialToDelete, setMaterialToDelete] = useState(null);
+  const [materialToEdit, setMaterialToEdit] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const filteredMaterials = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLocaleLowerCase('es')
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase("es");
 
-    if (!normalizedSearch) return materials
+    if (!normalizedSearch) return materials;
 
     const fieldsToSearch =
-      filterBy === 'all'
-        ? columns.map((column) => column.id)
-        : [filterBy]
+      filterBy === "all" ? columns.map((column) => column.id) : [filterBy];
 
     return materials.filter((material) =>
       fieldsToSearch.some((field) =>
-        String(material[field] ?? '')
-          .toLocaleLowerCase('es')
+        String(material[field] ?? "")
+          .toLocaleLowerCase("es")
           .includes(normalizedSearch),
       ),
-    )
-  }, [filterBy, materials, searchTerm])
+    );
+  }, [filterBy, materials, searchTerm]);
 
   const loadMaterials = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     try {
       // Llamada real a la API:
@@ -106,23 +104,23 @@ function Knowledge() {
       // setMaterials(Array.isArray(data) ? data : [])
 
       // Datos mockeados:
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simula un retraso de 500 ms para la carga de datos
-      setMaterials(mockMaterials)
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simula un retraso de 500 ms para la carga de datos
+      setMaterials(mockMaterials);
     } catch (requestError) {
-      setError(requestError)
+      setError(requestError);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    loadMaterials()
-  }, [loadMaterials])
+    loadMaterials();
+  }, [loadMaterials]);
 
   const handleDeleteMaterial = () => {
-    if (!materialToDelete) return
+    if (!materialToDelete) return;
 
-    const materialId = materialToDelete.id
+    const materialId = materialToDelete.id;
 
     // Llamada real a la API:
     // await apiClient.delete(`/materials/${materialId}`)
@@ -130,13 +128,13 @@ function Knowledge() {
     // Eliminación mockeada en el estado local:
     setMaterials((currentMaterials) =>
       currentMaterials.filter((material) => material.id !== materialId),
-    )
-  }
+    );
+  };
 
   const handleEditMaterial = (updatedFields) => {
-    if (!materialToEdit) return
+    if (!materialToEdit) return;
 
-    const materialId = materialToEdit.id
+    const materialId = materialToEdit.id;
 
     // Llamada real a la API:
     // const { data } = await apiClient.put(`/materials/${materialId}`, updatedFields)
@@ -153,21 +151,21 @@ function Knowledge() {
           ? { ...material, ...updatedFields }
           : material,
       ),
-    )
-  }
+    );
+  };
 
   const handleCreateMaterial = (newMaterial) => {
-    setMaterials((currentMaterials) => [newMaterial, ...currentMaterials])
-  }
+    setMaterials((currentMaterials) => [newMaterial, ...currentMaterials]);
+  };
 
   return (
     <Box>
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
           gap: 2,
           mb: 3,
         }}
@@ -176,7 +174,7 @@ function Knowledge() {
           Materiales
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <FormControl size="small" sx={{ minWidth: 130 }}>
             <InputLabel id="materials-view-label">Vista</InputLabel>
             <Select
@@ -186,13 +184,13 @@ function Knowledge() {
               label="Vista"
               onChange={(event) => setSelectedView(event.target.value)}
               renderValue={(value) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {value === 'list' ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {value === "list" ? (
                     <ViewListIcon fontSize="small" />
                   ) : (
                     <GridViewIcon fontSize="small" />
                   )}
-                  <span>{value === 'list' ? 'Tabla' : 'Galería'}</span>
+                  <span>{value === "list" ? "Tabla" : "Galería"}</span>
                 </Box>
               )}
             >
@@ -222,8 +220,8 @@ function Knowledge() {
 
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'flex-start',
+          display: "flex",
+          alignItems: "flex-start",
           gap: 1.5,
           mb: 2,
         }}
@@ -263,16 +261,16 @@ function Knowledge() {
           message={error.message}
           onRetry={loadMaterials}
         />
-      ) : selectedView === 'list' ? (
+      ) : selectedView === "list" ? (
         <TableContainer
           component={Paper}
           variant="outlined"
           sx={{
             borderRadius: 1,
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.08)",
           }}
         >
-          <Table aria-label="Tabla de materiales" sx={{ tableLayout: 'fixed' }}>
+          <Table aria-label="Tabla de materiales" sx={{ tableLayout: "fixed" }}>
             <TableHead>
               <TableRow>
                 {columns.map((column) => (
@@ -282,24 +280,24 @@ function Knowledge() {
                       width: column.width,
                       py: 1.5,
                       fontWeight: 600,
-                      color: 'text.primary',
-                      bgcolor: 'action.hover',
+                      color: "text.primary",
+                      bgcolor: "grey.50",
                     }}
                   >
                     {column.label}
                   </TableCell>
                 ))}
                 <TableCell
-                  align="center"
+                  align="right"
                   sx={{
-                    width: '10%',
+                    width: "10%",
                     py: 1.5,
                     fontWeight: 600,
-                    color: 'text.primary',
-                    bgcolor: 'action.hover',
+                    color: "text.primary",
+                    bgcolor: "grey.50",
                   }}
                 >
-                  
+                  Acciones
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -324,13 +322,13 @@ function Knowledge() {
                     <EmptyState
                       title={
                         materials.length === 0
-                          ? 'No hay materiales para mostrar'
-                          : 'No se encontraron materiales'
+                          ? "No hay materiales para mostrar"
+                          : "No se encontraron materiales"
                       }
                       description={
                         materials.length === 0
-                          ? 'Los materiales que se agreguen aparecerán en esta tabla.'
-                          : 'Probá con otro término o criterio de búsqueda.'
+                          ? "Los materiales que se agreguen aparecerán en esta tabla."
+                          : "Probá con otro término o criterio de búsqueda."
                       }
                     />
                   </TableCell>
@@ -342,26 +340,27 @@ function Knowledge() {
                     <TableCell>{material.stage_id}</TableCell>
                     <TableCell>{material.title}</TableCell>
 
-                    <TableCell sx={{ overflow: 'hidden' }}>
+                    <TableCell sx={{ overflow: "hidden" }}>
                       <Link
                         href={material.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         underline="hover"
                         sx={{
-                          display: 'block',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
+                          display: "block",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {material.url}
                       </Link>
                     </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                       <Tooltip title="Editar">
                         <IconButton
                           size="small"
+                          color="primary"
                           aria-label={`Editar ${material.id}`}
                           onClick={() => setMaterialToEdit(material)}
                         >
@@ -371,6 +370,7 @@ function Knowledge() {
                       <Tooltip title="Eliminar">
                         <IconButton
                           size="small"
+                          color="error"
                           aria-label={`Eliminar ${material.id}`}
                           onClick={() => setMaterialToDelete(material)}
                         >
@@ -385,7 +385,7 @@ function Knowledge() {
           </Table>
         </TableContainer>
       ) : isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress size={32} aria-label="Cargando materiales" />
         </Box>
       ) : filteredMaterials.length === 0 ? (
@@ -393,13 +393,13 @@ function Knowledge() {
           <EmptyState
             title={
               materials.length === 0
-                ? 'No hay materiales para mostrar'
-                : 'No se encontraron materiales'
+                ? "No hay materiales para mostrar"
+                : "No se encontraron materiales"
             }
             description={
               materials.length === 0
-                ? 'Los materiales que se agreguen aparecerán en esta galería.'
-                : 'Probá con otro término o criterio de búsqueda.'
+                ? "Los materiales que se agreguen aparecerán en esta galería."
+                : "Probá con otro término o criterio de búsqueda."
             }
           />
         </Paper>
@@ -407,11 +407,11 @@ function Knowledge() {
         <Box
           aria-label="Galería de materiales"
           sx={{
-            display: 'grid',
+            display: "grid",
             gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, minmax(0, 1fr))',
-              lg: 'repeat(3, minmax(0, 1fr))',
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              lg: "repeat(3, minmax(0, 1fr))",
             },
             gap: 2,
           }}
@@ -423,24 +423,24 @@ function Knowledge() {
               sx={{
                 minWidth: 0,
                 minHeight: 235,
-                display: 'flex',
-                flexDirection: 'column',
-                borderColor: 'divider',
+                display: "flex",
+                flexDirection: "column",
+                borderColor: "divider",
                 borderRadius: 1,
-                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
-                transition: 'box-shadow 150ms ease, transform 150ms ease',
-                '&:hover': {
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
-                  transform: 'translateY(-1px)',
+                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.08)",
+                transition: "box-shadow 150ms ease, transform 150ms ease",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
+                  transform: "translateY(-1px)",
                 },
               }}
             >
               <CardContent
                 sx={{
                   p: 2.5,
-                  '&:last-child': { pb: 2 },
-                  display: 'flex',
-                  flexDirection: 'column',
+                  "&:last-child": { pb: 2 },
+                  display: "flex",
+                  flexDirection: "column",
                   flexGrow: 1,
                   gap: 2,
                 }}
@@ -448,9 +448,9 @@ function Knowledge() {
                 <Box>
                   <Box
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
                       gap: 1,
                       mb: 0.5,
                     }}
@@ -503,10 +503,10 @@ function Knowledge() {
                     rel="noopener noreferrer"
                     underline="hover"
                     sx={{
-                      display: 'block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {material.url}
@@ -515,15 +515,16 @@ function Knowledge() {
 
                 <Box
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    mt: 'auto',
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    mt: "auto",
                     pt: 0.5,
                   }}
                 >
                   <Tooltip title="Editar">
                     <IconButton
                       size="small"
+                      color="primary"
                       aria-label={`Editar ${material.id}`}
                       onClick={() => setMaterialToEdit(material)}
                     >
@@ -533,6 +534,7 @@ function Knowledge() {
                   <Tooltip title="Eliminar">
                     <IconButton
                       size="small"
+                      color="error"
                       aria-label={`Eliminar ${material.id}`}
                       onClick={() => setMaterialToDelete(material)}
                     >
@@ -552,7 +554,7 @@ function Knowledge() {
         message={
           materialToDelete
             ? `¿Estás seguro de que querés eliminar el material “${materialToDelete.title}”? Esta acción no se puede deshacer.`
-            : ''
+            : ""
         }
         confirmText="Eliminar"
         cancelText="Cancelar"
@@ -573,7 +575,7 @@ function Knowledge() {
         onClose={() => setIsCreateModalOpen(false)}
       />
     </Box>
-  )
+  );
 }
 
-export default Knowledge
+export default Knowledge;
