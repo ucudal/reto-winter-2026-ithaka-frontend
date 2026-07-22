@@ -14,7 +14,9 @@ import Tutors from '../pages/sections/Tutors.jsx'
 import Knowledge from '../pages/sections/Knowledge.jsx'
 import NotFoundPage from '../pages/sections/NotFoundPage.jsx'
 
-import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
+// TODO: Descomentar este import una vez que se haga merge del PR que agrega
+// RoleProtectedRoute.jsx.
+// import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
 
 const appRouter = createBrowserRouter([
@@ -118,6 +120,10 @@ const appRouter = createBrowserRouter([
                 <Knowledge />
               </RoleProtectedRoute>
             ),
+          },
+          {
+            path: '/forbidden',
+            element: <ForbiddenPage />,
           },
         ],
       },
