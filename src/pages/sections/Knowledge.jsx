@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Box,
   Button,
+  Card,
+  CardContent,
   CircularProgress,
   FormControl,
   IconButton,
@@ -261,7 +263,7 @@ function Knowledge() {
           message={error.message}
           onRetry={loadMaterials}
         />
-      ) : (
+      ) : selectedView === 'list' ? (
         <TableContainer
           component={Paper}
           variant="outlined"
@@ -382,6 +384,166 @@ function Knowledge() {
             </TableBody>
           </Table>
         </TableContainer>
+      ) : isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress size={32} aria-label="Cargando materiales" />
+        </Box>
+      ) : filteredMaterials.length === 0 ? (
+        <Paper variant="outlined">
+          <EmptyState
+            title={
+              materials.length === 0
+                ? 'No hay materiales para mostrar'
+                : 'No se encontraron materiales'
+            }
+            description={
+              materials.length === 0
+                ? 'Los materiales que se agreguen aparecerán en esta galería.'
+                : 'Probá con otro término o criterio de búsqueda.'
+            }
+          />
+        </Paper>
+      ) : (
+        <Box
+          aria-label="Galería de materiales"
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, minmax(0, 1fr))',
+              lg: 'repeat(3, minmax(0, 1fr))',
+            },
+            gap: 2,
+          }}
+        >
+          {filteredMaterials.map((material) => (
+            <Card
+              key={material.id}
+              variant="outlined"
+              sx={{
+                minWidth: 0,
+                minHeight: 235,
+                display: 'flex',
+                flexDirection: 'column',
+                borderColor: 'divider',
+                borderRadius: 1,
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+                transition: 'box-shadow 150ms ease, transform 150ms ease',
+                '&:hover': {
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+                  transform: 'translateY(-1px)',
+                },
+              }}
+            >
+              <CardContent
+                sx={{
+                  p: 2.5,
+                  '&:last-child': { pb: 2 },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexGrow: 1,
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: 0.5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      component="p"
+                      color="text.secondary"
+                    >
+                      Título
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      component="p"
+                      color="text.secondary"
+                      sx={{ flexShrink: 0, fontWeight: 600 }}
+                    >
+                      #{material.id}
+                    </Typography>
+                  </Box>
+                  <Typography variant="h6" component="h2" lineHeight={1.3}>
+                    {material.title}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant="caption"
+                    component="p"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    Etapa
+                  </Typography>
+                  <Typography variant="body1">{material.stage_id}</Typography>
+                </Box>
+
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="caption"
+                    component="p"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    URL
+                  </Typography>
+                  <Link
+                    href={material.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    underline="hover"
+                    sx={{
+                      display: 'block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {material.url}
+                  </Link>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    mt: 'auto',
+                    pt: 0.5,
+                  }}
+                >
+                  <Tooltip title="Editar">
+                    <IconButton
+                      size="small"
+                      aria-label={`Editar ${material.id}`}
+                      onClick={() => setMaterialToEdit(material)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar">
+                    <IconButton
+                      size="small"
+                      aria-label={`Eliminar ${material.id}`}
+                      onClick={() => setMaterialToDelete(material)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
       )}
 
       <ConfirmModal
