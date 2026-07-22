@@ -51,8 +51,24 @@ export default function Login() {
 
     if (!validate()) return;
 
-    if (email === USER.email && password === USER.password) {
-      login();
+    if (password === "123456") {
+      let role = "Coordinator";
+      let name = "Carlos Rodríguez";
+
+      if (email === "tutor@gmail.com") {
+        role = "BusinessTutor";
+        name = "María Pérez";
+      } else if (email === "student@gmail.com") {
+        role = "Student";
+        name = "Juan Pérez";
+      }
+
+      login({
+        id: role === "Coordinator" ? 1 : role === "Student" ? 101 : 8,
+        name,
+        email,
+        role,
+      });
       navigate("/dashboard");
     } else {
       setLoginError("Usuario o contraseña incorrectos");
