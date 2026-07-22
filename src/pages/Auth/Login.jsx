@@ -7,6 +7,7 @@ import {
   Typography,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
@@ -18,9 +19,26 @@ const USER = {
   password: import.meta.env.VITE_MOCK_USER_PASSWORD,
 };
 
+const inputSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px",
+    bgcolor: "action.hover",
+  },
+  "& .MuiOutlinedInput-input": {
+    color: "text.primary",
+  },
+  "& .MuiOutlinedInput-input:-webkit-autofill": {
+    WebkitTextFillColor: (theme) => theme.palette.text.primary,
+    WebkitBoxShadow: (theme) =>
+      `0 0 0 1000px ${theme.palette.background.paper} inset`,
+    transition: "background-color 5000s ease-in-out 0s",
+  },
+};
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const theme = useTheme();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,12 +95,27 @@ export default function Login() {
 
   return (
     <Box className="login-container">
-      <Paper className="login-card" elevation={5}>
+      <Paper
+        className="login-card"
+        elevation={5}
+        sx={{
+          bgcolor: (theme) =>
+            theme.palette.mode === "dark"
+              ? "rgba(19, 27, 44, 0.92)"
+              : "rgba(255, 255, 255, 0.96)",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <div className="login-logo-wrap">
           <img src={logo} alt="ITHAKA" className="login-logo" />
         </div>
 
-        <Typography variant="h5" className="login-title">
+        <Typography 
+          variant="h5" 
+          className="login-title"
+          style={{ color: theme.palette.text.primary }}
+        >
           Iniciar sesión
         </Typography>
 
@@ -101,6 +134,7 @@ export default function Login() {
             onChange={(e) => setEmail(e.target.value)}
             error={!!errors.email}
             helperText={errors.email}
+            sx={inputSx}
           />
 
           <TextField
@@ -112,6 +146,7 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             error={!!errors.password}
             helperText={errors.password}
+            sx={inputSx}
           />
 
           <Button
@@ -119,6 +154,7 @@ export default function Login() {
             variant="contained"
             type="submit"
             className="login-button"
+            style={{ color: "#FFFFFF" }}
           >
             CONTINUAR
           </Button>
@@ -130,6 +166,7 @@ export default function Login() {
             <Link
               to="/register"
               className="login-register-link"
+              style={{ color: theme.palette.secondary.main }}
             >
               Registrarse
             </Link>

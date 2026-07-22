@@ -113,25 +113,25 @@ export default function Tutors() {
               width: 280,
               "& .MuiFilledInput-root": {
                 height: 60,
-                backgroundColor: "#f5f5f5",
+                bgcolor: "action.hover",
                 "&:hover": {
-                  backgroundColor: "#f5f5f5",
+                  bgcolor: "action.hover",
                 },
                 "&.Mui-focused": {
-                  backgroundColor: "#f5f5f5",
+                  bgcolor: "action.hover",
                 },
                 "&:before": {
-                  borderBottom: "1px solid #BDBDBD",
+                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
                 },
                 "&:after": {
-                  borderBottom: "2px solid #1976d2",
+                  borderBottom: (theme) => `2px solid ${theme.palette.primary.main}`,
                 },
               },
               "& .MuiInputLabel-root": {
-                color: "#1976d2",
+                color: "primary.main",
               },
               "& .MuiInputLabel-root.Mui-focused": {
-                color: "#1976d2",
+                color: "primary.main",
               },
             }}
           >

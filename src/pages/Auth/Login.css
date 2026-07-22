@@ -25,18 +25,16 @@ html, body {
 
 .login-card {
   width: 100%;
-    max-width: 420px;
+  max-width: 420px;
   padding: 28px 32px 24px;
-    border-radius: 20px;
-    box-shadow: 0 20px 45px rgba(17, 39, 77, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 20px 45px rgba(17, 39, 77, 0.18);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-sizing: border-box;
-  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .login-logo-wrap {
@@ -48,16 +46,15 @@ html, body {
 
 .login-logo {
   width: 100%;
-    max-width: 240px;
+  max-width: 240px;
   height: auto;
   display: block;
   object-fit: contain;
 }
 
 .login-title {
-    margin-bottom: 0;
-    font-weight: 600;
-  color: #0f172a;
+  margin-bottom: 0;
+  font-weight: 600;
   text-align: center;
   letter-spacing: 0.01em;
 }
@@ -76,22 +73,8 @@ html, body {
   margin: 0;
 }
 
-.login-card .MuiOutlinedInput-root {
-  border-radius: 12px;
-  background: rgba(248, 250, 252, 0.9);
-}
-
-.login-card .MuiOutlinedInput-root:hover fieldset {
-  border-color: #1976d2;
-}
-
-.login-card .MuiOutlinedInput-root.Mui-focused fieldset {
-  border-color: #1976d2;
-  border-width: 2px;
-}
-
 .login-button {
-    margin-top: 16px !important;
+  margin-top: 16px !important;
   height: 48px;
   border-radius: 12px !important;
   font-weight: 700 !important;
@@ -106,7 +89,7 @@ html, body {
 }
 
 .login-register {
-    margin-top: 14px !important;
+  margin-top: 14px !important;
 }
 
 .login-register-link {
@@ -132,7 +115,7 @@ html, body {
   }
 
   .login-card {
-        padding: 20px 18px 18px;
+    padding: 20px 18px 18px;
     border-radius: 16px;
     gap: 12px;
   }
