@@ -11,7 +11,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copiamos el código y compilamos. Las VITE_* se hornean en ESTE paso (build-time).
+ARG VITE_API_URL=http://localhost:8000
+ENV VITE_API_URL=${VITE_API_URL}
+
+# Copiamos el código y compilamos.
 COPY . .
 RUN npm run build
 
