@@ -10,20 +10,12 @@ export function AuthProvider({ children }) {
     setUser(userData);
     setIsAuthenticated(true);
   };
-
-
-  const login = () => {
-    setUser(mockUser);
-    setIsAuthenticated(true);
-  };
-
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
     <AuthContext.Provider
       value={{
         isAuthenticated,
