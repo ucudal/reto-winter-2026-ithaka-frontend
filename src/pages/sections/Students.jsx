@@ -31,7 +31,9 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
+
 import { getStudents } from '../../api/endpoints/students'
+import EmptyState from "../../components/common/EmptyState";
 
 function Students() {
   const [students, setStudents] = useState([])
@@ -188,64 +190,65 @@ function Students() {
         )}
 
 
-        {
-          loading ? (
+        {loading ? (
 
-            <Box
-              sx={{
-                py: 8,
-                display: 'flex',
-                justifyContent: 'center',
-              }}
-            >
-              <CircularProgress />
-            </Box>
+          <Box
+            sx={{
+              py: 8,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <CircularProgress />
+          </Box>
 
-          ) : (
+        ) : (
 
-            <TableContainer>
+          <TableContainer>
 
-              <Table>
+            <Table>
 
-                <TableHead>
+              <TableHead>
 
-                  <TableRow>
+                <TableRow>
 
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      Usuario
-                    </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Usuario
+                  </TableCell>
 
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      Email
-                    </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Email
+                  </TableCell>
 
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      Carrera
-                    </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Carrera
+                  </TableCell>
 
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      Estado
-                    </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Estado
+                  </TableCell>
 
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      ID
-                    </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    ID
+                  </TableCell>
 
-                    <TableCell
-                      align="right"
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      Acciones
-                    </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ fontWeight: 'bold' }}
+                  >
+                    Acciones
+                  </TableCell>
 
-                  </TableRow>
+                </TableRow>
 
-                </TableHead>
+              </TableHead>
 
 
-                <TableBody>
+              <TableBody>
 
-                  {filteredStudents.map((student) => {
+                {filteredStudents.length > 0 ? (
+
+                  filteredStudents.map((student) => {
 
                     const initials =
                       (student.name || 'U')
@@ -362,22 +365,32 @@ function Students() {
 
                         </TableCell>
 
-
                       </TableRow>
 
                     )
 
-                  })}
+                  })
 
+                ) : (
 
-                </TableBody>
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <EmptyState
+                        title="No hay alumnos para mostrar"
+                        description="No se encontraron alumnos que coincidan con la búsqueda."
+                      />
+                    </TableCell>
+                  </TableRow>
 
-              </Table>
+                )}
 
-            </TableContainer>
+              </TableBody>
 
-          )
-        }
+            </Table>
+
+          </TableContainer>
+
+        )}
 
       </Paper>
 
