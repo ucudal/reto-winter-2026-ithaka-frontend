@@ -50,7 +50,7 @@ describe('Topbar', () => {
     await user.click(screen.getByLabelText('Abrir menú de usuario'))
 
     expect(screen.getByText('Ana')).toBeInTheDocument()
-    expect(screen.getByText('Logout')).toBeInTheDocument()
+    expect(screen.getByText('Cerrar sesión')).toBeInTheDocument()
   })
 
   it('calls onLogout when clicking the logout option', async () => {
@@ -60,7 +60,7 @@ describe('Topbar', () => {
     render(<TopbarWithState userName="Ana" onLogout={onLogout} />)
 
     await user.click(screen.getByLabelText('Abrir menú de usuario'))
-    await user.click(screen.getByText('Logout'))
+    await user.click(screen.getByText('Cerrar sesión'))
 
     expect(onLogout).toHaveBeenCalledTimes(1)
   })
