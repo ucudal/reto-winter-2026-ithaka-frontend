@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -15,7 +15,6 @@ import {
   MenuItem,
   Toolbar,
   ListItemText,
-  ListItemIcon,
   Typography,
 } from "@mui/material";
 
@@ -29,7 +28,7 @@ function Topbar({ onMenuClick, onLogout }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { user } = useAuth();
 
-   const currentUser = user || usersMock?.tutor{};
+  const currentUser = user || usersMock?.tutor;
 
   const handleOpenUserMenu = (event) => {
     setUserMenuAnchor(event.currentTarget);
@@ -41,7 +40,7 @@ function Topbar({ onMenuClick, onLogout }) {
 
   const handleOpenProfileDrawer = () => {
     handleCloseUserMenu();
-    setIsDrawerOpen(true); 
+    setIsDrawerOpen(true);
   };
 
   const handleCloseProfileDrawer = () => {
@@ -115,39 +114,44 @@ function Topbar({ onMenuClick, onLogout }) {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         PaperProps={{
-          sx: { width: 220, mt: 1 }
+          sx: { width: 220, mt: 1 },
         }}
       >
-        <MenuItem disabled sx={{ minWidth: 220, opacity: 1 }}>
-          <ListItemText
-            primary={userName}
-            secondary="Usuario mockeado"
-            primaryTypographyProps={{ color: "text.primary" }}
-            secondaryTypographyProps={{ color: "text.secondary" }}
-          />
-        </MenuItem>
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography variant="subtitle2" fontWeight="bold">
+            {currentUser?.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" display="block">
+            {currentUser?.email}
+          </Typography>
+        </Box>
 
         <Divider />
 
-        <MenuItem onClick={onUserMenuClose}>
+        <MenuItem onClick={handleCloseUserMenu}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
-          Ajustes
+          <ListItemText primary="Settings" />
         </MenuItem>
 
-        <MenuItem onClick={onUserMenuClose}>
+        <MenuItem onClick={handleOpenProfileDrawer}>
           <ListItemIcon>
             <PersonIcon fontSize="small" />
           </ListItemIcon>
-          Perfil
+          <ListItemText primary="Profile" />
         </MenuItem>
 
-        <MenuItem onClick={onLogout}>
+        <MenuItem
+          onClick={() => {
+            handleCloseUserMenu();
+            if (onLogout) onLogout();
+          }}
+        >
           <ListItemIcon>
             <Logout fontSize="small" />
           </ListItemIcon>
-          Cerrar sesión
+          <ListItemText primary="Sign out" />
         </MenuItem>
       </Menu>
 
