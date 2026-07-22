@@ -1,4 +1,6 @@
 import MenuIcon from "@mui/icons-material/Menu";
+import SettingsIcon from "@mui/icons-material/Settings";
+import PersonIcon from "@mui/icons-material/Person";
 import Logout from "@mui/icons-material/Logout";
 
 import {
@@ -6,6 +8,7 @@ import {
   Box,
   Divider,
   IconButton,
+  ListItemIcon,
   Menu,
   MenuItem,
   Toolbar,
@@ -34,7 +37,6 @@ function Topbar({
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between", gap: 2 }}>
-
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton
               color="inherit"
@@ -57,7 +59,6 @@ function Topbar({
               }}
             />
           </Box>
-
 
           <IconButton
             onClick={onUserMenuOpen}
@@ -82,10 +83,8 @@ function Topbar({
               }}
             />
           </IconButton>
-
         </Toolbar>
       </AppBar>
-
 
       <Menu
         anchorEl={userMenuAnchor}
@@ -104,14 +103,32 @@ function Topbar({
           <ListItemText
             primary={userName}
             secondary="Usuario mockeado"
+            primaryTypographyProps={{ color: "text.primary" }}
+            secondaryTypographyProps={{ color: "text.secondary" }}
           />
         </MenuItem>
 
         <Divider />
 
+        <MenuItem onClick={onUserMenuClose}>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          Ajustes
+        </MenuItem>
+
+        <MenuItem onClick={onUserMenuClose}>
+          <ListItemIcon>
+            <PersonIcon fontSize="small" />
+          </ListItemIcon>
+          Perfil
+        </MenuItem>
+
         <MenuItem onClick={onLogout}>
-          <Logout sx={{ mr: 1 }} fontSize="small" />
-          Logout
+          <ListItemIcon>
+            <Logout fontSize="small" />
+          </ListItemIcon>
+          Cerrar sesión
         </MenuItem>
       </Menu>
     </>
