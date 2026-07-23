@@ -4,36 +4,49 @@ import {
   Box,
   Button,
   Paper,
-  TextField,
   Typography,
 } from '@mui/material'
 
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
+
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 
 
 const mockTemplates = {
   1: {
     name: 'Business Model Canvas',
     content:
-      'Propuesta de valor\nSegmentos de clientes\nCanales',
+      'Propuesta de valor<br/>Segmentos de clientes<br/>Canales',
   },
 
   2: {
     name: 'Informe Final',
     content:
-      'Introducción\nDesarrollo\nConclusiones',
+      'Introducción<br/>Desarrollo<br/>Conclusiones',
   },
 }
 
 
 function TemplateDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
 
   const template = mockTemplates[id]
 
   const [content, setContent] = useState(
     template?.content || ''
   )
+
+
+  const handleSave = () => {
+    console.log('Guardando template:', {
+      id,
+      content,
+    })
+
+    navigate('/templates')
+  }
 
 
   return (
@@ -51,20 +64,25 @@ function TemplateDetail() {
         }}
       >
 
-        <TextField
-          multiline
-          minRows={15}
-          fullWidth
+        <ReactQuill
+          theme="snow"
           value={content}
-          onChange={(e) =>
-            setContent(e.target.value)
-          }
+          onChange={setContent}
+          modules={{
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['link'],
+              ['clean'],
+            ],
+          }}
         />
 
 
         <Button
           variant='contained'
           sx={{ mt: 3 }}
+          onClick={handleSave}
         >
           Guardar cambios
         </Button>
