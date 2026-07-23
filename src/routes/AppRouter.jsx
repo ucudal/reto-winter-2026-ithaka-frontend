@@ -13,6 +13,7 @@ import CohortDetail from "../pages/sections/CohortDetail.jsx";
 import Groups from "../pages/sections/Groups.jsx";
 import Templates from "../pages/sections/Templates.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
+import Deliverables from "../pages/sections/Deliverables.jsx";
 import Knowledge from "../pages/sections/Knowledge.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
 import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
@@ -111,6 +112,21 @@ const appRouter = createBrowserRouter([
                         ]}
                       >
                         <Tutors />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/deliverables",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                          "Student",
+                        ]}
+                      >
+                        <Deliverables />
                       </RoleProtectedRoute>
                     ),
                   },
