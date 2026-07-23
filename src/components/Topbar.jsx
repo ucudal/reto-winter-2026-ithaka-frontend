@@ -141,6 +141,13 @@ function Topbar({ onMenuClick, onLogout }) {
           </ListItemIcon>
           <ListItemText primary="Perfil"/>
         </MenuItem>
+
+        <MenuItem onClick={onLogout}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Cerrar sesión"/>
+        </MenuItem>
       </Menu>
 
       <UserProfileDrawer
