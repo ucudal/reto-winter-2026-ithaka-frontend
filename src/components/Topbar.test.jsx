@@ -4,6 +4,12 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Topbar from './Topbar'
 
+vi.mock("../context/AuthContext", () => ({
+  useAuth: () => ({
+    user: { name: "Ana", email: "ana@ucu.edu.uy", role: "Student" },
+  }),
+}));
+
 function TopbarWithState(props) {
   const [anchor, setAnchor] = useState(null)
 
@@ -39,7 +45,7 @@ describe('Topbar', () => {
   it('does not show the user menu items before opening it', () => {
     render(<Topbar userName="Ana" userMenuAnchor={null} />)
 
-    expect(screen.queryByText('Logout')).not.toBeInTheDocument()
+    expect(screen.queryByText('Cerrar sesión')).not.toBeInTheDocument()
   })
 
   it('shows the user name and a logout option after opening the menu', async () => {
