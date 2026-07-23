@@ -26,7 +26,11 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import GroupIcon from "@mui/icons-material/Group";
 import RouteIcon from "@mui/icons-material/Route";
 
-import { getCohortById, getCohortGroups, getCohortStages } from "../../api/endpoints/cohorts";
+import {
+  getCohortById,
+  getCohortGroups,
+  getCohortStages,
+} from "../../api/endpoints/cohorts";
 import EmptyState from "../../components/common/EmptyState";
 import { sanitizeText } from "../../utils/sanitize";
 
@@ -79,7 +83,9 @@ export default function CohortDetail() {
       const sortedStages = (stagesData || []).sort((a, b) => a.order - b.order);
       setStages(sortedStages);
     } catch (err) {
-      setError(err?.message || "No se pudieron cargar los detalles del cohorte.");
+      setError(
+        err?.message || "No se pudieron cargar los detalles del cohorte.",
+      );
     } finally {
       setLoading(false);
     }
@@ -124,12 +130,7 @@ export default function CohortDetail() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">
           Inicio
         </Link>
         <Link
@@ -169,7 +170,11 @@ export default function CohortDetail() {
         <CardContent>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={4}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Fecha de Inicio
               </Typography>
               <Typography variant="body1" fontWeight={500}>
@@ -177,7 +182,11 @@ export default function CohortDetail() {
               </Typography>
             </Grid>
             <Grid item xs={12} sm={4}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Fecha de Fin
               </Typography>
               <Typography variant="body1" fontWeight={500}>
@@ -185,7 +194,11 @@ export default function CohortDetail() {
               </Typography>
             </Grid>
             <Grid item xs={12} sm={4}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Cantidad de Grupos
               </Typography>
               <Typography variant="body1" fontWeight={500}>
@@ -193,7 +206,11 @@ export default function CohortDetail() {
               </Typography>
             </Grid>
             <Grid item xs={12}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Notas / Descripción
               </Typography>
               <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
@@ -208,9 +225,23 @@ export default function CohortDetail() {
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="Detalles de cohorte tabs">
-          <Tab icon={<GroupIcon />} iconPosition="start" label="Grupos" id="cohort-tab-0" />
-          <Tab icon={<RouteIcon />} iconPosition="start" label="Etapas del Proceso" id="cohort-tab-1" />
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="Detalles de cohorte tabs"
+        >
+          <Tab
+            icon={<GroupIcon />}
+            iconPosition="start"
+            label="Grupos"
+            id="cohort-tab-0"
+          />
+          <Tab
+            icon={<RouteIcon />}
+            iconPosition="start"
+            label="Etapas del Proceso"
+            id="cohort-tab-1"
+          />
         </Tabs>
       </Box>
 
@@ -228,7 +259,9 @@ export default function CohortDetail() {
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: "bold" }}>ID</TableCell>
-                    <TableCell sx={{ fontWeight: "bold" }}>Nombre del Grupo</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>
+                      Nombre del Grupo
+                    </TableCell>
                     <TableCell sx={{ fontWeight: "bold" }}>Estado</TableCell>
                   </TableRow>
                 </TableHead>
@@ -236,16 +269,24 @@ export default function CohortDetail() {
                   {groups.map((group) => (
                     <TableRow key={group.id} hover>
                       <TableCell>{group.id}</TableCell>
-                      <TableCell fontWeight="medium">
-                        <Link component={RouterLink} to={`/groups`} underline="hover">
+                      <TableCell sx={{ fontWeight: "medium" }}>
+                        <Link
+                          component={RouterLink}
+                          to={`/groups`}
+                          underline="hover"
+                        >
                           {group.name}
                         </Link>
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={group.status === "Active" ? "Activo" : group.status}
+                          label={
+                            group.status === "Active" ? "Activo" : group.status
+                          }
                           size="small"
-                          color={group.status === "Active" ? "success" : "default"}
+                          color={
+                            group.status === "Active" ? "success" : "default"
+                          }
                         />
                       </TableCell>
                     </TableRow>
@@ -267,9 +308,22 @@ export default function CohortDetail() {
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {stages.map((stage, idx) => (
-                <Card key={stage.id} variant="outlined" sx={{ borderRadius: 2 }}>
-                  <CardContent sx={{ display: "flex", alignItems: "center", gap: 3, py: "16px !important" }}>
-                    <Avatar sx={{ bgcolor: "primary.main", width: 40, height: 40 }}>
+                <Card
+                  key={stage.id}
+                  variant="outlined"
+                  sx={{ borderRadius: 2 }}
+                >
+                  <CardContent
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 3,
+                      py: "16px !important",
+                    }}
+                  >
+                    <Avatar
+                      sx={{ bgcolor: "primary.main", width: 40, height: 40 }}
+                    >
                       {stage.order}
                     </Avatar>
                     <Box>
