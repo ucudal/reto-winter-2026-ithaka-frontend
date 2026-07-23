@@ -154,7 +154,6 @@ export default function Login() {
             variant="contained"
             type="submit"
             className="login-button"
-            style={{ color: "#FFFFFF" }}
           >
             CONTINUAR
           </Button>

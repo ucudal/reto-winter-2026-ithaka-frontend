@@ -8,9 +8,10 @@ const ThemeModeContext = createContext(null);
 
 function getInitialMode() {
   if (typeof window === "undefined") return "light";
-
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
+  try{
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored === "light" || stored === "dark") return stored;
+  } catch {}
 
   const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
   return prefersDark ? "dark" : "light";
@@ -20,7 +21,10 @@ export function ThemeModeProvider({ children }) {
   const [mode, setMode] = useState(getInitialMode);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, mode);
+    try{ 
+      window.localStorage.setItem(STORAGE_KEY, mode); 
+    } catch {}
+    
   }, [mode]);
 
   const toggleMode = () => {

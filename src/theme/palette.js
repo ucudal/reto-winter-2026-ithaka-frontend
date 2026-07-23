@@ -29,7 +29,7 @@ export const darkPalette = {
     main: "#4C8DD9",
     light: "#7DAEE8",
     dark: "#2C5F9E",
-    contrastText: "#08152A",
+    contrastText: "#FFFFFF",
   },
   secondary: {
     main: "#00B4F0",

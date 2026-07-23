@@ -126,6 +126,9 @@ export default function Tutors() {
                 "&:before": {
                   borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
                 },
+                "&:hover:not(.Mui-disabled):before": {
+                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                },
                 "&:after": {
                   borderBottom: (theme) => `2px solid ${theme.palette.primary.main}`,
                 },

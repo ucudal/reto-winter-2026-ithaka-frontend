@@ -148,7 +148,6 @@ function Register() {
           variant="contained"
           fullWidth
           className="login-button"
-          style={{ color: '#FFFFFF' }}
         >
           CONTINUAR
         </Button>
