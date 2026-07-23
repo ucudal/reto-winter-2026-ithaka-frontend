@@ -15,11 +15,17 @@ import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import WorkspacesIcon from "@mui/icons-material/Workspaces";
 
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
 
-export default function Sidebar({ open, variant = "permanent", onClose, onNavigate }) {
+export default function Sidebar({
+  open,
+  variant = "permanent",
+  onClose,
+  onNavigate,
+}) {
   const location = useLocation();
   const isTemporary = variant === "temporary";
 
@@ -33,6 +39,7 @@ export default function Sidebar({ open, variant = "permanent", onClose, onNaviga
       <ListItemIcon>
         <Icon />
       </ListItemIcon>
+
       <ListItemText primary={label} />
     </ListItemButton>
   );
@@ -41,18 +48,37 @@ export default function Sidebar({ open, variant = "permanent", onClose, onNaviga
     <>
       <Toolbar />
 
-      <List subheader={<ListSubheader component="div">Proyectos</ListSubheader>}>
+      <List
+        subheader={
+          <ListSubheader component="div">
+            Proyectos
+          </ListSubheader>
+        }
+      >
         {navItem("/dashboard", "Resumen", DashboardIcon)}
+        {navItem("/workspace", "Mi Workspace", WorkspacesIcon)}
         {navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
         {navItem("/groups", "Grupos", GroupsIcon)}
       </List>
 
-      <List subheader={<ListSubheader component="div">Equipo</ListSubheader>}>
+      <List
+        subheader={
+          <ListSubheader component="div">
+            Equipo
+          </ListSubheader>
+        }
+      >
         {navItem("/tutors", "Tutores", PeopleIcon)}
         {navItem("/students", "Alumnos", SchoolIcon)}
       </List>
 
-      <List subheader={<ListSubheader component="div">Herramientas</ListSubheader>}>
+      <List
+        subheader={
+          <ListSubheader component="div">
+            Herramientas
+          </ListSubheader>
+        }
+      >
         {navItem("/templates", "Templates", AssignmentOutlinedIcon)}
         {navItem("/knowledge", "Materiales", MenuBookIcon)}
       </List>
