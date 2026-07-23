@@ -15,6 +15,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import TaskIcon from "@mui/icons-material/Task";
 
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
@@ -50,6 +51,8 @@ export default function Sidebar({ open, variant = "permanent", onClose, onNaviga
       <List subheader={<ListSubheader component="div">Equipo</ListSubheader>}>
         {navItem("/tutors", "Tutores", PeopleIcon)}
         {navItem("/students", "Alumnos", SchoolIcon)}
+        {navItem("/deliverables", "Entregables", TaskIcon)}
+
       </List>
 
       <List subheader={<ListSubheader component="div">Herramientas</ListSubheader>}>

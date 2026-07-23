@@ -47,7 +47,7 @@ const initialDeliverablesData = [
 export default function Deliverables() {
   const [deliverables, setDeliverables] = useState(initialDeliverablesData);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterProperty, setFilterProperty] = useState("name");
+  const [filterProperty, setFilterProperty] = useState("group_id");
 
   const filteredDeliverables = deliverables.filter((deliverable) => {
     const valueToSearch = deliverable[filterProperty]?.toString().toLowerCase() || "";
@@ -128,9 +128,8 @@ export default function Deliverables() {
               },
             }}
           >
-            <MenuItem value="name">Nombre</MenuItem>
-            <MenuItem value="role">Rol</MenuItem>
-            <MenuItem value="specialty">Especialidad</MenuItem>
+            <MenuItem value="group_id">ID</MenuItem>
+            <MenuItem value="expected_date">Fecha esperada</MenuItem>
             <MenuItem value="status">Estado</MenuItem>
           </TextField>
         </Box>
@@ -167,13 +166,13 @@ export default function Deliverables() {
                           fontSize: "0.875rem",
                         }}
                       >
-                        {deliverable.name
+                        {deliverable.group_id
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
                       </Avatar>
                       <Typography variant="body2" fontWeight="medium">
-                        {deliverable.name}
+                        {deliverable.group_id}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -193,14 +192,14 @@ export default function Deliverables() {
                     <IconButton
                       size="small"
                       color="primary"
-                      aria-label={`Editar ${deliverable.name}`}
+                      aria-label={`Editar ${deliverable.group_id}`}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
                       color="error"
-                      aria-label={`Eliminar ${deliverable.name}`}
+                      aria-label={`Eliminar ${deliverable.group_id}`}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
