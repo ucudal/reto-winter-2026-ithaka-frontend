@@ -8,6 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material'
+import { isValidUrl } from '../utils/validators'
 
 // import { apiClient } from '../api/client'
 
@@ -20,19 +21,34 @@ const emptyForm = {
 function CreateMaterialModal({ open, onCreate, onClose }) {
   const titleId = useId()
   const [formData, setFormData] = useState(emptyForm)
+  const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (open) setFormData(emptyForm)
+    if (open) {
+      setFormData(emptyForm)
+      setErrors({})
+    }
   }, [open])
 
   const handleChange = (event) => {
     const { name, value } = event.target
     setFormData((currentForm) => ({ ...currentForm, [name]: value }))
+    if (errors[name]) {
+      setErrors((currentErrors) => ({ ...currentErrors, [name]: '' }))
+    }
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+
+    if (!isValidUrl(formData.url)) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        url: 'Ingresa una URL valida (debe empezar con http:// o https://)',
+      }))
+      return
+    }
 
     const newMaterial = {
       stage_id: Number(formData.stage_id),
@@ -65,7 +81,7 @@ function CreateMaterialModal({ open, onCreate, onClose }) {
       fullWidth
       maxWidth="sm"
     >
-      <Box component="form" onSubmit={handleSubmit}>
+      <Box component="form" onSubmit={handleSubmit} noValidate>
         <DialogTitle id={titleId}>Crear material</DialogTitle>
 
         <DialogContent
@@ -101,6 +117,8 @@ function CreateMaterialModal({ open, onCreate, onClose }) {
             required
             fullWidth
             disabled={isSubmitting}
+            error={!!errors.url}
+            helperText={errors.url}
           />
         </DialogContent>
 

@@ -32,6 +32,7 @@ import {
   getCohortStages,
 } from "../../api/endpoints/cohorts";
 import EmptyState from "../../components/common/EmptyState";
+import { sanitizeText } from "../../utils/sanitize";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -213,7 +214,9 @@ export default function CohortDetail() {
                 Notas / Descripción
               </Typography>
               <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
-                {cohort.notes || "Sin notas adicionales."}
+                {cohort.notes
+                  ? sanitizeText(cohort.notes)
+                  : "Sin notas adicionales."}
               </Typography>
             </Grid>
           </Grid>
