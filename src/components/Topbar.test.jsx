@@ -14,6 +14,12 @@ function renderWithTheme(ui) {
   );
 }
 
+vi.mock("../context/AuthContext", () => ({
+  useAuth: () => ({
+    user: { name: "Ana", email: "ana@ucu.edu.uy", role: "Student" },
+  }),
+}));
+
 function TopbarWithState(props) {
   const [anchor, setAnchor] = useState(null);
 
@@ -58,6 +64,7 @@ describe("Topbar", () => {
     renderWithTheme(
       <Topbar userName="Ana" userMenuAnchor={null} />
     );
+
 
     expect(screen.queryByText("Cerrar sesión")).not.toBeInTheDocument();
   });
