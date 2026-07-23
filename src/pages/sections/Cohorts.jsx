@@ -29,6 +29,7 @@ import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SearchIcon from "@mui/icons-material/Search";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 import { getCohorts, createCohort } from "../../api/endpoints/cohorts";
 import { useToast } from "../../ToastContext";
@@ -300,6 +301,16 @@ export default function Cohorts() {
                         aria-label="Ver detalles"
                       >
                         <VisibilityIcon fontSize="small" />
+                      </IconButton>
+
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        component={RouterLink}
+                        to={`/cohorts/${cohort.id}/configuration`}
+                        aria-label="Configurar cohorte"
+                      >
+                        <SettingsIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
                   </TableRow>
