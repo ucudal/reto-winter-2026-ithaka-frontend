@@ -14,6 +14,7 @@ import Groups from "../pages/sections/Groups.jsx";
 import Templates from "../pages/sections/Templates.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
 import Knowledge from "../pages/sections/Knowledge.jsx";
+import Meetings from "../pages/sections/Meetings.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
 import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
@@ -125,6 +126,20 @@ const appRouter = createBrowserRouter([
                         ]}
                       >
                         <Knowledge />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/meetings",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                        ]}
+                      >
+                        <Meetings />
                       </RoleProtectedRoute>
                     ),
                   },
