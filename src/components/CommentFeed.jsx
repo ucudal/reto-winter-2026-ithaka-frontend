@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -48,25 +48,43 @@ export default function CommentFeed({ deliverableId }) {
   const [submitting, setSubmitting] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
 
+  const requestIdRef = useRef(0);
+
   const loadComments = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
+    const requestId = ++requestIdRef.current;
 
-      const [commentsData, tutorsData] = await Promise.all([
-        getDeliverableComments(deliverableId),
-        getTutors(),
-      ]);
+    setLoading(true);
+    setError("");
 
-      setComments(commentsData ?? []);
-      setTutorsById(
-        Object.fromEntries((tutorsData ?? []).map((t) => [t.id, t.name])),
+    const [commentsResult, tutorsResult] = await Promise.allSettled([
+      getDeliverableComments(deliverableId),
+      getTutors(),
+    ]);
+
+    // Descarta la respuesta si mientras tanto se disparó otra carga
+    if (requestId !== requestIdRef.current) return;
+
+    if (commentsResult.status === "fulfilled") {
+      setComments(commentsResult.value ?? []);
+    } else {
+      setComments([]);
+      setError(
+        commentsResult.reason?.message ||
+          "No se pudieron cargar los comentarios.",
       );
-    } catch (err) {
-      setError(err?.message || "No se pudieron cargar los comentarios.");
-    } finally {
-      setLoading(false);
     }
+
+    if (tutorsResult.status === "fulfilled") {
+      setTutorsById(
+        Object.fromEntries(
+          (tutorsResult.value ?? []).map((t) => [t.id, t.name]),
+        ),
+      );
+    } else {
+      setTutorsById({});
+    }
+
+    setLoading(false);
   }, [deliverableId]);
 
   useEffect(() => {
