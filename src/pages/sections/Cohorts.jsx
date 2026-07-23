@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -28,7 +28,6 @@ import { Link as RouterLink } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import SearchIcon from "@mui/icons-material/Search";
 
 import { getCohorts, createCohort } from "../../api/endpoints/cohorts";
 import { useToast } from "../../ToastContext";
@@ -40,8 +39,9 @@ export default function Cohorts() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterYear, setFilterYear] = useState("");
+  const [filterSemester, setFilterSemester] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
   // State for Create Cohort Dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -55,14 +55,20 @@ export default function Cohorts() {
   });
 
   useEffect(() => {
-    loadCohorts();
-  }, []);
+    loadCohorts({
+      year: filterYear || undefined,
+      semester: filterSemester || undefined,
+      status: filterStatus || undefined,
+      page: 1,
+      page_size: 20,
+    });
+  }, [filterYear, filterSemester, filterStatus]);
 
-  async function loadCohorts() {
+  async function loadCohorts(filters = {}) {
     try {
       setLoading(true);
       setError("");
-      const data = await getCohorts();
+      const data = await getCohorts(filters);
       const items = Array.isArray(data) ? data : (data?.items ?? []);
       setCohorts(items);
     } catch (err) {
@@ -71,24 +77,6 @@ export default function Cohorts() {
       setLoading(false);
     }
   }
-
-  const filteredCohorts = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    return cohorts.filter((cohort) => {
-      const matchesSearch =
-        !term ||
-        [String(cohort.year), String(cohort.semester), cohort.notes || ""]
-          .join(" ")
-          .toLowerCase()
-          .includes(term);
-
-      const matchesStatus =
-        filterStatus === "all" ||
-        cohort.status?.toLowerCase() === filterStatus.toLowerCase();
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [cohorts, searchTerm, filterStatus]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -129,7 +117,13 @@ export default function Cohorts() {
       await createCohort(payload);
       showToast("Cohorte creado exitosamente", "success");
       setIsDialogOpen(false);
-      loadCohorts();
+      loadCohorts({
+        year: filterYear || undefined,
+        semester: filterSemester || undefined,
+        status: filterStatus || undefined,
+        page: 1,
+        page_size: 20,
+      });
     } catch (err) {
       showToast(err?.message || "Error al crear el cohorte", "error");
     } finally {
@@ -171,54 +165,44 @@ export default function Cohorts() {
       </Box>
 
       <Paper sx={{ p: 2, borderRadius: 2, mb: 3 }}>
-        <Box sx={{ display: "flex", gap: 2, alignItems: "stretch" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            alignItems: "stretch",
+            flexWrap: "wrap",
+          }}
+        >
           <TextField
-            label="Buscar"
-            placeholder="Buscar por año o notas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            fullWidth
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                height: 60,
-              },
-            }}
+            label="Año"
+            type="number"
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            sx={{ width: 180 }}
           />
+
           <TextField
             select
-            label="Filtrar por estado"
+            label="Semestre"
+            value={filterSemester}
+            onChange={(e) => setFilterSemester(e.target.value)}
+            sx={{ width: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value={1}>1° Semestre</MenuItem>
+            <MenuItem value={2}>2° Semestre</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            label="Estado"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            variant="filled"
-            sx={{
-              width: 280,
-              "& .MuiFilledInput-root": {
-                height: 60,
-                backgroundColor: "#f5f5f5",
-                "&:hover": {
-                  backgroundColor: "#f5f5f5",
-                },
-                "&.Mui-focused": {
-                  backgroundColor: "#f5f5f5",
-                },
-                "&:before": {
-                  borderBottom: "1px solid #BDBDBD",
-                },
-                "&:after": {
-                  borderBottom: "2px solid #1976d2",
-                },
-              },
-              "& .MuiInputLabel-root": {
-                color: "#1976d2",
-              },
-              "& .MuiInputLabel-root.Mui-focused": {
-                color: "#1976d2",
-              },
-            }}
+            sx={{ width: 220 }}
           >
-            <MenuItem value="all">Todos</MenuItem>
-            <MenuItem value="active">Activo</MenuItem>
-            <MenuItem value="inactive">Inactivo</MenuItem>
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="Active">Activo</MenuItem>
+            <MenuItem value="Inactive">Inactivo</MenuItem>
           </TextField>
         </Box>
       </Paper>
@@ -234,7 +218,7 @@ export default function Cohorts() {
           <Box sx={{ py: 8, display: "flex", justifyContent: "center" }}>
             <CircularProgress />
           </Box>
-        ) : filteredCohorts.length === 0 ? (
+        ) : cohorts.length === 0 ? (
           <EmptyState
             title="No hay cohortes"
             description="No se encontraron cohortes cargados en el sistema."
@@ -261,7 +245,7 @@ export default function Cohorts() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredCohorts.map((cohort) => (
+                {cohorts.map((cohort) => (
                   <TableRow key={cohort.id} hover>
                     <TableCell sx={{ fontWeight: "medium" }}>
                       {cohort.year}
