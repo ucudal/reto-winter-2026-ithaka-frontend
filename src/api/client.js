@@ -88,10 +88,10 @@ apiClient.interceptors.response.use(
 
 export async function cachedGet(url, config = {}, ttlInMinutes = 15) {
   const cacheKey = `cache_${url}`
-  const cachedData = getCache(cacheKey)
+  const cached = getCache(cacheKey)
 
-  if (cachedData !== null) {
-    return { data: cachedData, fromCache: true }
+  if (cached.hit) {
+    return { data: cached.data, fromCache: true }
   }
 
   const response = await apiClient.get(url, config)
