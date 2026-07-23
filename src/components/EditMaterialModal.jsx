@@ -8,6 +8,7 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material'
+import { isValidUrl } from '../utils/validators'
 
 const emptyForm = {
   stage_id: '',
@@ -18,6 +19,7 @@ const emptyForm = {
 function EditMaterialModal({ open, material, onSave, onClose }) {
   const titleId = useId()
   const [formData, setFormData] = useState(emptyForm)
+  const [errors, setErrors] = useState({})
 
   useEffect(() => {
     if (material) {
@@ -26,16 +28,28 @@ function EditMaterialModal({ open, material, onSave, onClose }) {
         title: material.title ?? '',
         url: material.url ?? '',
       })
+      setErrors({})
     }
   }, [material])
 
   const handleChange = (event) => {
     const { name, value } = event.target
     setFormData((currentForm) => ({ ...currentForm, [name]: value }))
+    if (errors[name]) {
+      setErrors((currentErrors) => ({ ...currentErrors, [name]: ''}))
+    }
   }
 
   const handleSubmit = (event) => {
     event.preventDefault()
+
+    if (!isValidUrl(formData.url)){
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        url: 'Ingresa una URL valida (debe empezar con http:// o https://)',
+      }))
+      return
+    }
 
     onSave?.({
       stage_id: Number(formData.stage_id),
@@ -53,7 +67,7 @@ function EditMaterialModal({ open, material, onSave, onClose }) {
       fullWidth
       maxWidth="sm"
     >
-      <Box component="form" onSubmit={handleSubmit}>
+      <Box component="form" onSubmit={handleSubmit} noValidate>
         <DialogTitle id={titleId}>Editar material</DialogTitle>
 
         <DialogContent
@@ -86,6 +100,8 @@ function EditMaterialModal({ open, material, onSave, onClose }) {
             onChange={handleChange}
             required
             fullWidth
+            error={!!errors.url}
+            helperText={errors.url}
           />
         </DialogContent>
 

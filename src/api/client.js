@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import { env } from '../config/env'
+import { getCache, setCache } from '../utils/cache'
 
 const AUTH_TOKEN_KEY = 'ithaka_auth_token'
 
@@ -84,3 +85,16 @@ apiClient.interceptors.response.use(
     return Promise.reject(normalizeError(error))
   },
 )
+
+export async function cachedGet(url, config = {}, ttlInMinutes = 15) {
+  const cacheKey = `cache_${url}`
+  const cached = getCache(cacheKey)
+
+  if (cached.hit) {
+    return { data: cached.data, fromCache: true }
+  }
+
+  const response = await apiClient.get(url, config)
+  setCache(cacheKey, response.data, ttlInMinutes)
+  return response
+}

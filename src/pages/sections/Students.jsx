@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
+
 import {
   Alert,
   Avatar,
   Box,
+  Breadcrumbs,
+  Button,
   Chip,
   CircularProgress,
   IconButton,
   InputAdornment,
+  Link,
   MenuItem,
   Paper,
   Stack,
@@ -18,22 +22,25 @@ import {
   TableRow,
   TextField,
   Typography,
-  Button,
 } from '@mui/material'
+
+import { Link as RouterLink } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
+import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 
 import { getStudents } from '../../api/endpoints/students'
+import EmptyState from '../../components/common/EmptyState'
 
 function Students() {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState('name')
 
   useEffect(() => {
     loadStudents()
@@ -42,77 +49,95 @@ function Students() {
   async function loadStudents() {
     try {
       setLoading(true)
-      setError('')
+      setError("")
 
       const data = await getStudents()
       const items = Array.isArray(data) ? data : data?.items ?? []
+
       setStudents(items)
     } catch (err) {
-      setError(err?.message || 'No se pudieron cargar los alumnos.')
+      setError(err?.message || "No se pudieron cargar los alumnos.")
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   const filteredStudents = useMemo(() => {
-    const term = search.toLowerCase().trim()
-
     return students.filter((student) => {
-      const matchesSearch =
-        !term ||
-        [
-          student?.name,
-          student?.email,
-          student?.major,
-          String(student?.group_id ?? ''),
-          String(student?.id ?? ''),
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(term)
+      const valueToSearch =
+        student[filter]?.toString().toLowerCase() || ''
 
-      const matchesFilter = filter === 'all' || filter === 'active'
-
-      return matchesSearch && matchesFilter
+      return valueToSearch.includes(search.toLowerCase())
     })
   }, [students, search, filter])
 
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        spacing={2}
-        sx={{ mb: 3 }}
+    <Box sx={{ width: '100%' }}>
+
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 1 }}
       >
-        <Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-            Inicio / Alumnos
-          </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 500 }}>
-            Alumnos
-          </Typography>
-        </Box>
+        <Link
+          component={RouterLink}
+          to="/"
+          underline="hover"
+          color="inherit"
+        >
+          Inicio
+        </Link>
+
+        <Typography color="text.primary">
+          Alumnos
+        </Typography>
+      </Breadcrumbs>
+
+
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          mb: 3,
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
+
+        <Typography variant="h4">
+          Alumnos
+        </Typography>
+
 
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          sx={{ px: 2.5, boxShadow: 2, textTransform: 'uppercase' }}
+          sx={{ height: 40 }}
         >
           Nuevo alumno
         </Button>
-      </Stack>
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="stretch">
+      </Box>
+
+
+      <Paper sx={{ p: 2, borderRadius: 2 }}>
+
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            mb: 3,
+            alignItems: 'stretch',
+          }}
+        >
+
           <TextField
-            fullWidth
             label="Buscar"
+            placeholder="Ingrese un dato"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Ingrese un dato"
-            size="small"
+            fullWidth
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -120,123 +145,255 @@ function Students() {
                 </InputAdornment>
               ),
             }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: 60,
+              },
+            }}
           />
+
 
           <TextField
             select
-            fullWidth
-            size="small"
             label="Filtrar por"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            sx={{ maxWidth: { md: 220 } }}
+            sx={{
+              width: 280,
+              '& .MuiOutlinedInput-root': {
+                height: 60,
+              },
+            }}
           >
-            <MenuItem value="all">Todos</MenuItem>
-            <MenuItem value="active">Activo</MenuItem>
+
+            <MenuItem value="name">
+              Nombre
+            </MenuItem>
+
+            <MenuItem value="email">
+              Email
+            </MenuItem>
+
+            <MenuItem value="major">
+              Carrera
+            </MenuItem>
+
           </TextField>
-        </Stack>
-      </Paper>
 
-      {error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      ) : null}
+        </Box>
 
-      <Paper sx={{ overflow: 'hidden' }}>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+
         {loading ? (
-          <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+
+          <Box
+            sx={{
+              py: 8,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
             <CircularProgress />
           </Box>
+
         ) : (
+
           <TableContainer>
-            <Table sx={{ minWidth: 750 }}>
+
+            <Table>
+
               <TableHead>
+
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Alumno</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Carrera</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Estado de cuenta</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                  <TableCell align="right" />
+
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Usuario
+                  </TableCell>
+
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Email
+                  </TableCell>
+
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Carrera
+                  </TableCell>
+
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Estado
+                  </TableCell>
+
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    ID
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{ fontWeight: 'bold' }}
+                  >
+                    Acciones
+                  </TableCell>
+
                 </TableRow>
+
               </TableHead>
 
+
               <TableBody>
+
                 {filteredStudents.length > 0 ? (
+
                   filteredStudents.map((student) => {
-                    const initials = (student?.name || 'U')
-                      .split(' ')
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((part) => part[0])
-                      .join('')
-                      .toUpperCase()
+
+                    const initials =
+                      (student.name || 'U')
+                        .split(' ')
+                        .filter(Boolean)
+                        .map((part) => part[0])
+                        .join('')
+                        .toUpperCase()
+
 
                     return (
-                      <TableRow key={student.id} hover>
+
+                      <TableRow
+                        key={student.id}
+                        hover
+                      >
+
                         <TableCell>
-                          <Stack direction="row" spacing={1.5} alignItems="center">
-                            <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: 'grey.400' }}>
+
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1.5,
+                            }}
+                          >
+
+                            <Avatar
+                              sx={{
+                                bgcolor: 'action.selected',
+                                color: 'text.secondary',
+                                width: 32,
+                                height: 32,
+                                fontSize: '0.875rem',
+                              }}
+                            >
                               {initials}
                             </Avatar>
-                            <Typography variant="body2">{student.name || '-'}</Typography>
-                          </Stack>
+
+
+                            <Typography
+                              variant="body2"
+                              fontWeight="medium"
+                            >
+                              {student.name || '-'}
+                            </Typography>
+
+                          </Box>
+
                         </TableCell>
 
-                        <TableCell>{student.email || '-'}</TableCell>
 
                         <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <SchoolOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                            <Typography variant="body2">{student.major || '-'}</Typography>
-                          </Stack>
+                          {student.email || '-'}
                         </TableCell>
 
+
                         <TableCell>
+
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+
+                            <SchoolOutlinedIcon
+                              sx={{
+                                fontSize: 18,
+                                color: 'text.secondary',
+                              }}
+                            />
+
+                            <Typography variant="body2">
+                              {student.major || '-'}
+                            </Typography>
+
+                          </Stack>
+
+                        </TableCell>
+
+
+                        <TableCell>
+
                           <Chip
                             label="Activo"
                             size="small"
-                            sx={{
-                              height: 24,
-                              borderRadius: 999,
-                              bgcolor: 'grey.100',
-                              color: 'text.primary',
-                            }}
+                            color="success"
                           />
+
                         </TableCell>
 
-                        <TableCell>{student.id ?? '-'}</TableCell>
+
+                        <TableCell>
+                          {student.id ?? '-'}
+                        </TableCell>
+
 
                         <TableCell align="right">
-                          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                            <IconButton size="small" aria-label="Editar alumno">
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              aria-label="Eliminar alumno"
-                              color="default"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Stack>
+
+                          <IconButton
+                            size="small"
+                            color="primary"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+
+
+                          <IconButton
+                            size="small"
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+
                         </TableCell>
+
                       </TableRow>
+
                     )
+
                   })
+
                 ) : (
+
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                      No hay alumnos para mostrar.
+                    <TableCell colSpan={6}>
+                      <EmptyState
+                        title="No hay alumnos para mostrar"
+                        description="No se encontraron alumnos que coincidan con la búsqueda."
+                      />
                     </TableCell>
                   </TableRow>
+
                 )}
+
               </TableBody>
+
             </Table>
+
           </TableContainer>
+
         )}
+
       </Paper>
+
     </Box>
   )
 }

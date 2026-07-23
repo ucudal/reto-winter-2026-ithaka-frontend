@@ -1,7 +1,9 @@
+import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import MenuIcon from "@mui/icons-material/Menu";
-import SettingsIcon from "@mui/icons-material/Settings";
-import PersonIcon from "@mui/icons-material/Person";
-import Logout from "@mui/icons-material/Logout";
+import LogoutIcon from "@mui/icons-material/Logout";
+import SettingsIcon from '@mui/icons-material/Settings';
+import PersonIcon from '@mui/icons-material/Person';
 
 import {
   AppBar,
@@ -13,19 +15,38 @@ import {
   MenuItem,
   Toolbar,
   ListItemText,
+  Typography,
 } from "@mui/material";
 
 import logo from "../assets/img/logo-bw.png";
 import personFilled from "../assets/img/userFilled.png";
+import UserProfileDrawer from "./UserProfileDrawer";
+import { usersMock } from "../utils/userData";
 
-function Topbar({
-  userName,
-  onMenuClick,
-  userMenuAnchor,
-  onUserMenuOpen,
-  onUserMenuClose,
-  onLogout,
-}) {
+function Topbar({ onMenuClick, onLogout }) {
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { user } = useAuth();
+
+  const currentUser = user || usersMock?.tutor;
+
+  const handleOpenUserMenu = (event) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleOpenProfileDrawer = () => {
+    handleCloseUserMenu();
+    setIsDrawerOpen(true);
+  };
+
+  const handleCloseProfileDrawer = () => {
+    setIsDrawerOpen(false);
+  };
+
   return (
     <>
       <AppBar
@@ -61,7 +82,7 @@ function Topbar({
           </Box>
 
           <IconButton
-            onClick={onUserMenuOpen}
+            onClick={handleOpenUserMenu}
             aria-label="Abrir menú de usuario"
             sx={{
               bgcolor: "grey.300",
@@ -89,48 +110,51 @@ function Topbar({
       <Menu
         anchorEl={userMenuAnchor}
         open={Boolean(userMenuAnchor)}
-        onClose={onUserMenuClose}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
+        onClose={handleCloseUserMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        PaperProps={{
+          sx: { width: 220, mt: 1 },
         }}
       >
-        <MenuItem disabled sx={{ minWidth: 220, opacity: 1 }}>
-          <ListItemText
-            primary={userName}
-            secondary="Usuario mockeado"
-            primaryTypographyProps={{ color: "text.primary" }}
-            secondaryTypographyProps={{ color: "text.secondary" }}
-          />
-        </MenuItem>
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography variant="subtitle2" fontWeight="bold">
+            {currentUser?.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" display="block">
+            {currentUser?.email}
+          </Typography>
+        </Box>
 
         <Divider />
 
-        <MenuItem onClick={onUserMenuClose}>
+        <MenuItem onClick={handleCloseUserMenu}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
-          Ajustes
+          <ListItemText primary="Ajustes"/>
         </MenuItem>
 
-        <MenuItem onClick={onUserMenuClose}>
+        <MenuItem onClick={handleOpenProfileDrawer}>
           <ListItemIcon>
             <PersonIcon fontSize="small" />
           </ListItemIcon>
-          Perfil
+          <ListItemText primary="Perfil"/>
         </MenuItem>
 
         <MenuItem onClick={onLogout}>
           <ListItemIcon>
-            <Logout fontSize="small" />
+            <LogoutIcon fontSize="small" />
           </ListItemIcon>
-          Cerrar sesión
+          <ListItemText primary="Cerrar sesión"/>
         </MenuItem>
       </Menu>
+
+      <UserProfileDrawer
+        user={currentUser}
+        open={isDrawerOpen}
+        onClose={handleCloseProfileDrawer}
+      />
     </>
   );
 }
