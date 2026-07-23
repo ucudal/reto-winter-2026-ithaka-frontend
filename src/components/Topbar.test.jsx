@@ -4,6 +4,12 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Topbar from './Topbar'
 
+vi.mock("../context/AuthContext", () => ({
+  useAuth: () => ({
+    user: { name: "Ana", email: "ana@ucu.edu.uy", role: "Student" },
+  }),
+}));
+
 function TopbarWithState(props) {
   const [anchor, setAnchor] = useState(null)
 
@@ -39,7 +45,7 @@ describe('Topbar', () => {
   it('does not show the user menu items before opening it', () => {
     render(<Topbar userName="Ana" userMenuAnchor={null} />)
 
-    expect(screen.queryByText('Logout')).not.toBeInTheDocument()
+    expect(screen.queryByText('Cerrar sesión')).not.toBeInTheDocument()
   })
 
   it('shows the user name and a logout option after opening the menu', async () => {
@@ -50,7 +56,7 @@ describe('Topbar', () => {
     await user.click(screen.getByLabelText('Abrir menú de usuario'))
 
     expect(screen.getByText('Ana')).toBeInTheDocument()
-    expect(screen.getByText('Logout')).toBeInTheDocument()
+    expect(screen.getByText('Cerrar sesión')).toBeInTheDocument()
   })
 
   it('calls onLogout when clicking the logout option', async () => {
@@ -60,7 +66,7 @@ describe('Topbar', () => {
     render(<TopbarWithState userName="Ana" onLogout={onLogout} />)
 
     await user.click(screen.getByLabelText('Abrir menú de usuario'))
-    await user.click(screen.getByText('Logout'))
+    await user.click(screen.getByText('Cerrar sesión'))
 
     expect(onLogout).toHaveBeenCalledTimes(1)
   })
