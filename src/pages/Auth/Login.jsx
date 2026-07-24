@@ -10,14 +10,9 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-
+import { loginUser } from "../../api/endpoints/auth";
 import "./Login.css";
 import logo from "../../assets/img/logo.png";
-
-const USER = {
-  email: import.meta.env.VITE_MOCK_USER_EMAIL,
-  password: import.meta.env.VITE_MOCK_USER_PASSWORD,
-};
 
 const inputSx = {
   "& .MuiOutlinedInput-root": {
@@ -34,7 +29,6 @@ const inputSx = {
     transition: "background-color 5000s ease-in-out 0s",
   },
 };
-
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -45,6 +39,7 @@ export default function Login() {
 
   const [errors, setErrors] = useState({});
   const [loginError, setLoginError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const validate = () => {
     const e = {};
@@ -64,32 +59,21 @@ export default function Login() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (ev) => {
+  const handleSubmit = async (ev) => {
     ev.preventDefault();
 
     if (!validate()) return;
 
-    if (password === USER.password) {
-      let role = "Coordinator";
-      let name = "Carlos Rodríguez";
-
-      if (email === "tutor@gmail.com") {
-        role = "BusinessTutor";
-        name = "María Pérez";
-      } else if (email === "student@gmail.com") {
-        role = "Student";
-        name = "Juan Pérez";
-      }
-
-      login({
-        id: role === "Coordinator" ? 1 : role === "Student" ? 101 : 8,
-        name,
-        email,
-        role,
-      });
+    try {
+      setSubmitting(true);
+      setLoginError("");
+      const data = await loginUser(email, password);
+      login(data.token, data.user);
       navigate("/dashboard");
-    } else {
-      setLoginError("Usuario o contraseña incorrectos");
+    } catch (err) {
+      setLoginError(err?.message || "Usuario o contraseña incorrectos");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -134,6 +118,7 @@ export default function Login() {
             onChange={(e) => setEmail(e.target.value)}
             error={!!errors.email}
             helperText={errors.email}
+            disabled={submitting}
             sx={inputSx}
           />
 
@@ -146,6 +131,7 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             error={!!errors.password}
             helperText={errors.password}
+            disabled={submitting}
             sx={inputSx}
           />
 
@@ -154,8 +140,9 @@ export default function Login() {
             variant="contained"
             type="submit"
             className="login-button"
+            disabled={submitting}
           >
-            CONTINUAR
+            {submitting ? "Cargando..." : "CONTINUAR"}
           </Button>
           <Typography
             variant="body2"
