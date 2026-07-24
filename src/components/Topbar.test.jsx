@@ -1,8 +1,21 @@
-import { useState } from 'react'
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import Topbar from './Topbar'
+import { useState } from "react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import { MemoryRouter } from "react-router-dom";
+import Topbar from "./Topbar";
+import { ThemeModeProvider } from "../context/ThemeContext";
+
+function renderWithTheme(ui) {
+  return render(
+    <MemoryRouter>
+      <ThemeModeProvider>
+        {ui}
+      </ThemeModeProvider>
+    </MemoryRouter>
+  );
+}
 
 vi.mock("../context/AuthContext", () => ({
   useAuth: () => ({
@@ -11,7 +24,7 @@ vi.mock("../context/AuthContext", () => ({
 }));
 
 function TopbarWithState(props) {
-  const [anchor, setAnchor] = useState(null)
+  const [anchor, setAnchor] = useState(null);
 
   return (
     <Topbar
@@ -20,54 +33,72 @@ function TopbarWithState(props) {
       onUserMenuOpen={(event) => setAnchor(event.currentTarget)}
       onUserMenuClose={() => setAnchor(null)}
     />
-  )
+  );
 }
 
-describe('Topbar', () => {
-  it('renders the menu button and the user avatar button', () => {
-    render(<Topbar userName="Ana" userMenuAnchor={null} />)
+describe("Topbar", () => {
+  it("renders the menu button and the user avatar button", () => {
+    renderWithTheme(
+      <Topbar userName="Ana" userMenuAnchor={null} />
+    );
 
-    expect(screen.getByLabelText('Abrir menú lateral')).toBeInTheDocument()
-    expect(screen.getByLabelText('Abrir menú de usuario')).toBeInTheDocument()
-  })
+    expect(screen.getByLabelText("Abrir menú lateral")).toBeInTheDocument();
+    expect(screen.getByLabelText("Abrir menú de usuario")).toBeInTheDocument();
+  });
 
-  it('calls onMenuClick when the hamburger button is clicked', async () => {
-    const user = userEvent.setup()
-    const onMenuClick = vi.fn()
+  it("calls onMenuClick when the hamburger button is clicked", async () => {
+    const user = userEvent.setup();
+    const onMenuClick = vi.fn();
 
-    render(<Topbar userName="Ana" userMenuAnchor={null} onMenuClick={onMenuClick} />)
+    renderWithTheme(
+      <Topbar
+        userName="Ana"
+        userMenuAnchor={null}
+        onMenuClick={onMenuClick}
+      />
+    );
 
-    await user.click(screen.getByLabelText('Abrir menú lateral'))
+    await user.click(screen.getByLabelText("Abrir menú lateral"));
 
-    expect(onMenuClick).toHaveBeenCalledTimes(1)
-  })
+    expect(onMenuClick).toHaveBeenCalledTimes(1);
+  });
 
-  it('does not show the user menu items before opening it', () => {
-    render(<Topbar userName="Ana" userMenuAnchor={null} />)
+  it("does not show the user menu items before opening it", () => {
+    renderWithTheme(
+      <Topbar userName="Ana" userMenuAnchor={null} />
+    );
 
-    expect(screen.queryByText('Cerrar sesión')).not.toBeInTheDocument()
-  })
 
-  it('shows the user name and a logout option after opening the menu', async () => {
-    const user = userEvent.setup()
+    expect(screen.queryByText("Cerrar sesión")).not.toBeInTheDocument();
+  });
 
-    render(<TopbarWithState userName="Ana" />)
+  it("shows the user name and a logout option after opening the menu", async () => {
+    const user = userEvent.setup();
 
-    await user.click(screen.getByLabelText('Abrir menú de usuario'))
+    renderWithTheme(
+      <TopbarWithState userName="Ana" />
+    );
 
-    expect(screen.getByText('Ana')).toBeInTheDocument()
-    expect(screen.getByText('Cerrar sesión')).toBeInTheDocument()
-  })
+    await user.click(screen.getByLabelText("Abrir menú de usuario"));
 
-  it('calls onLogout when clicking the logout option', async () => {
-    const user = userEvent.setup()
-    const onLogout = vi.fn()
+    expect(screen.getByText("Ana")).toBeInTheDocument();
+    expect(screen.getByText("Cerrar sesión")).toBeInTheDocument();
+  });
 
-    render(<TopbarWithState userName="Ana" onLogout={onLogout} />)
+  it("calls onLogout when clicking the logout option", async () => {
+    const user = userEvent.setup();
+    const onLogout = vi.fn();
 
-    await user.click(screen.getByLabelText('Abrir menú de usuario'))
-    await user.click(screen.getByText('Cerrar sesión'))
+    renderWithTheme(
+      <TopbarWithState
+        userName="Ana"
+        onLogout={onLogout}
+      />
+    );
 
-    expect(onLogout).toHaveBeenCalledTimes(1)
-  })
-})
+    await user.click(screen.getByLabelText("Abrir menú de usuario"));
+    await user.click(screen.getByText("Cerrar sesión"));
+
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+});
