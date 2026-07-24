@@ -1,0 +1,154 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  font-family: inherit;
+}
+
+.login-container {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: url("../../assets/img/background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-sizing: border-box;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 32px 24px;
+  border-radius: 20px;
+  box-shadow: 0 20px 45px rgba(17, 39, 77, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-sizing: border-box;
+}
+
+.login-logo-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.login-logo {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.login-title {
+  margin-bottom: 0;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.login-alert {
+  margin-bottom: 0;
+}
+
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-card .MuiTextField-root {
+  margin: 0;
+}
+
+.login-button {
+  margin-top: 16px !important;
+  height: 48px;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em;
+  box-shadow: 0 10px 20px rgba(25, 118, 210, 0.2) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(25, 118, 210, 0.25) !important;
+}
+
+.login-register {
+  margin-top: 14px !important;
+}
+
+.login-register-link {
+  text-decoration: underline;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .login-card {
+    max-width: 100%;
+    padding: 24px 20px 20px;
+  }
+
+  .login-logo {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 380px) {
+  .login-container {
+    padding: 12px;
+  }
+
+  .login-card {
+    padding: 20px 18px 18px;
+    border-radius: 16px;
+    gap: 12px;
+  }
+
+  .login-logo {
+    max-width: 180px;
+  }
+
+  .login-title {
+    font-size: 1.1rem;
+  }
+
+  .login-button {
+    height: 44px;
+  }
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .login-container {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .login-card {
+    gap: 10px;
+    padding: 16px 24px;
+  }
+
+  .login-logo {
+    max-width: 140px;
+  }
+
+  .login-logo-wrap {
+    padding-top: 0;
+  }
+}

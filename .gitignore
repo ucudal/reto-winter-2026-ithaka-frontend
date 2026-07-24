@@ -1,8 +1,38 @@
-node_modules
-dist
-dist-ssr
+# dependencies
+node_modules/
+
+# build output
+dist/
+dist-ssr/
+build/
 *.local
 
+# typescript incremental build cache
+*.tsbuildinfo
+
+# env
 .env
 .env.*
 !.env.example
+
+k8s/secret.yaml
+k8s/*-secret.yaml
+
+# SonarQube (scanner) y reportes de cobertura
+.scannerwork/
+coverage/
+
+# logs
+*.log
+npm-debug.log*
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# vite
+.vite/
+
+# Kanban
+Kanban_Frontend_Ithaka.md

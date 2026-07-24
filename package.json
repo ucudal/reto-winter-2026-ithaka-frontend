@@ -6,17 +6,32 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-react": "^11.2.0",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^6.5.0",
     "@mui/material": "^6.1.6",
+    "axios": "^1.18.1",
+    "dompurify": "^3.4.12",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-error-boundary": "^6.1.2",
+    "react-quill": "^2.0.0",
+    "react-router": "^6.30.4",
+    "react-router-dom": "^6.30.4"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^6.0.3",
-    "vite": "^8.1.5"
+    "jsdom": "^29.1.1",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
   }
 }
