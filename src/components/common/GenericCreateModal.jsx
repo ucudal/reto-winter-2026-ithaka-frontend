@@ -10,6 +10,8 @@ import {
   Grid,
 } from "@mui/material";
 
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 export default function GenericCreateModal({
   open,
@@ -140,7 +142,35 @@ export default function GenericCreateModal({
             helperText={errors[field.name]}
           />
         );
+        case "editor":
+          return (
+            <>
+              <TextField
+                label={field.label}
+                value=""
+                sx={{ display: "none" }}
+              />
 
+              <ReactQuill
+                theme="snow"
+                value={formData[field.name] ?? ""}
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    [field.name]: value,
+                  }))
+                }
+                modules={{
+                  toolbar: [
+                    ["bold", "italic", "underline"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    ["link"],
+                    ["clean"],
+                  ],
+                }}
+              />
+            </>
+          );
 
       default:
 
