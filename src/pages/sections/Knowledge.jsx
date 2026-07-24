@@ -23,11 +23,14 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Breadcrumbs,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import GridViewIcon from "@mui/icons-material/GridView";
 import ViewListIcon from "@mui/icons-material/ViewList";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import { Link as RouterLink } from "react-router-dom";
 
 // import { apiClient } from '../../api/client' // Línea para llamar a la API real, actualmente comentada para usar datos mockeados
 import ConfirmModal from "../../components/ConfirmModal";
@@ -160,6 +163,22 @@ function Knowledge() {
 
   return (
     <Box>
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 1 }}
+      >
+        <Link
+          component={RouterLink}
+          to="/"
+          underline="hover"
+          color="inherit"
+        >
+          Inicio
+        </Link>
+
+        <Typography color="text.primary">Materiales</Typography>
+      </Breadcrumbs>
+
       <Box
         sx={{
           display: "flex",
