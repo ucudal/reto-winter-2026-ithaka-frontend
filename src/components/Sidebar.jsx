@@ -15,13 +15,15 @@ import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import TaskIcon from "@mui/icons-material/Task";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Sidebar({ open, variant = "permanent", onClose, onNavigate }) {
   const location = useLocation();
+  const { user } = useAuth();
   const isTemporary = variant === "temporary";
 
   const navItem = (to, label, Icon) => (
@@ -54,6 +56,12 @@ export default function Sidebar({ open, variant = "permanent", onClose, onNaviga
         {navItem("/deliverables", "Entregables", TaskIcon)}
 
       </List>
+
+      {user?.role === "Coordinator" ? (
+        <List subheader={<ListSubheader component="div">Administración</ListSubheader>}>
+          {navItem("/users", "Usuarios", ManageAccountsIcon)}
+        </List>
+      ) : null}
 
       <List subheader={<ListSubheader component="div">Herramientas</ListSubheader>}>
         {navItem("/templates", "Templates", AssignmentOutlinedIcon)}
