@@ -55,6 +55,10 @@ export default function Cohorts() {
   });
 
   useEffect(() => {
+    if (filterYear && filterYear.length < 3) {
+      return;
+    }
+
     loadCohorts({
       year: filterYear || undefined,
       semester: filterSemester || undefined,
@@ -175,7 +179,7 @@ export default function Cohorts() {
         >
           <TextField
             label="Año"
-            type="number"
+            type="text"
             value={filterYear}
             onChange={(e) => setFilterYear(e.target.value)}
             sx={{ width: 180 }}
