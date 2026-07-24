@@ -7,11 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test" : "vitest"
+    "test": "vitest"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@fullcalendar/react": "^7.0.1",
     "@mui/icons-material": "^6.5.0",
     "@mui/material": "^6.1.6",
     "axios": "^1.18.1",
@@ -20,15 +21,16 @@
     "react-dom": "^18.3.1",
     "react-error-boundary": "^6.1.2",
     "react-router": "^6.30.4",
-    "react-router-dom": "^6.30.4"
+    "react-router-dom": "^6.30.4",
+    "temporal-polyfill": "^1.0.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.0",
-    "@testing-library/react" : "^16.3.2",
-    "@testing-library/user-event" : "^14.6.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^6.0.3",
-    "jsdom" : "^29.1.1",
+    "jsdom": "^29.1.1",
     "vite": "^8.1.5",
-    "vitest" : "^4.1.10"
+    "vitest": "^4.1.10"
   }
 }
