@@ -87,7 +87,10 @@ apiClient.interceptors.response.use(
 )
 
 export async function cachedGet(url, config = {}, ttlInMinutes = 15) {
-  const cacheKey = `cache_${url}`
+  const params = config?.params
+    ? JSON.stringify(config.params)
+    : "";
+  const cacheKey = `cache_${url}_${params}`;
   const cached = getCache(cacheKey)
 
   if (cached.hit) {

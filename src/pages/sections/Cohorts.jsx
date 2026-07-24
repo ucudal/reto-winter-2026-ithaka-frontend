@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -37,7 +37,6 @@ import { Link as RouterLink } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import SearchIcon from "@mui/icons-material/Search";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -54,8 +53,9 @@ export default function Cohorts() {
   const [error, setError] = useState("");
   const [view, setView] = useState("list");
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterYear, setFilterYear] = useState("");
+  const [filterSemester, setFilterSemester] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
   // State for Create Cohort Dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -69,14 +69,24 @@ export default function Cohorts() {
   });
 
   useEffect(() => {
-    loadCohorts();
-  }, []);
+    if (filterYear && filterYear.length < 3) {
+      return;
+    }
 
-  async function loadCohorts() {
+    loadCohorts({
+      year: filterYear || undefined,
+      semester: filterSemester || undefined,
+      status: filterStatus || undefined,
+      page: 1,
+      page_size: 20,
+    });
+  }, [filterYear, filterSemester, filterStatus]);
+
+  async function loadCohorts(filters = {}) {
     try {
       setLoading(true);
       setError("");
-      const data = await getCohorts();
+      const data = await getCohorts(filters);
       const items = Array.isArray(data) ? data : (data?.items ?? []);
       setCohorts(items);
     } catch (err) {
@@ -85,24 +95,6 @@ export default function Cohorts() {
       setLoading(false);
     }
   }
-
-  const filteredCohorts = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    return cohorts.filter((cohort) => {
-      const matchesSearch =
-        !term ||
-        [String(cohort.year), String(cohort.semester), cohort.notes || ""]
-          .join(" ")
-          .toLowerCase()
-          .includes(term);
-
-      const matchesStatus =
-        filterStatus === "all" ||
-        cohort.status?.toLowerCase() === filterStatus.toLowerCase();
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [cohorts, searchTerm, filterStatus]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -133,8 +125,14 @@ export default function Cohorts() {
     try {
       await createCohort(formData);
       showToast("Cohorte creado exitosamente", "success");
-      handleCloseDialog();
-      loadCohorts();
+      setIsDialogOpen(false);
+      loadCohorts({
+        year: filterYear || undefined,
+        semester: filterSemester || undefined,
+        status: filterStatus || undefined,
+        page: 1,
+        page_size: 20,
+      });
     } catch (err) {
       showToast(err?.message || "Error al crear el cohorte", "error");
     } finally {
@@ -148,12 +146,7 @@ export default function Cohorts() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">
           Inicio
         </Link>
         <Typography color="text.primary">Cohortes</Typography>
@@ -170,7 +163,7 @@ export default function Cohorts() {
         }}
       >
         <Typography variant="h4">Cohortes</Typography>
-        
+
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <FormControl size="small" sx={{ minWidth: 170 }}>
             <InputLabel id="cohorts-view-label">Vista</InputLabel>
@@ -207,64 +200,37 @@ export default function Cohorts() {
       </Box>
 
       <Paper sx={{ p: 2, borderRadius: 2, mb: 3 }}>
-        <Box sx={{ display: "flex", gap: 2, alignItems: "stretch" }}>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "stretch", flexWrap: "wrap" }}>
           <TextField
-            label="Buscar"
-            placeholder="Buscar por año o notas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                height: 60,
-              },
-            }}
+            label="Año"
+            type="text"
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            sx={{ width: 180 }}
           />
+
           <TextField
             select
-            label="Filtrar por estado"
+            label="Semestre"
+            value={filterSemester}
+            onChange={(e) => setFilterSemester(e.target.value)}
+            sx={{ width: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value={1}>1° Semestre</MenuItem>
+            <MenuItem value={2}>2° Semestre</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            label="Estado"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            variant="filled"
-            sx={{
-              width: 280,
-              "& .MuiFilledInput-root": {
-                height: 60,
-                bgcolor: "action.hover",
-                "&:hover": {
-                  bgcolor: "action.hover",
-                },
-                "&.Mui-focused": {
-                  bgcolor: "action.hover",
-                },
-                "&:before": {
-                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                },
-                "&:hover:not(.Mui-disabled):before": {
-                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                },
-                "&:after": {
-                  borderBottom: (theme) => `2px solid ${theme.palette.primary.main}`,
-                },
-              },
-              "& .MuiInputLabel-root": {
-                color: "primary.main",
-              },
-              "& .MuiInputLabel-root.Mui-focused": {
-                color: "primary.main",
-              },
-            }}
+            sx={{ width: 220 }}
           >
-            <MenuItem value="all">Todos</MenuItem>
-            <MenuItem value="active">Activo</MenuItem>
-            <MenuItem value="inactive">Inactivo</MenuItem>
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="Active">Activo</MenuItem>
+            <MenuItem value="Inactive">Inactivo</MenuItem>
           </TextField>
         </Box>
       </Paper>
@@ -279,7 +245,7 @@ export default function Cohorts() {
         <Box sx={{ py: 8, display: "flex", justifyContent: "center" }}>
           <CircularProgress />
         </Box>
-      ) : filteredCohorts.length === 0 ? (
+      ) : cohorts.length === 0 ? (
         <Paper variant="outlined" sx={{ borderRadius: 2 }}>
           <EmptyState
             title="No hay cohortes"
@@ -303,7 +269,7 @@ export default function Cohorts() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredCohorts.map((cohort) => (
+                {cohorts.map((cohort) => (
                   <TableRow key={cohort.id} hover>
                     <TableCell sx={{ fontWeight: "medium" }}>{cohort.year}</TableCell>
                     <TableCell>{cohort.semester}° semestre</TableCell>
@@ -346,14 +312,14 @@ export default function Cohorts() {
         </Paper>
       ) : (
         <Grid container spacing={3}>
-          {filteredCohorts.map((cohort) => (
+          {cohorts.map((cohort) => (
             <Grid item xs={12} sm={6} md={4} key={cohort.id}>
               <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography variant="h6" fontWeight="bold" gutterBottom>
                     Cohorte {cohort.year} - {cohort.semester}° Semestre
                   </Typography>
-                  
+
                   <Stack spacing={1} sx={{ mt: 2 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <CalendarTodayIcon sx={{ fontSize: 18, color: "text.secondary" }} />
@@ -398,12 +364,7 @@ export default function Cohorts() {
       )}
 
       {/* Create Cohort Dialog */}
-      <Dialog
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit}>
           <DialogTitle>Agregar nuevo cohorte</DialogTitle>
           <DialogContent dividers>
@@ -464,11 +425,7 @@ export default function Cohorts() {
             <Button onClick={handleCloseDialog} disabled={isCreating}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isCreating}
-            >
+            <Button type="submit" variant="contained" disabled={isCreating}>
               {isCreating ? "Guardando..." : "Guardar"}
             </Button>
           </DialogActions>
