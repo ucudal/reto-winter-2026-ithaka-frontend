@@ -177,7 +177,7 @@ export default function GroupCard({ group }) {
           variant="caption"
           color="primary"
         >
-          {group.currentStage.name}
+          {group.currentStage.name || "Sin etapa asignada"}
         </Typography>
 
         <LinearProgress
