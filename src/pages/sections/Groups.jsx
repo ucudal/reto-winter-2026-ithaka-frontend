@@ -19,6 +19,8 @@ import {
   TableHead,
   TableRow,
   Chip,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 
 import { Link as RouterLink } from "react-router-dom";
@@ -27,6 +29,7 @@ import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SearchIcon from "@mui/icons-material/Search";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import GroupsGrid from "../../components/GroupsGrid";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
@@ -282,12 +285,13 @@ function Groups() {
                 <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Etapa actual</TableCell>
                 <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Tutores</TableCell>
                 <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Estado</TableCell>
+                <TableCell align="right" sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredGroups.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                     <Typography color="text.secondary">No se encontraron grupos</Typography>
                   </TableCell>
                 </TableRow>
@@ -317,6 +321,13 @@ function Groups() {
                     </TableCell>
                     <TableCell>
                       <Chip label={group.status} size="small" color="default" />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Ver detalle">
+                        <IconButton size="small" color="primary" component={RouterLink} to={`/groups/${group.id}`}>
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))

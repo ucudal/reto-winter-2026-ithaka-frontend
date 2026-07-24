@@ -8,8 +8,12 @@ import {
   Box,
   Divider,
   LinearProgress,
+  IconButton,
+  Tooltip,
   getLinearProgressUtilityClass,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 export default function GroupCard({ group }) {
   
@@ -69,6 +73,19 @@ export default function GroupCard({ group }) {
           >
             E
           </Avatar>
+        </Box>
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+          <Tooltip title="Ver detalle">
+            <IconButton
+              size="small"
+              color="primary"
+              component={RouterLink}
+              to={`/groups/${group.id}`}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Box>
 
         
@@ -177,7 +194,7 @@ export default function GroupCard({ group }) {
           variant="caption"
           color="primary"
         >
-          {group.currentStage.name || "Sin etapa asignada"}
+          {group.currentStage?.name || "Sin etapa asignada"}
         </Typography>
 
         <LinearProgress

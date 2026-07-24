@@ -11,6 +11,7 @@ import Students from "../pages/sections/Students.jsx";
 import Cohorts from "../pages/sections/Cohorts.jsx";
 import CohortDetail from "../pages/sections/CohortDetail.jsx";
 import Groups from "../pages/sections/Groups.jsx";
+import GroupDetail from "../pages/sections/GroupDetail.jsx";
 import Templates from "../pages/sections/Templates.jsx";
 import TemplateDetail from "../pages/sections/TemplateDetail.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
@@ -100,6 +101,20 @@ const appRouter = createBrowserRouter([
                         ]}
                       >
                         <Groups />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/groups/:id",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                        ]}
+                      >
+                        <GroupDetail />
                       </RoleProtectedRoute>
                     ),
                   },
