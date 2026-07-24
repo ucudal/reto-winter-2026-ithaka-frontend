@@ -391,6 +391,15 @@ export const mockDashboardSummary = {
    * Escribir pruebas unitarias para las funciones de utilidad, formateadores de fechas, y el cliente de API (manejo de errores de FastAPI, etc.).
    * Escribir pruebas de componentes simples (como el `ConfirmModal`, `Topbar` o las redirecciones de `ProtectedRoute`).
 
+### [FRONTEND] Diseñar e implementar la pantalla de Ajustes (Únicamente Visual)
+**Labels:** `easy` `design`
+
+* **Descripción:** Diseñar e implementar la estructura visual de la pantalla de ajustes/configuración del perfil del usuario logueado en el sistema, sin conectar con lógica del backend de momento.
+* **Tareas específicas:**
+   * Maquetar la interfaz de Ajustes (`Settings.jsx`) incluyendo pestañas para información personal, seguridad (cambio de contraseña) y preferencias visuales.
+   * Utilizar componentes estándar de Material UI alineados con la estética premium y soporte para modo oscuro/claro.
+   * Conectar la pantalla a las rutas principales de React Router para navegación desde el menú de usuario.
+
 ---
 
 ## ✅ Hecho

@@ -32,11 +32,9 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-sizing: border-box;
-  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .login-logo-wrap {
@@ -57,7 +55,6 @@ html, body {
 .login-title {
   margin-bottom: 2px;
   font-weight: 700;
-  color: #0f172a;
   text-align: center;
   letter-spacing: 0.01em;
 }
@@ -74,20 +71,6 @@ html, body {
 
 .login-card .MuiTextField-root {
   margin: 0;
-}
-
-.login-card .MuiOutlinedInput-root {
-  border-radius: 12px;
-  background: rgba(248, 250, 252, 0.9);
-}
-
-.login-card .MuiOutlinedInput-root:hover fieldset {
-  border-color: #1976d2;
-}
-
-.login-card .MuiOutlinedInput-root.Mui-focused fieldset {
-  border-color: #1976d2;
-  border-width: 2px;
 }
 
 .login-button {
@@ -111,7 +94,6 @@ html, body {
 
 .login-register-link {
   text-decoration: underline;
-  color: #1976d2;
   font-weight: 500;
 }
 
