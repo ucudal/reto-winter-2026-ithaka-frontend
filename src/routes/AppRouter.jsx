@@ -61,14 +61,7 @@ const appRouter = createBrowserRouter([
                   {
                     path: "/workspace",
                     element: (
-                      <RoleProtectedRoute
-                        allowedRoles={[
-                          "Coordinator",
-                          "BusinessTutor",
-                          "TechnicalTutor",
-                          "Student",
-                        ]}
-                      >
+                      <RoleProtectedRoute allowedRoles={["Student"]}>
                         <StudentWorkspace />
                       </RoleProtectedRoute>
                     ),
