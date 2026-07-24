@@ -14,6 +14,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useParams } from "react-router-dom";
 
 const API_BASE = "/api";
@@ -102,7 +103,7 @@ export default function CohortLifecycleConfiguration() {
     }
   };
 
- const moveStage = async (index, direction) => {
+  const moveStage = async (index, direction) => {
   const newIndex = index + direction;
   if (newIndex < 0 || newIndex >= stages.length) return;
 
@@ -127,45 +128,64 @@ export default function CohortLifecycleConfiguration() {
     order: current.order,
   };
 
+  const results = await Promise.allSettled([
+    upsertStage(currentUpdated),
+    upsertStage(targetUpdated),
+  ]);
+
+  const firstOk = results[0].status === "fulfilled";
+  const secondOk = results[1].status === "fulfilled";
+
+  if (firstOk && secondOk) {
+    await loadStages();
+    setSaving(false);
+    return;
+  }
+
+  // Rollback best-effort
   try {
-    const results = await Promise.allSettled([
-      upsertStage(currentUpdated),
-      upsertStage(targetUpdated),
-    ]);
-
-    const firstOk = results[0].status === "fulfilled";
-    const secondOk = results[1].status === "fulfilled";
-
-    if (firstOk && secondOk) {
-      await loadStages();
-      return;
+    if (firstOk) {
+      await upsertStage(current);
     }
+
+    if (secondOk) {
+      await upsertStage(target);
+    }
+  } catch (rollbackError) {
+    console.error("Rollback failed", rollbackError);
+  }
+
+  setError(
+    "No se pudo reordenar la etapa. Se intentó restaurar el orden original. Verificá el estado e intentá nuevamente."
+  );
+
+  await loadStages();
+  setSaving(false);
+};
+
+  const deleteStage = async (stage) => {
+    setSaving(true);
+    setError(null);
 
     try {
-      if (firstOk) {
-        await upsertStage(current);
+      const res = await fetch(`${API_BASE}/stages`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error ${res.status} al eliminar la etapa`);
       }
 
-      if (secondOk) {
-        await upsertStage(target);
-      }
-    } catch (rollbackError) {
-      console.error("Rollback failed", rollbackError);
+      setStages((prev) => prev.filter((s) => s.id !== stage.id));
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo eliminar la etapa.");
+    } finally {
+      setSaving(false);
     }
-
-    setError(
-      "No se pudo reordenar la etapa. Se intentó restaurar el orden original. Verificá el estado e intentá nuevamente."
-    );
-
-    await loadStages();
-  } catch (err) {
-    console.error(err);
-    setError("Ocurrió un error inesperado al reordenar las etapas.");
-    await loadStages();
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
   const keyDateSummary = (stage) => {
     if (!stage.key_dates || stage.key_dates.length === 0) return null;
@@ -243,6 +263,13 @@ export default function CohortLifecycleConfiguration() {
                     onClick={() => moveStage(index, 1)}
                   >
                     <ArrowDownwardIcon />
+                  </IconButton>
+
+                  <IconButton
+                    disabled={saving}
+                    onClick={() => deleteStage(stage)}
+                  >
+                    <DeleteIcon />
                   </IconButton>
                 </Box>
               </Paper>
