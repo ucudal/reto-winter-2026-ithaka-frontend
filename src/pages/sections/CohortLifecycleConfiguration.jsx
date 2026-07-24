@@ -102,33 +102,70 @@ export default function CohortLifecycleConfiguration() {
     }
   };
 
-  const moveStage = async (index, direction) => {
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= stages.length) return;
+ const moveStage = async (index, direction) => {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= stages.length) return;
 
-    const current = stages[index];
-    const target = stages[newIndex];
+  const current = stages[index];
+  const target = stages[newIndex];
 
-    const updated = [...stages];
-    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-    setStages(updated);
+  // Optimistic UI
+  const updated = [...stages];
+  [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+  setStages(updated);
 
-    setSaving(true);
-    setError(null);
-    try {
-      await Promise.all([
-        upsertStage({ ...current, order: target.order }),
-        upsertStage({ ...target, order: current.order }),
-      ]);
-      await loadStages();
-    } catch (err) {
-      console.error(err);
-      setError("No se pudo reordenar las etapas. Reintentando cargar el estado actual.");
-      loadStages();
-    } finally {
-      setSaving(false);
-    }
+  setSaving(true);
+  setError(null);
+
+  const currentUpdated = {
+    ...current,
+    order: target.order,
   };
+
+  const targetUpdated = {
+    ...target,
+    order: current.order,
+  };
+
+  try {
+    const results = await Promise.allSettled([
+      upsertStage(currentUpdated),
+      upsertStage(targetUpdated),
+    ]);
+
+    const firstOk = results[0].status === "fulfilled";
+    const secondOk = results[1].status === "fulfilled";
+
+    if (firstOk && secondOk) {
+      await loadStages();
+      return;
+    }
+
+    try {
+      if (firstOk) {
+        await upsertStage(current);
+      }
+
+      if (secondOk) {
+        await upsertStage(target);
+      }
+    } catch (rollbackError) {
+      console.error("Rollback failed", rollbackError);
+    }
+
+    setError(
+      "No se pudo reordenar la etapa. Se intentó restaurar el orden original. Verificá el estado e intentá nuevamente."
+    );
+
+    await loadStages();
+  } catch (err) {
+    console.error(err);
+    setError("Ocurrió un error inesperado al reordenar las etapas.");
+    await loadStages();
+  } finally {
+    setSaving(false);
+  }
+};
 
   const keyDateSummary = (stage) => {
     if (!stage.key_dates || stage.key_dates.length === 0) return null;
