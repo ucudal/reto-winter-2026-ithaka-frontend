@@ -7,7 +7,6 @@ import {
   ListItemText,
   ListSubheader,
 } from "@mui/material";
-
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
@@ -16,9 +15,10 @@ import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
-
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Sidebar({
   open,
@@ -27,6 +27,7 @@ export default function Sidebar({
   onNavigate,
 }) {
   const location = useLocation();
+  const { user } = useAuth();
   const isTemporary = variant === "temporary";
 
   const navItem = (to, label, Icon) => (
@@ -39,7 +40,6 @@ export default function Sidebar({
       <ListItemIcon>
         <Icon />
       </ListItemIcon>
-
       <ListItemText primary={label} />
     </ListItemButton>
   );
@@ -71,6 +71,18 @@ export default function Sidebar({
         {navItem("/tutors", "Tutores", PeopleIcon)}
         {navItem("/students", "Alumnos", SchoolIcon)}
       </List>
+
+      {user?.role === "Coordinator" ? (
+        <List
+          subheader={
+            <ListSubheader component="div">
+              Administración
+            </ListSubheader>
+          }
+        >
+          {navItem("/users", "Usuarios", ManageAccountsIcon)}
+        </List>
+      ) : null}
 
       <List
         subheader={
