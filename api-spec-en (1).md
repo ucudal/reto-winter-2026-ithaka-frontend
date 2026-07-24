@@ -435,7 +435,7 @@ POST   /api/users
 
 // response
 {
-  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "token": "token",
   "user": {
     "id": 8,
     "name": "María Pérez",
