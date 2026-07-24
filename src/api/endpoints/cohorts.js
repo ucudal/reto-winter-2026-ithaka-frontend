@@ -1,8 +1,10 @@
 import { apiClient, cachedGet } from "../client";
 import { clearCache } from "../../utils/cache";
 
-export async function getCohorts() {
-  const response = await cachedGet("/api/cohorts");
+export async function getCohorts(filters = {}) {
+  const response = await cachedGet("/api/cohorts", {
+    params: filters,
+  });
   return response.data;
 }
 

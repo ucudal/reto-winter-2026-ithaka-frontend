@@ -1,11 +1,29 @@
 import { Box, Button, Typography, TextField, Paper } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../assets/img/logo.png'
 import './Register.css'
 
+const inputSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '12px',
+    bgcolor: 'action.hover',
+  },
+  '& .MuiOutlinedInput-input': {
+    color: 'text.primary',
+  },
+  '& .MuiOutlinedInput-input:-webkit-autofill': {
+    WebkitTextFillColor: (theme) => theme.palette.text.primary,
+    WebkitBoxShadow: (theme) =>
+      `0 0 0 1000px ${theme.palette.background.paper} inset`,
+    transition: 'background-color 5000s ease-in-out 0s',
+  },
+}
+
 function Register() {
   const navigate = useNavigate()
+  const theme = useTheme()
   const [formValues, setFormValues] = useState({
     name: '',
     email: '',
@@ -16,7 +34,7 @@ function Register() {
   const handleChange = (event) => {
     const { name, value } = event.target
 
-    if (name === 'name' && /\d/.test(value)) return // Validación para que el campo de nombre no acepte números
+    if (name === 'name' && /\d/.test(value)) return 
 
     setFormValues((currentValues) => ({
       ...currentValues,
@@ -30,8 +48,8 @@ function Register() {
 
   const validateForm = () => {
     const newErrors = {}
-    const fullNamePattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$/ // Validación para que el nombre completo tenga al menos dos palabras y no contenga números
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // Validación para correo electrónico
+    const fullNamePattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$/ 
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/ 
 
     if (!fullNamePattern.test(formValues.name.trim())) {
       newErrors.name = 'Debes ingresar un nombre completo válido.'
@@ -63,12 +81,24 @@ function Register() {
         noValidate
         className="login-card"
         elevation={5}
+        sx={{
+          bgcolor: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'rgba(19, 27, 44, 0.92)'
+              : 'rgba(255, 255, 255, 0.96)',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
       >
         <div className="login-logo-wrap">
           <img src={logo} alt="ITHAKA" className="login-logo" />
         </div>
 
-        <Typography variant="h5" className="login-title">
+        <Typography
+          variant="h5"
+          className="login-title"
+          style={{ color: theme.palette.text.primary }}
+        >
           Crear una cuenta
         </Typography>
 
@@ -82,6 +112,7 @@ function Register() {
           onChange={handleChange}
           error={Boolean(errors.name)}
           helperText={errors.name}
+          sx={inputSx}
         />
 
         <TextField
@@ -95,6 +126,7 @@ function Register() {
           onChange={handleChange}
           error={Boolean(errors.email)}
           helperText={errors.email}
+          sx={inputSx}
         />
 
         <TextField
@@ -108,15 +140,25 @@ function Register() {
           onChange={handleChange}
           error={Boolean(errors.password)}
           helperText={errors.password}
+          sx={inputSx}
         />
 
-        <Button type="submit" variant="contained" fullWidth className="login-button">
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          className="login-button"
+        >
           CONTINUAR
         </Button>
 
         <Typography variant="body2" align="center" className="login-register">
           ¿Ya tienes una cuenta?{' '}
-          <Link to="/login" className="login-register-link">
+          <Link
+            to="/login"
+            className="login-register-link"
+            style={{ color: theme.palette.secondary.main }}
+          >
             Iniciar sesión
           </Link>
         </Typography>

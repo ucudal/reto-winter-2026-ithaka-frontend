@@ -12,9 +12,11 @@ import Cohorts from "../pages/sections/Cohorts.jsx";
 import CohortDetail from "../pages/sections/CohortDetail.jsx";
 import Groups from "../pages/sections/Groups.jsx";
 import Templates from "../pages/sections/Templates.jsx";
+import TemplateDetail from "../pages/sections/TemplateDetail.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
 import TutorsCapacity from "../pages/sections/TutorsCapacity.jsx";
 import Knowledge from "../pages/sections/Knowledge.jsx";
+import Users from "../pages/sections/Users.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
 import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
@@ -52,6 +54,14 @@ const appRouter = createBrowserRouter([
                         ]}
                       >
                         <Dashboard />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/users",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <Users />
                       </RoleProtectedRoute>
                     ),
                   },
@@ -98,6 +108,14 @@ const appRouter = createBrowserRouter([
                     element: (
                       <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <Templates />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: '/templates/:id',
+                    element: (
+                      <RoleProtectedRoute allowedRoles={['Coordinator']}>
+                        <TemplateDetail />
                       </RoleProtectedRoute>
                     ),
                   },
