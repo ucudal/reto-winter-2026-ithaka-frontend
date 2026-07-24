@@ -20,6 +20,7 @@ import Settings from "../pages/sections/Settings.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
 import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
+import TutorDetail from "../pages/sections/TutorDetail";
 
 const appRouter = createBrowserRouter([
   {
@@ -130,6 +131,20 @@ const appRouter = createBrowserRouter([
                         ]}
                       >
                         <Tutors />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/tutors/:id",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                        ]}
+                      >
+                        <TutorDetail />
                       </RoleProtectedRoute>
                     ),
                   },
