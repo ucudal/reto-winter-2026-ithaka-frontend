@@ -29,9 +29,22 @@ import interactionPlugin from "@fullcalendar/react/interaction";
 import timeGridPlugin from "@fullcalendar/react/timegrid";
 import esLocale from "@fullcalendar/react/locales/es";
 import classicThemePlugin from "@fullcalendar/react/themes/classic";
+import ReactQuill from "react-quill";
 import "@fullcalendar/react/skeleton.css";
 import "@fullcalendar/react/themes/classic/theme.css";
 import "@fullcalendar/react/themes/classic/palette.css";
+import "react-quill/dist/quill.snow.css";
+
+const notesEditorModules = {
+  toolbar: [
+    ["bold", "italic", "underline"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link"],
+    ["clean"],
+  ],
+};
+
+const tabContentHeight = "min(480px, calc(100vh - 81px))";
 
 const calendarViews = [
   { value: "timeGridDay", label: "Día" },
@@ -143,6 +156,7 @@ const createMeetingForm = (
     participants: [],
     attendance: {},
     link: "",
+    notes: "",
   };
 };
 
@@ -166,6 +180,7 @@ const meetingToForm = (meeting) => {
     participants: details.participants ?? [],
     attendance: details.attendance ?? {},
     link: details.link ?? "",
+    notes: details.notes ?? "",
   };
 };
 
@@ -254,6 +269,16 @@ function Meetings() {
     calendarRef.current?.getApi().unselect();
   };
 
+  const handleDeleteMeeting = () => {
+    if (!selectedMeetingId) return;
+
+    // await apiClient.delete(`/api/meetings/${selectedMeetingId}`);
+    setMeetings((currentMeetings) =>
+      currentMeetings.filter((meeting) => meeting.id !== selectedMeetingId),
+    );
+    handleClosePopover();
+  };
+
   const handleFormChange = (event) => {
     const { name, value } = event.target;
 
@@ -261,6 +286,26 @@ function Meetings() {
       ...currentForm,
       [name]: value,
     }));
+  };
+
+  const handleNotesChange = (notes) => {
+    setMeetingForm((currentForm) => ({ ...currentForm, notes }));
+
+    if (selectedMeetingId) {
+      setMeetings((currentMeetings) =>
+        currentMeetings.map((meeting) =>
+          meeting.id === selectedMeetingId
+            ? {
+                ...meeting,
+                extendedProps: {
+                  ...meeting.extendedProps,
+                  notes,
+                },
+              }
+            : meeting,
+        ),
+      );
+    }
   };
 
   const handleAttendanceChange = (participant) => {
@@ -327,6 +372,7 @@ function Meetings() {
           ]),
         ),
         link: meetingForm.link.trim(),
+        notes: meetingForm.notes,
       },
     };
 
@@ -564,6 +610,8 @@ function Meetings() {
               flexDirection: "column",
               gap: 2,
               p: 2,
+              height: tabContentHeight,
+              boxSizing: "border-box",
               overflowY: "auto",
             }}
           >
@@ -730,8 +778,13 @@ function Meetings() {
             >
               {isViewingMeeting ? (
                 <>
-                  <Button type="button" onClick={handleClosePopover}>
-                    Cerrar
+                  <Button
+                    type="button"
+                    variant="contained"
+                    color="error"
+                    onClick={handleDeleteMeeting}
+                  >
+                    Eliminar
                   </Button>
                   <Button
                     type="button"
@@ -773,13 +826,34 @@ function Meetings() {
         )}
 
         {activeTab === 1 && (
-          <Box sx={{ p: 3, minHeight: 160 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Notas
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Esta sección se configurará en una próxima etapa.
-            </Typography>
+          <Box
+            sx={{
+              p: 2,
+              height: tabContentHeight,
+              boxSizing: "border-box",
+              "& .quill": {
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+              },
+              "& .ql-toolbar": {
+                flexShrink: 0,
+              },
+              "& .ql-container": {
+                flex: 1,
+                minHeight: 0,
+              },
+              "& .ql-editor": {
+                overflowY: "auto",
+              },
+            }}
+          >
+            <ReactQuill
+              theme="snow"
+              value={meetingForm.notes}
+              onChange={handleNotesChange}
+              modules={notesEditorModules}
+            />
           </Box>
         )}
 
