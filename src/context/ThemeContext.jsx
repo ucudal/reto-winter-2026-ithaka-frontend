@@ -8,13 +8,12 @@ const ThemeModeContext = createContext(null);
 
 function getInitialMode() {
   if (typeof window === "undefined") return "light";
-  try{
+  try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored === "light" || stored === "dark") return stored;
   } catch {}
 
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  return prefersDark ? "dark" : "light";
+  return "light";
 }
 
 export function ThemeModeProvider({ children }) {
