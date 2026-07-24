@@ -5,7 +5,7 @@ export async function getTutors() {
   return Array.isArray(data) ? data : (data?.items ?? []);
 }
 
-export async function updateTutor(id, payload) {
-  const { data } = await apiClient.put(`/api/tutors/${id}`, payload);
+export async function upsertTutor(payload) {
+  const { data } = await apiClient.put("/api/tutors", payload);
   return data;
 }

@@ -38,7 +38,7 @@ import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SearchIcon from "@mui/icons-material/Search";
 
-import { getTutors, updateTutor } from "../../api/endpoints/tutors";
+import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
 
@@ -115,6 +115,7 @@ export default function Tutors() {
   const handleSaveTutor = async (data) => {
     const { id, ...values } = data;
     const payload = {
+      id,
       name: values.name,
       role: values.role,
       specialty: values.specialty || null,
@@ -125,7 +126,7 @@ export default function Tutors() {
 
     try {
       setSaving(true);
-      await updateTutor(id, payload);
+      await upsertTutor(payload);
       showToast("Tutor actualizado correctamente.", "success");
       handleCloseEdit();
       await loadTutors();
