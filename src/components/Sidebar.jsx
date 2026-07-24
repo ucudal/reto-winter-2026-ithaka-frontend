@@ -15,11 +15,8 @@ import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-<<<<<<< HEAD
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-=======
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
->>>>>>> 5d5d8c23fb0d77749c1b29d4ecb2ecd4e1e937af
 
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
