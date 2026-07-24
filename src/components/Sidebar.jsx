@@ -56,7 +56,7 @@ export default function Sidebar({
         }
       >
         {navItem("/dashboard", "Resumen", DashboardIcon)}
-        {navItem("/workspace", "Mi espacio", WorkspacesIcon)}
+        {user?.role === "Student" && navItem("/workspace", "Mi espacio", WorkspacesIcon)}
         {navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
         {navItem("/groups", "Grupos", GroupsIcon)}
       </List>
