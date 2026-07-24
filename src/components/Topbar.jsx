@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -25,6 +26,7 @@ import UserProfileDrawer from "./UserProfileDrawer";
 import { usersMock } from "../utils/userData";
 
 function Topbar({ onMenuClick, onLogout }) {
+  const navigate = useNavigate();
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { user } = useAuth();
@@ -135,7 +137,7 @@ function Topbar({ onMenuClick, onLogout }) {
 
         <Divider />
 
-        <MenuItem onClick={handleCloseUserMenu}>
+        <MenuItem onClick={() => { handleCloseUserMenu(); navigate("/settings"); }}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
