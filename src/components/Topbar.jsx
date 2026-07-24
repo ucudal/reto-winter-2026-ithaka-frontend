@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import MenuIcon from "@mui/icons-material/Menu";
+import SettingsIcon from "@mui/icons-material/Settings";
+import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
-import SettingsIcon from '@mui/icons-material/Settings';
-import PersonIcon from '@mui/icons-material/Person';
+import ThemeToggle from "./ThemeToggle.jsx";
 
 import {
   AppBar,
@@ -57,7 +58,7 @@ function Topbar({ onMenuClick, onLogout }) {
           bgcolor: "primary.dark",
         }}
       >
-        <Toolbar sx={{ justifyContent: "space-between", gap: 2 }}>
+        <Toolbar>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton
               color="inherit"
@@ -81,29 +82,35 @@ function Topbar({ onMenuClick, onLogout }) {
             />
           </Box>
 
-          <IconButton
-            onClick={handleOpenUserMenu}
-            aria-label="Abrir menú de usuario"
-            sx={{
-              bgcolor: "grey.300",
-              borderRadius: "50%",
-              width: 32,
-              height: 32,
-              "&:hover": {
-                bgcolor: "grey.400",
-              },
-            }}
-          >
-            <Box
-              component="img"
-              src={personFilled}
-              alt="Usuario"
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <ThemeToggle />
+
+            <IconButton
+              onClick={handleOpenUserMenu}
+              aria-label="Abrir menú de usuario"
               sx={{
-                width: 20,
-                height: 20,
+                bgcolor: "grey.300",
+                borderRadius: "50%",
+                width: 32,
+                height: 32,
+                "&:hover": {
+                  bgcolor: "grey.400",
+                },
               }}
-            />
-          </IconButton>
+            >
+              <Box
+                component="img"
+                src={personFilled}
+                alt="Usuario"
+                sx={{
+                  width: 20,
+                  height: 20,
+                }}
+              />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 
