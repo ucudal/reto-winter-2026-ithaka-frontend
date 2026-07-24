@@ -12,7 +12,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Avatar,
   Chip,
   IconButton,
   Breadcrumbs,
@@ -27,12 +26,12 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 const initialDeliverablesData = [
   {
     id: 5,
-    group_id:45,
+    group_id: 45,
     expected_date: "2026-04-20",
     status: "Out of date",
   },
   {
-   id: 6,
+    id: 6,
     group_id: 46,
     expected_date: "2026-07-31",
     status: "Pending",
@@ -44,6 +43,7 @@ const initialDeliverablesData = [
     status: "Pending",
   },
 ];
+
 export default function Deliverables() {
   const [deliverables, setDeliverables] = useState(initialDeliverablesData);
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,13 +54,23 @@ export default function Deliverables() {
     return valueToSearch.includes(searchTerm.toLowerCase());
   });
 
+  const renderStatusChip = (status) => {
+    if (status === "Pending") {
+      return <Chip label="Pendiente" size="small" color="warning" />;
+    }
+    if (status === "Out of date") {
+      return <Chip label="Atrasado" size="small" color="error" />;
+    }
+    return <Chip label={status} size="small" color="default" />;
+  };
+
   return (
     <Box sx={{ width: "100%" }}>
       <Breadcrumbs
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/" underline="hover" color="inherit">
+        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
           Inicio
         </Link>
         <Typography color="text.primary">Entregables</Typography>
@@ -128,7 +138,7 @@ export default function Deliverables() {
               },
             }}
           >
-            <MenuItem value="group_id">ID</MenuItem>
+            <MenuItem value="group_id">ID Grupo</MenuItem>
             <MenuItem value="expected_date">Fecha esperada</MenuItem>
             <MenuItem value="status">Estado</MenuItem>
           </TextField>
@@ -138,12 +148,9 @@ export default function Deliverables() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: "bold" }}>Usuario</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Rol</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Especialidad</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>
-                  Disponibilidad
-                </TableCell>
+                <TableCell sx={{ fontWeight: "bold" }}>ID Entregable</TableCell>
+                <TableCell sx={{ fontWeight: "bold" }}>ID Grupo</TableCell>
+                <TableCell sx={{ fontWeight: "bold" }}>Fecha esperada</TableCell>
                 <TableCell sx={{ fontWeight: "bold" }}>Estado</TableCell>
                 <TableCell align="right" sx={{ fontWeight: "bold" }}>
                   Acciones
@@ -153,53 +160,22 @@ export default function Deliverables() {
             <TableBody>
               {filteredDeliverables.map((deliverable) => (
                 <TableRow key={deliverable.id} hover>
-                  <TableCell>
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                    >
-                      <Avatar
-                        sx={{
-                          bgcolor: "action.selected",
-                          color: "text.secondary",
-                          width: 32,
-                          height: 32,
-                          fontSize: "0.875rem",
-                        }}
-                      >
-                        {deliverable.group_id
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </Avatar>
-                      <Typography variant="body2" fontWeight="medium">
-                        {deliverable.group_id}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {deliverable.role === "Business" ? "Negocio" : "Técnico"}
-                  </TableCell>
-                  <TableCell>{deliverable.specialty}</TableCell>
-                  <TableCell>{deliverable.availability}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={deliverable.status === "Active" ? "Activo" : "Inactivo"}
-                      size="small"
-                      color={deliverable.status === "Active" ? "success" : "default"}
-                    />
-                  </TableCell>
+                  <TableCell>#{deliverable.id}</TableCell>
+                  <TableCell>Grupo {deliverable.group_id}</TableCell>
+                  <TableCell>{deliverable.expected_date}</TableCell>
+                  <TableCell>{renderStatusChip(deliverable.status)}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
                       color="primary"
-                      aria-label={`Editar ${deliverable.group_id}`}
+                      aria-label={`Editar ${deliverable.id}`}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
                       color="error"
-                      aria-label={`Eliminar ${deliverable.group_id}`}
+                      aria-label={`Eliminar ${deliverable.id}`}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
