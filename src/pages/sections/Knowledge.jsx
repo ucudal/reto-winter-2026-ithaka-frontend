@@ -31,6 +31,11 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Link as RouterLink } from "react-router-dom";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import YouTubeIcon from "@mui/icons-material/YouTube";
+import LinkIcon from "@mui/icons-material/Link";
+import CloudQueueIcon from "@mui/icons-material/CloudQueue";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
 // import { apiClient } from '../../api/client' // Línea para llamar a la API real, actualmente comentada para usar datos mockeados
 import ConfirmModal from "../../components/ConfirmModal";
@@ -68,6 +73,43 @@ const mockMaterials = [
     url: "https://drive.google.com/value-proposition",
   },
 ];
+
+function getPlatformDetails(url = "") {
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes("drive.google.com") || lowerUrl.includes("docs.google.com")) {
+    return {
+      label: "Google Drive",
+      color: "#0F9D58",
+      icon: <InsertDriveFileIcon fontSize="small" sx={{ color: "#0F9D58" }} />,
+    };
+  }
+  if (lowerUrl.includes("sharepoint.com")) {
+    return {
+      label: "SharePoint",
+      color: "#0078D4",
+      icon: <CloudQueueIcon fontSize="small" sx={{ color: "#0078D4" }} />,
+    };
+  }
+  if (lowerUrl.includes("github.com")) {
+    return {
+      label: "GitHub",
+      color: "text.primary",
+      icon: <GitHubIcon fontSize="small" />,
+    };
+  }
+  if (lowerUrl.includes("youtube.com") || lowerUrl.includes("youtu.be")) {
+    return {
+      label: "YouTube",
+      color: "#FF0000",
+      icon: <YouTubeIcon fontSize="small" sx={{ color: "#FF0000" }} />,
+    };
+  }
+  return {
+    label: "Enlace",
+    color: "text.secondary",
+    icon: <LinkIcon fontSize="small" />,
+  };
+}
 
 function Knowledge() {
   const [materials, setMaterials] = useState([]);
@@ -300,7 +342,7 @@ function Knowledge() {
                       py: 1.5,
                       fontWeight: 600,
                       color: "text.primary",
-                      bgcolor: "grey.50",
+                      bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50',
                     }}
                   >
                     {column.label}
@@ -313,7 +355,7 @@ function Knowledge() {
                     py: 1.5,
                     fontWeight: 600,
                     color: "text.primary",
-                    bgcolor: "grey.50",
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50',
                   }}
                 >
                   Acciones
@@ -360,20 +402,28 @@ function Knowledge() {
                     <TableCell>{material.title}</TableCell>
 
                     <TableCell sx={{ overflow: "hidden" }}>
-                      <Link
-                        href={material.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        underline="hover"
-                        sx={{
-                          display: "block",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {material.url}
-                      </Link>
+                      {(() => {
+                        const platform = getPlatformDetails(material.url);
+                        return (
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            {platform.icon}
+                            <Link
+                              href={material.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              underline="hover"
+                              sx={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                fontWeight: 500,
+                              }}
+                            >
+                              {platform.label}
+                            </Link>
+                          </Box>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                       <Tooltip title="Editar">
@@ -516,20 +566,28 @@ function Knowledge() {
                   >
                     URL
                   </Typography>
-                  <Link
-                    href={material.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    underline="hover"
-                    sx={{
-                      display: "block",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {material.url}
-                  </Link>
+                  {(() => {
+                    const platform = getPlatformDetails(material.url);
+                    return (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        {platform.icon}
+                        <Link
+                          href={material.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          underline="hover"
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {platform.label}
+                        </Link>
+                      </Box>
+                    );
+                  })()}
                 </Box>
 
                 <Box
