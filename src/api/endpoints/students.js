@@ -40,7 +40,7 @@ const MOCK_STUDENTS = [
 
 export async function getStudents() {
   try {
-    const { data } = await apiClient.get('/students')
+    const { data } = await apiClient.get('/api/students')
     return data
   } catch (err) {
     console.warn("Failing back to mock students:", err);
@@ -50,7 +50,7 @@ export async function getStudents() {
 
 export async function getStudentById(id) {
   try {
-    const { data } = await apiClient.get(`/students/${id}`)
+    const { data } = await apiClient.get(`/api/students/${id}`)
     return data
   } catch (err) {
     const found = MOCK_STUDENTS.find(s => s.id === Number(id));
@@ -61,7 +61,7 @@ export async function getStudentById(id) {
 
 export async function createStudent(payload) {
   try {
-    const { data } = await apiClient.post('/students', payload)
+    const { data } = await apiClient.post('/api/students', payload)
     return data
   } catch (err) {
     const newStudent = { ...payload, id: Date.now() };
@@ -72,7 +72,7 @@ export async function createStudent(payload) {
 
 export async function updateStudent(id, payload) {
   try {
-    const { data } = await apiClient.put(`/students/${id}`, payload)
+    const { data } = await apiClient.put(`/api/students/${id}`, payload)
     return data
   } catch (err) {
     const idx = MOCK_STUDENTS.findIndex(s => s.id === Number(id));
@@ -86,7 +86,7 @@ export async function updateStudent(id, payload) {
 
 export async function deleteStudent(id) {
   try {
-    const { data } = await apiClient.delete(`/students/${id}`)
+    const { data } = await apiClient.delete(`/api/students/${id}`)
     return data
   } catch (err) {
     const idx = MOCK_STUDENTS.findIndex(s => s.id === Number(id));
