@@ -42,6 +42,7 @@ export default function CommentFeed({ deliverableId }) {
 
   const [comments, setComments] = useState([]);
   const [tutorsById, setTutorsById] = useState({});
+  const [currentTutorId, setCurrentTutorId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [newComment, setNewComment] = useState("");
@@ -75,17 +76,19 @@ export default function CommentFeed({ deliverableId }) {
     }
 
     if (tutorsResult.status === "fulfilled") {
-      setTutorsById(
-        Object.fromEntries(
-          (tutorsResult.value ?? []).map((t) => [t.id, t.name]),
-        ),
-      );
+      const tutors = tutorsResult.value ?? [];
+      setTutorsById(Object.fromEntries(tutors.map((t) => [t.id, t.name])));
+      // El usuario autenticado (users.id) no es el tutor (tutors.id): buscamos
+      // el tutor correspondiente para usar su id al crear comentarios.
+      const currentTutor = tutors.find((t) => t.name === user?.name);
+      setCurrentTutorId(currentTutor?.id ?? null);
     } else {
       setTutorsById({});
+      setCurrentTutorId(null);
     }
 
     setLoading(false);
-  }, [deliverableId]);
+  }, [deliverableId, user?.name]);
 
   useEffect(() => {
     if (deliverableId) {
@@ -102,10 +105,18 @@ export default function CommentFeed({ deliverableId }) {
       return;
     }
 
+    if (!currentTutorId) {
+      showToast(
+        "No se pudo identificar tu perfil de tutor para publicar el comentario.",
+        "error",
+      );
+      return;
+    }
+
     try {
       setSubmitting(true);
       await createDeliverableComment(deliverableId, {
-        tutor_id: user.id,
+        tutor_id: currentTutorId,
         content,
       });
       setNewComment("");
@@ -162,7 +173,7 @@ export default function CommentFeed({ deliverableId }) {
       <Stack spacing={2} sx={{ mb: 3 }}>
         {comments.map((comment) => {
           const name = tutorName(comment.tutor_id);
-          const isAuthor = user?.id === comment.tutor_id;
+          const isAuthor = currentTutorId === comment.tutor_id;
 
           return (
             <Paper
