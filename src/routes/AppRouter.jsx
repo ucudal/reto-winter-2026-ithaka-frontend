@@ -15,6 +15,7 @@ import Templates from "../pages/sections/Templates.jsx";
 import TemplateDetail from "../pages/sections/TemplateDetail.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
 import Knowledge from "../pages/sections/Knowledge.jsx";
+import Users from "../pages/sections/Users.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
 import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
@@ -52,6 +53,14 @@ const appRouter = createBrowserRouter([
                         ]}
                       >
                         <Dashboard />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/users",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <Users />
                       </RoleProtectedRoute>
                     ),
                   },
