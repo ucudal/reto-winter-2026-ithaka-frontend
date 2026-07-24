@@ -300,7 +300,7 @@ function Knowledge() {
                       py: 1.5,
                       fontWeight: 600,
                       color: "text.primary",
-                      bgcolor: "grey.50",
+                      bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50',
                     }}
                   >
                     {column.label}
@@ -313,7 +313,7 @@ function Knowledge() {
                     py: 1.5,
                     fontWeight: 600,
                     color: "text.primary",
-                    bgcolor: "grey.50",
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50',
                   }}
                 >
                   Acciones
