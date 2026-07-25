@@ -99,9 +99,15 @@ export default function StudentWorkspace() {
         }
       }
       
-      // Fallback to mock data matching student email or user email
+      // Fallback to mock data matching student email or name
       const emailToMatch = user.student?.email || user.email;
-      const mock = mockGroups.find((g) => g.students.some((s) => s.email === emailToMatch));
+      const nameToMatch = user.student?.name || user.name;
+      const mock = mockGroups.find((g) =>
+        g.students.some((s) =>
+          (s.email && s.email === emailToMatch) ||
+          (s.name && s.name.toLowerCase() === nameToMatch.toLowerCase())
+        )
+      );
       setGroup(mock || null);
       setLoadingWorkspace(false);
     }
@@ -143,7 +149,9 @@ export default function StudentWorkspace() {
   }
 
   const nextDeliverable = deliverables.find((d) => d.status !== "submitted");
-  const teammates = group.students.filter((s) => s.email !== user.email);
+  const teammates = group.students.filter((s) =>
+    s.email ? s.email !== user.email : s.name !== user.name
+  );
 
   return (
     <Box sx={{ p: 3 }}>
@@ -168,7 +176,7 @@ export default function StudentWorkspace() {
         </Box>
 
         <Chip
-          label={group.currentStage.name}
+          label={group.currentStage?.name || "Sin etapa"}
           color="primary"
           variant="outlined"
           sx={{ fontWeight: 600 }}
