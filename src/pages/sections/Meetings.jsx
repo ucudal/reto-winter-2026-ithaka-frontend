@@ -190,7 +190,7 @@ function Meetings() {
   const isDarkMode = theme.palette.mode === "dark";
 
   const calendarRef = useRef(null);
-  const [selectedView, setSelectedView] = useState("dayGridMonth");
+  const [selectedView, setSelectedView] = useState("timeGridWeek");
   const [meetings, setMeetings] = useState(mockedMeetings);
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [popoverMode, setPopoverMode] = useState("create");
@@ -220,10 +220,10 @@ function Meetings() {
     setMeetingForm(
       isMonthView
         ? {
-            ...newMeetingForm,
-            startTime: "",
-            endTime: "",
-          }
+          ...newMeetingForm,
+          startTime: "",
+          endTime: "",
+        }
         : newMeetingForm,
     );
     setSelectedMeetingId(null);
@@ -300,12 +300,12 @@ function Meetings() {
         currentMeetings.map((meeting) =>
           meeting.id === selectedMeetingId
             ? {
-                ...meeting,
-                extendedProps: {
-                  ...meeting.extendedProps,
-                  notes,
-                },
-              }
+              ...meeting,
+              extendedProps: {
+                ...meeting.extendedProps,
+                notes,
+              },
+            }
             : meeting,
         ),
       );
@@ -328,12 +328,12 @@ function Meetings() {
         currentMeetings.map((meeting) =>
           meeting.id === selectedMeetingId
             ? {
-                ...meeting,
-                extendedProps: {
-                  ...meeting.extendedProps,
-                  attendance,
-                },
-              }
+              ...meeting,
+              extendedProps: {
+                ...meeting.extendedProps,
+                attendance,
+              },
+            }
             : meeting,
         ),
       );
@@ -385,9 +385,9 @@ function Meetings() {
         return currentMeetings.map((meeting) =>
           meeting.id === selectedMeetingId
             ? {
-                ...meeting,
-                ...meetingData,
-              }
+              ...meeting,
+              ...meetingData,
+            }
             : meeting,
         );
       }
@@ -570,7 +570,7 @@ function Meetings() {
           selectMirror
           selectMinDistance={5}
           select={handleDateSelection}
-          height="calc(100vh - 220px)"
+          height="calc(100vh - 240px)"
           dayMaxEvents
           nowIndicator
         />
@@ -595,7 +595,7 @@ function Meetings() {
           },
         }}
       >
-        
+
         <Tabs
           value={activeTab}
           onChange={(_event, newValue) => setActiveTab(newValue)}
