@@ -20,11 +20,9 @@ import {
   ListItem,
   ListItemText,
   CircularProgress,
-  Tooltip,
-  IconButton,
+  Divider,
 } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import { getGroupById, updateGroupStage, updateGroupTutors } from "../../api/endpoints/groups";
 import { getCohortStages } from "../../api/endpoints/cohorts";
@@ -206,6 +204,16 @@ export default function GroupDetail() {
               <Typography variant="body1" fontWeight={500}>
                 {cohort ? `${cohort.year} - ${cohort.semester}° semestre` : `#${group.cohortId}`}
               </Typography>
+              {cohort?.notes && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {cohort.notes}
+                </Typography>
+              )}
+              {cohort?.start_date && (
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                  Período: {cohort.start_date} {cohort.end_date ? ` al ${cohort.end_date}` : ""}
+                </Typography>
+              )}
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="caption" color="text.secondary" display="block">
@@ -243,14 +251,35 @@ export default function GroupDetail() {
                   <Typography variant="body1" fontWeight={500}>
                     {group.businessTutor?.name || "Sin asignar"}
                   </Typography>
+                  {group.businessTutor?.specialty && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Especialidad:</strong> {group.businessTutor.specialty}
+                    </Typography>
+                  )}
+                  {group.businessTutor?.availability && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Disponibilidad:</strong> {group.businessTutor.availability}
+                    </Typography>
+                  )}
                 </Grid>
                 <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
                   <Typography variant="caption" color="text.secondary" display="block">
                     Tutor técnico
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {group.technicalTutor?.name || "Sin asignar"}
                   </Typography>
+                  {group.technicalTutor?.specialty && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Especialidad:</strong> {group.technicalTutor.specialty}
+                    </Typography>
+                  )}
+                  {group.technicalTutor?.availability && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Disponibilidad:</strong> {group.technicalTutor.availability}
+                    </Typography>
+                  )}
                 </Grid>
               </Grid>
             </CardContent>
@@ -272,6 +301,26 @@ export default function GroupDetail() {
               <Typography variant="body1" fontWeight={500}>
                 {group.currentStage?.name || "Sin etapa definida"}
               </Typography>
+
+              {group.currentStage?.key_dates?.length > 0 && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Fechas clave de esta etapa:
+                  </Typography>
+                  <List size="small" disablePadding>
+                    {group.currentStage.key_dates.map((dateObj, idx) => (
+                      <ListItem key={idx} sx={{ py: 0.5, px: 0 }} divider={idx < group.currentStage.key_dates.length - 1}>
+                        <ListItemText
+                          primary={dateObj.description}
+                          secondary={dateObj.date}
+                          primaryTypographyProps={{ variant: "body2", fontWeight: 500 }}
+                          secondaryTypographyProps={{ variant: "caption" }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
