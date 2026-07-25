@@ -570,7 +570,7 @@ function Meetings() {
           selectMirror
           selectMinDistance={5}
           select={handleDateSelection}
-          height={450}
+          height="calc(100vh - 220px)"
           dayMaxEvents
           nowIndicator
         />
