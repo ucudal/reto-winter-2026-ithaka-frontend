@@ -299,10 +299,10 @@ export default function GroupDetail() {
                   ))}
                 </List>
               )}
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* Dialog: cambiar etapa */}
       <Dialog open={stageDialogOpen} onClose={() => setStageDialogOpen(false)} fullWidth maxWidth="xs">
