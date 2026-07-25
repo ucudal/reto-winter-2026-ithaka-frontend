@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -29,31 +29,99 @@ import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SearchIcon from "@mui/icons-material/Search";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import GroupsGrid from "../../components/GroupsGrid";
-import { mockGroups } from "../../data/mockGroups";
+import LoadingStateComponent from "../../components/LoadingStateComponent";
+import ErrorState from "../../components/common/ErrorState";
+import GenericCreateModal from "../../components/common/GenericCreateModal";
+import { getGroups, createGroup } from "../../api/endpoints/groups";
+import { getCohorts } from "../../api/endpoints/cohorts";
 
 function Groups() {
   const [view, setView] = useState("gallery");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
+  const [groups, setGroups] = useState([]);
+  const [cohorts, setCohorts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    loadGroups();
+  }, []);
+
+  const loadGroups = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const [groupsData, cohortsData] = await Promise.all([
+        getGroups(),
+        getCohorts(),
+      ]);
+
+      setGroups(groupsData);
+      setCohorts(Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []));
+    } catch (err) {
+      setError(err?.message || "No se pudieron cargar los grupos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateGroup = async (formData) => {
+    try {
+      setCreating(true);
+      await createGroup({
+        name: formData.name,
+        cohort_id: Number(formData.cohort_id),
+        idea: formData.idea || null,
+      });
+      setCreateModalOpen(false);
+      await loadGroups();
+    } catch (err) {
+      setError(err?.message || "No se pudo crear el grupo.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const createFields = [
+    { name: "name", label: "Nombre del grupo", required: true },
+    {
+      name: "cohort_id",
+      label: "Cohorte",
+      type: "select",
+      required: true,
+      options: cohorts.map((c) => ({
+        value: c.id,
+        label: `${c.year} - ${c.semester}° semestre`,
+      })),
+    },
+    { name: "idea", label: "Idea de proyecto", type: "textarea" },
+  ];
+
   const filteredGroups = useMemo(() => {
-    return mockGroups.filter((group) => {
+    return groups.filter((group) => {
       const matchesSearch =
         group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         group.idea?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         group.major?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus =
-        statusFilter === "" ||
-        (statusFilter === "progress" && group.status === "In progress") ||
-        (statusFilter === "finished" && group.status === "Finished");
+      const matchesStatus = statusFilter === "" || group.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
-  }, [searchTerm, statusFilter]);
+  }, [groups, searchTerm, statusFilter]);
+
+  const statusOptions = useMemo(
+    () => [...new Set(groups.map((g) => g.status).filter(Boolean))],
+    [groups],
+  );
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -117,6 +185,7 @@ function Groups() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
+            onClick={() => setCreateModalOpen(true)}
             sx={{
               height: 40,
             }}
@@ -191,12 +260,19 @@ function Groups() {
           }}
         >
           <MenuItem value="">Todos</MenuItem>
-          <MenuItem value="progress">En progreso</MenuItem>
-          <MenuItem value="finished">Finalizados</MenuItem>
+          {statusOptions.map((status) => (
+            <MenuItem key={status} value={status}>
+              {status}
+            </MenuItem>
+          ))}
         </TextField>
       </Box>
 
-      {view === "gallery" ? (
+      {loading ? (
+        <LoadingStateComponent />
+      ) : error ? (
+        <ErrorState message={error} onRetry={loadGroups} />
+      ) : view === "gallery" ? (
         <GroupsGrid groups={filteredGroups} />
       ) : (
         <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
@@ -233,7 +309,7 @@ function Groups() {
                       {group.idea}
                     </TableCell>
                     <TableCell>
-                      <Chip label={group.currentStage?.name} size="small" variant="outlined" color="primary" />
+                      <Chip label={group.currentStage?.name || "Sin etapa"} size="small" variant="outlined" color="primary" />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" display="block">
@@ -244,21 +320,12 @@ function Groups() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={group.status === "In progress" ? "En progreso" : "Finalizado"}
-                        size="small"
-                        color={group.status === "In progress" ? "success" : "default"}
-                      />
+                      <Chip label={group.status} size="small" color="default" />
                     </TableCell>
                     <TableCell align="right">
-                      <Tooltip title="Editar">
-                        <IconButton size="small" color="primary">
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Eliminar">
-                        <IconButton size="small" color="error">
-                          <DeleteIcon fontSize="small" />
+                      <Tooltip title="Ver detalle">
+                        <IconButton size="small" color="primary" component={RouterLink} to={`/groups/${group.id}`}>
+                          <VisibilityIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     </TableCell>
@@ -269,6 +336,15 @@ function Groups() {
           </Table>
         </TableContainer>
       )}
+
+      <GenericCreateModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Agregar grupo"
+        fields={createFields}
+        onSubmit={handleCreateGroup}
+        loading={creating}
+      />
     </Box>
   );
 }
