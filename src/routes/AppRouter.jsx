@@ -20,6 +20,7 @@ import Settings from "../pages/sections/Settings.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
 import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
+import CohortLifecycleConfiguration from "../pages/sections/CohortLifecycleConfiguration.jsx";
 
 const appRouter = createBrowserRouter([
   {
@@ -86,6 +87,14 @@ const appRouter = createBrowserRouter([
                     element: (
                       <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <CohortDetail />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/cohorts/:id/configuration",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <CohortLifecycleConfiguration />
                       </RoleProtectedRoute>
                     ),
                   },
