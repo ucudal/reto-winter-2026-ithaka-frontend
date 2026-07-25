@@ -175,6 +175,7 @@ const appRouter = createBrowserRouter([
                           "Coordinator",
                           "BusinessTutor",
                           "TechnicalTutor",
+                          "Student",
                         ]}
                       >
                         <Knowledge />
@@ -204,6 +205,7 @@ const appRouter = createBrowserRouter([
                           "Coordinator",
                           "BusinessTutor",
                           "TechnicalTutor",
+                          "Student",
                         ]}
                       >
                         <Meetings />

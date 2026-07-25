@@ -58,22 +58,24 @@ export default function Sidebar({
       >
         {navItem("/dashboard", "Resumen", DashboardIcon)}
         {user?.role === "Student" && navItem("/workspace", "Mi espacio", WorkspacesIcon)}
-        {navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
-        {navItem("/groups", "Grupos", GroupsIcon)}
+        {user?.role === "Coordinator" && navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
+        {user?.role !== "Student" && navItem("/groups", "Grupos", GroupsIcon)}
       </List>
 
-      <List
-        subheader={
-          <ListSubheader component="div">
-            Equipo
-          </ListSubheader>
-        }
-      >
-        {navItem("/tutors", "Tutores", PeopleIcon)}
-        {navItem("/students", "Alumnos", SchoolIcon)}
-      </List>
+      {user?.role !== "Student" && (
+        <List
+          subheader={
+            <ListSubheader component="div">
+              Equipo
+            </ListSubheader>
+          }
+        >
+          {navItem("/tutors", "Tutores", PeopleIcon)}
+          {user?.role === "Coordinator" && navItem("/students", "Alumnos", SchoolIcon)}
+        </List>
+      )}
 
-      {user?.role === "Coordinator" ? (
+      {user?.role === "Coordinator" && (
         <List
           subheader={
             <ListSubheader component="div">
@@ -83,7 +85,7 @@ export default function Sidebar({
         >
           {navItem("/users", "Usuarios", ManageAccountsIcon)}
         </List>
-      ) : null}
+      )}
 
       <List
         subheader={
@@ -92,7 +94,7 @@ export default function Sidebar({
           </ListSubheader>
         }
       >
-        {navItem("/templates", "Templates", AssignmentOutlinedIcon)}
+        {user?.role !== "Student" && navItem("/templates", "Templates", AssignmentOutlinedIcon)}
         {navItem("/knowledge", "Materiales", MenuBookIcon)}
         {navItem("/meetings", "Reuniones", AccessTimeIcon)}
       </List>

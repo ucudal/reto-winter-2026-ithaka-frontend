@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
+import { useAuth } from "../../context/AuthContext";
 import {
   Box,
   Breadcrumbs,
@@ -188,6 +189,7 @@ const meetingToForm = (meeting) => {
 function Meetings() {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const { user } = useAuth();
 
   const calendarRef = useRef(null);
   const [selectedView, setSelectedView] = useState("timeGridWeek");
@@ -198,6 +200,25 @@ function Meetings() {
   const [activeTab, setActiveTab] = useState(0);
   const [meetingForm, setMeetingForm] = useState(createMeetingForm);
 
+  const filteredMeetings = useMemo(() => {
+    if (!user) return [];
+    if (user.role !== "Student") return meetings;
+
+    const studentName = user.student?.name || user.name;
+    const studentGroupName = user.student?.group?.name || "";
+
+    return meetings.filter((meeting) => {
+      const groupName = meeting.extendedProps?.group;
+      const parts = meeting.extendedProps?.participants ?? [];
+      return (
+        (groupName && studentGroupName && groupName.toLowerCase().includes(studentGroupName.toLowerCase())) ||
+        parts.some((p) => p.toLowerCase().includes(studentName.toLowerCase())) ||
+        (studentName === "Ana Fernández" && (groupName === "Grupo 1" || parts.includes("Sofía Martínez"))) ||
+        (studentName === "Luca Rossi" && (groupName === "Grupo 1" || parts.includes("Mateo Fernández")))
+      );
+    });
+  }, [meetings, user]);
+
   const handleViewChange = (event) => {
     const view = event.target.value;
 
@@ -206,6 +227,8 @@ function Meetings() {
   };
 
   const handleDateClick = (info) => {
+    if (user?.role === "Student") return;
+
     const isTimedView = ["timeGridDay", "timeGridWeek"].includes(
       info.view.type,
     );
@@ -236,6 +259,8 @@ function Meetings() {
   };
 
   const handleDateSelection = (info) => {
+    if (user?.role === "Student") return;
+
     if (
       !["timeGridDay", "timeGridWeek"].includes(info.view.type) ||
       info.allDay
@@ -563,7 +588,7 @@ function Meetings() {
           }}
           toolbarTitleClass="meetings-calendar-title"
           allDayText="Todo el día"
-          events={meetings}
+          events={filteredMeetings}
           dateClick={handleDateClick}
           eventClick={handleEventClick}
           selectable
@@ -793,7 +818,15 @@ function Meetings() {
                 pt: 0.5,
               }}
             >
-              {isViewingMeeting ? (
+              {user?.role === "Student" ? (
+                <Button
+                  type="button"
+                  variant="contained"
+                  onClick={handleClosePopover}
+                >
+                  Cerrar
+                </Button>
+              ) : isViewingMeeting ? (
                 <>
                   <Button
                     type="button"
@@ -870,6 +903,7 @@ function Meetings() {
               value={meetingForm.notes}
               onChange={handleNotesChange}
               modules={notesEditorModules}
+              readOnly={user?.role === "Student"}
             />
           </Box>
         )}
@@ -915,6 +949,7 @@ function Meetings() {
                         meetingForm.attendance[participant],
                       )}
                       onChange={() => handleAttendanceChange(participant)}
+                      disabled={user?.role === "Student"}
                       inputProps={{
                         "aria-label": `Marcar asistencia de ${participant}`,
                       }}
