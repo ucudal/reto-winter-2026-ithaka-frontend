@@ -7,6 +7,7 @@ import RouteErrorBoundary from "./RouteErrorBoundary.jsx";
 import Login from "../pages/Auth/Login.jsx";
 import Register from "../pages/Auth/Register.jsx";
 import Dashboard from "../pages/sections/Dashboard.jsx";
+import StudentWorkspace from "../pages/sections/StudentsWorkspace.jsx";
 import Students from "../pages/sections/Students.jsx";
 import Cohorts from "../pages/sections/Cohorts.jsx";
 import CohortDetail from "../pages/sections/CohortDetail.jsx";
@@ -21,6 +22,7 @@ import Meetings from "../pages/sections/Meetings.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
 import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
+import CohortLifecycleConfiguration from "../pages/sections/CohortLifecycleConfiguration.jsx";
 
 const appRouter = createBrowserRouter([
   {
@@ -59,6 +61,14 @@ const appRouter = createBrowserRouter([
                     ),
                   },
                   {
+                    path: "/workspace",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Student"]}>
+                        <StudentWorkspace />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
                     path: "/users",
                     element: (
                       <RoleProtectedRoute allowedRoles={["Coordinator"]}>
@@ -87,6 +97,14 @@ const appRouter = createBrowserRouter([
                     element: (
                       <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <CohortDetail />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/cohorts/:id/configuration",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
+                        <CohortLifecycleConfiguration />
                       </RoleProtectedRoute>
                     ),
                   },
