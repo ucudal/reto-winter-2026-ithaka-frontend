@@ -19,11 +19,15 @@ import {
   List,
   ListItem,
   ListItemText,
+  CircularProgress,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import { getGroupById, updateGroupStage, updateGroupTutors } from "../../api/endpoints/groups";
-import { getCohortById, getCohortStages } from "../../api/endpoints/cohorts";
+import { getCohortStages } from "../../api/endpoints/cohorts";
 import { getTutors } from "../../api/endpoints/tutors";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
@@ -37,6 +41,8 @@ export default function GroupDetail() {
   const [stages, setStages] = useState([]);
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStages, setLoadingStages] = useState(false);
+  const [loadingTutors, setLoadingTutors] = useState(false);
   const [error, setError] = useState("");
 
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
@@ -62,14 +68,6 @@ export default function GroupDetail() {
       const groupData = await getGroupById(groupId);
       setGroup(groupData);
       setCohort(groupData.cohort);
-
-      const [stagesData, tutorsData] = await Promise.all([
-        getCohortStages(groupData.cohortId),
-        getTutors(),
-      ]);
-
-      setStages(stagesData || []);
-      setTutors(tutorsData || []);
     } catch (err) {
       setError(err?.message || "No se pudo cargar el grupo.");
     } finally {
@@ -77,9 +75,20 @@ export default function GroupDetail() {
     }
   };
 
-  const openStageDialog = () => {
+  const openStageDialog = async () => {
     setSelectedStageId(group.currentStage?.id ?? "");
     setStageDialogOpen(true);
+    if (stages.length === 0) {
+      try {
+        setLoadingStages(true);
+        const stagesData = await getCohortStages(group.cohortId);
+        setStages(stagesData || []);
+      } catch (err) {
+        console.error("Error al cargar etapas:", err);
+      } finally {
+        setLoadingStages(false);
+      }
+    }
   };
 
   const handleSaveStage = async () => {
@@ -96,10 +105,21 @@ export default function GroupDetail() {
     }
   };
 
-  const openTutorsDialog = () => {
+  const openTutorsDialog = async () => {
     setSelectedBusinessTutorId(group.businessTutor?.id ?? "");
     setSelectedTechnicalTutorId(group.technicalTutor?.id ?? "");
     setTutorsDialogOpen(true);
+    if (tutors.length === 0) {
+      try {
+        setLoadingTutors(true);
+        const tutorsData = await getTutors();
+        setTutors(tutorsData || []);
+      } catch (err) {
+        console.error("Error al cargar tutores:", err);
+      } finally {
+        setLoadingTutors(false);
+      }
+    }
   };
 
   const handleSaveTutors = async () => {
@@ -199,53 +219,82 @@ export default function GroupDetail() {
               <Typography variant="caption" color="text.secondary" display="block">
                 Idea de proyecto
               </Typography>
-              <Typography variant="body1">{group.idea || "Sin descripción."}</Typography>
+              <Typography variant="body1">{group.idea || "Sin idea registrada"}</Typography>
             </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Etapa actual
-                </Typography>
-                <Button size="small" onClick={openStageDialog}>
-                  Cambiar
-                </Button>
-              </Box>
-              <Typography variant="body1" fontWeight={500}>
-                {group.currentStage?.name || "Sin etapa asignada"}
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Tutores
-                </Typography>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: "100%", borderRadius: 2 }}>
+            <CardContent>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                <Typography variant="h6">Tutores</Typography>
                 <Button size="small" onClick={openTutorsDialog}>
-                  Asignar
+                  Asignar tutores
                 </Button>
               </Box>
-              <Typography variant="body2">
-                <strong>Negocio:</strong> {group.businessTutor?.name || "Sin asignar"}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Técnico:</strong> {group.technicalTutor?.name || "Sin asignar"}
-              </Typography>
-            </Grid>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Tutor de negocio
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {group.businessTutor?.name || "Sin asignar"}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Tutor técnico
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {group.technicalTutor?.name || "Sin asignar"}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
 
-            <Grid item xs={12}>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                Integrantes
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: "100%", borderRadius: 2 }}>
+            <CardContent>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                <Typography variant="h6">Etapa del proyecto</Typography>
+                <Button size="small" onClick={openStageDialog}>
+                  Cambiar etapa
+                </Button>
+              </Box>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Etapa actual
               </Typography>
-              {group.students.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  Sin integrantes registrados.
-                </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                {group.currentStage?.name || "Sin etapa definida"}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Estudiantes
+              </Typography>
+              {group.students?.length === 0 ? (
+                <EmptyState
+                  title="No hay estudiantes"
+                  description="Este grupo no tiene estudiantes asignados."
+                />
               ) : (
-                <List dense disablePadding>
-                  {group.students.map((student) => (
-                    <ListItem key={student.id} disableGutters>
-                      <ListItemText primary={student.name} />
+                <List>
+                  {group.students?.map((student) => (
+                    <ListItem key={student.id} divider>
+                      <ListItemText
+                        primary={student.name}
+                        secondary={`${student.email} — ${student.major || "Sin carrera"}`}
+                      />
                     </ListItem>
                   ))}
                 </List>
@@ -259,26 +308,32 @@ export default function GroupDetail() {
       <Dialog open={stageDialogOpen} onClose={() => setStageDialogOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle>Cambiar etapa</DialogTitle>
         <DialogContent>
-          <TextField
-            select
-            label="Etapa"
-            value={selectedStageId}
-            onChange={(e) => setSelectedStageId(e.target.value)}
-            fullWidth
-            sx={{ mt: 1 }}
-          >
-            {stages.map((stage) => (
-              <MenuItem key={stage.id} value={stage.id}>
-                {stage.name}
-              </MenuItem>
-            ))}
-          </TextField>
+          {loadingStages ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            <TextField
+              select
+              label="Etapa"
+              value={selectedStageId}
+              onChange={(e) => setSelectedStageId(e.target.value)}
+              fullWidth
+              sx={{ mt: 1 }}
+            >
+              {stages.map((stage) => (
+                <MenuItem key={stage.id} value={stage.id}>
+                  {stage.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setStageDialogOpen(false)} disabled={savingStage}>
             Cancelar
           </Button>
-          <Button variant="contained" onClick={handleSaveStage} disabled={savingStage || !selectedStageId}>
+          <Button variant="contained" onClick={handleSaveStage} disabled={savingStage || !selectedStageId || loadingStages}>
             {savingStage ? "Guardando..." : "Guardar"}
           </Button>
         </DialogActions>
@@ -288,41 +343,49 @@ export default function GroupDetail() {
       <Dialog open={tutorsDialogOpen} onClose={() => setTutorsDialogOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle>Asignar tutores</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
-          <TextField
-            select
-            label="Tutor de negocio"
-            value={selectedBusinessTutorId}
-            onChange={(e) => setSelectedBusinessTutorId(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="">Sin asignar</MenuItem>
-            {businessTutors.map((tutor) => (
-              <MenuItem key={tutor.id} value={tutor.id}>
-                {tutor.name}
-              </MenuItem>
-            ))}
-          </TextField>
+          {loadingTutors ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            <>
+              <TextField
+                select
+                label="Tutor de negocio"
+                value={selectedBusinessTutorId}
+                onChange={(e) => setSelectedBusinessTutorId(e.target.value)}
+                fullWidth
+              >
+                <MenuItem value="">Sin asignar</MenuItem>
+                {businessTutors.map((tutor) => (
+                  <MenuItem key={tutor.id} value={tutor.id}>
+                    {tutor.name}
+                  </MenuItem>
+                ))}
+              </TextField>
 
-          <TextField
-            select
-            label="Tutor técnico"
-            value={selectedTechnicalTutorId}
-            onChange={(e) => setSelectedTechnicalTutorId(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="">Sin asignar</MenuItem>
-            {technicalTutors.map((tutor) => (
-              <MenuItem key={tutor.id} value={tutor.id}>
-                {tutor.name}
-              </MenuItem>
-            ))}
-          </TextField>
+              <TextField
+                select
+                label="Tutor técnico"
+                value={selectedTechnicalTutorId}
+                onChange={(e) => setSelectedTechnicalTutorId(e.target.value)}
+                fullWidth
+              >
+                <MenuItem value="">Sin asignar</MenuItem>
+                {technicalTutors.map((tutor) => (
+                  <MenuItem key={tutor.id} value={tutor.id}>
+                    {tutor.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setTutorsDialogOpen(false)} disabled={savingTutors}>
             Cancelar
           </Button>
-          <Button variant="contained" onClick={handleSaveTutors} disabled={savingTutors}>
+          <Button variant="contained" onClick={handleSaveTutors} disabled={savingTutors || loadingTutors}>
             {savingTutors ? "Guardando..." : "Guardar"}
           </Button>
         </DialogActions>
