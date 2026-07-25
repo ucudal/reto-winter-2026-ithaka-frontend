@@ -7,6 +7,7 @@ import RouteErrorBoundary from "./RouteErrorBoundary.jsx";
 import Login from "../pages/Auth/Login.jsx";
 import Register from "../pages/Auth/Register.jsx";
 import Dashboard from "../pages/sections/Dashboard.jsx";
+import StudentWorkspace from "../pages/sections/StudentsWorkspace.jsx";
 import Students from "../pages/sections/Students.jsx";
 import Cohorts from "../pages/sections/Cohorts.jsx";
 import CohortDetail from "../pages/sections/CohortDetail.jsx";
@@ -55,6 +56,14 @@ const appRouter = createBrowserRouter([
                         ]}
                       >
                         <Dashboard />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/workspace",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Student"]}>
+                        <StudentWorkspace />
                       </RoleProtectedRoute>
                     ),
                   },
