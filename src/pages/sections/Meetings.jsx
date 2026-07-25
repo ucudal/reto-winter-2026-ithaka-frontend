@@ -19,6 +19,7 @@ import {
   Tabs,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -185,6 +186,9 @@ const meetingToForm = (meeting) => {
 };
 
 function Meetings() {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
   const calendarRef = useRef(null);
   const [selectedView, setSelectedView] = useState("dayGridMonth");
   const [meetings, setMeetings] = useState(mockedMeetings);
@@ -509,6 +513,19 @@ function Meetings() {
             boxShadow: "none",
             textTransform: "none",
             padding: "0.3rem 0.55rem",
+            backgroundColor: isDarkMode ? "#374151" : "#ffffff",
+            borderColor: isDarkMode ? "#4b5563" : "#d1d5db",
+            color: isDarkMode ? "#f3f4f6" : "#374151",
+            "&:hover": {
+              backgroundColor: isDarkMode ? "#4b5563" : "#f3f4f6",
+              borderColor: isDarkMode ? "#6b7280" : "#9ca3af",
+              color: isDarkMode ? "#ffffff" : "#111827",
+            },
+            "&:active, &.fc-button-active": {
+              backgroundColor: isDarkMode ? "#1f2937" : "#e5e7eb",
+              borderColor: isDarkMode ? "#374151" : "#9ca3af",
+              color: isDarkMode ? "#ffffff" : "#111827",
+            },
           },
           "& .fc .fc-col-header-cell-cushion": {
             color: "text.primary",
