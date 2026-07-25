@@ -15,6 +15,7 @@ function mapGroup(raw) {
     businessTutor: raw.business_tutor ?? null,
     technicalTutor: raw.technical_tutor ?? null,
     students: raw.students ?? [],
+    cohort: raw.cohort ?? null,
   };
 }
 

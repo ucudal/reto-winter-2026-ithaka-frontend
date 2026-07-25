@@ -61,14 +61,13 @@ export default function GroupDetail() {
 
       const groupData = await getGroupById(groupId);
       setGroup(groupData);
+      setCohort(groupData.cohort);
 
-      const [cohortData, stagesData, tutorsData] = await Promise.all([
-        getCohortById(groupData.cohortId),
+      const [stagesData, tutorsData] = await Promise.all([
         getCohortStages(groupData.cohortId),
         getTutors(),
       ]);
 
-      setCohort(cohortData);
       setStages(stagesData || []);
       setTutors(tutorsData || []);
     } catch (err) {
