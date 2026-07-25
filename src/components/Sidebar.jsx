@@ -14,6 +14,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { Link, useLocation } from "react-router-dom";
@@ -93,6 +94,7 @@ export default function Sidebar({
       >
         {navItem("/templates", "Templates", AssignmentOutlinedIcon)}
         {navItem("/knowledge", "Materiales", MenuBookIcon)}
+        {navItem("/meetings", "Reuniones", AccessTimeIcon)}
       </List>
     </>
   );
