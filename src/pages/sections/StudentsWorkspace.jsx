@@ -308,13 +308,13 @@ export default function StudentWorkspace() {
                 </Typography>
               </Stack>
 
-              {group.links.length === 0 ? (
+              {(group.links ?? []).length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   Todavía no cargaron links para este grupo.
                 </Typography>
               ) : (
                 <Stack spacing={1}>
-                  {group.links.map((link, index) => (
+                  {(group.links ?? []).map((link, index) => (
                     <Button
                       key={`${link.type}-${index}`}
                       component="a"
