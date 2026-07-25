@@ -39,6 +39,10 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 
 import { getCohorts, createCohort } from "../../api/endpoints/cohorts";
 import { useToast } from "../../ToastContext";
