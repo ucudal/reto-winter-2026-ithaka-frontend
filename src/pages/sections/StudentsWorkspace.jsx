@@ -21,7 +21,6 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import { useAuth } from "../../context/AuthContext";
-import { mockGroups } from "../../data/mockGroups";
 import { mockDeliverables, mockMinutes } from "../../data/mockWorkspace";
 import EmptyState from "../../components/common/EmptyState";
 import { getGroupById } from "../../api/endpoints/groups";
@@ -99,16 +98,7 @@ export default function StudentWorkspace() {
         }
       }
       
-      // Fallback to mock data matching student email or name
-      const emailToMatch = user.student?.email || user.email;
-      const nameToMatch = user.student?.name || user.name;
-      const mock = mockGroups.find((g) =>
-        g.students.some((s) =>
-          (s.email && s.email === emailToMatch) ||
-          (s.name && s.name.toLowerCase() === nameToMatch.toLowerCase())
-        )
-      );
-      setGroup(mock || null);
+      setGroup(null);
       setLoadingWorkspace(false);
     }
     loadWorkspaceGroup();
