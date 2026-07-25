@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Avatar,
   Box,
@@ -10,6 +10,7 @@ import {
   Grid,
   Stack,
   Typography,
+  CircularProgress,
 } from "@mui/material";
 import GroupsIcon from "@mui/icons-material/Groups";
 import SchoolIcon from "@mui/icons-material/School";
@@ -23,6 +24,7 @@ import { useAuth } from "../../context/AuthContext";
 import { mockGroups } from "../../data/mockGroups";
 import { mockDeliverables, mockMinutes } from "../../data/mockWorkspace";
 import EmptyState from "../../components/common/EmptyState";
+import { getGroupById } from "../../api/endpoints/groups";
 
 const LINK_LABELS = {
   Drive: "Drive",
@@ -75,10 +77,35 @@ function getDueMeta(dueDate, status) {
 
 export default function StudentWorkspace() {
   const { user } = useAuth();
+  const [group, setGroup] = useState(null);
+  const [loadingWorkspace, setLoadingWorkspace] = useState(true);
 
-  const group = useMemo(() => {
-    if (!user) return null;
-    return mockGroups.find((g) => g.students.some((s) => s.id === user.id));
+  useEffect(() => {
+    async function loadWorkspaceGroup() {
+      if (!user) {
+        setLoadingWorkspace(false);
+        return;
+      }
+      
+      const realGroupId = user.student?.group_id;
+      if (realGroupId) {
+        try {
+          const realGroup = await getGroupById(realGroupId);
+          setGroup(realGroup);
+          setLoadingWorkspace(false);
+          return;
+        } catch (err) {
+          console.error("Error fetching real group for student workspace:", err);
+        }
+      }
+      
+      // Fallback to mock data matching student email or user email
+      const emailToMatch = user.student?.email || user.email;
+      const mock = mockGroups.find((g) => g.students.some((s) => s.email === emailToMatch));
+      setGroup(mock || null);
+      setLoadingWorkspace(false);
+    }
+    loadWorkspaceGroup();
   }, [user]);
 
   const deliverables = useMemo(() => {
@@ -96,6 +123,14 @@ export default function StudentWorkspace() {
       .sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [group]);
 
+  if (loadingWorkspace) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   if (!group) {
     return (
       <Box sx={{ p: 3 }}>
@@ -108,7 +143,7 @@ export default function StudentWorkspace() {
   }
 
   const nextDeliverable = deliverables.find((d) => d.status !== "submitted");
-  const teammates = group.students.filter((s) => s.id !== user.id);
+  const teammates = group.students.filter((s) => s.email !== user.email);
 
   return (
     <Box sx={{ p: 3 }}>
