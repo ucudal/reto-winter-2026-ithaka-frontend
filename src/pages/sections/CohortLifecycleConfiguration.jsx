@@ -10,12 +10,15 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  Breadcrumbs,
+  Link,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useParams } from "react-router-dom";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import { useParams, Link as RouterLink } from "react-router-dom";
 
 const API_BASE = "/api";
 
@@ -103,82 +106,42 @@ export default function CohortLifecycleConfiguration() {
     }
   };
 
-  const moveStage = async (index, direction) => {
-  const newIndex = index + direction;
-  if (newIndex < 0 || newIndex >= stages.length) return;
+  const handleMove = async (index, direction) => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= stages.length) return;
 
-  const current = stages[index];
-  const target = stages[newIndex];
-
-  // Optimistic UI
-  const updated = [...stages];
-  [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-  setStages(updated);
-
-  setSaving(true);
-  setError(null);
-
-  const currentUpdated = {
-    ...current,
-    order: target.order,
-  };
-
-  const targetUpdated = {
-    ...target,
-    order: current.order,
-  };
-
-  const results = await Promise.allSettled([
-    upsertStage(currentUpdated),
-    upsertStage(targetUpdated),
-  ]);
-
-  const firstOk = results[0].status === "fulfilled";
-  const secondOk = results[1].status === "fulfilled";
-
-  if (firstOk && secondOk) {
-    await loadStages();
-    setSaving(false);
-    return;
-  }
-
-  // Rollback best-effort
-  try {
-    if (firstOk) {
-      await upsertStage(current);
-    }
-
-    if (secondOk) {
-      await upsertStage(target);
-    }
-  } catch (rollbackError) {
-    console.error("Rollback failed", rollbackError);
-  }
-
-  setError(
-    "No se pudo reordenar la etapa. Se intentó restaurar el orden original. Verificá el estado e intentá nuevamente."
-  );
-
-  await loadStages();
-  setSaving(false);
-};
-
-  const deleteStage = async (stage) => {
     setSaving(true);
     setError(null);
-
     try {
-      const res = await fetch(`${API_BASE}/stages`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
+      const current = stages[index];
+      const target = stages[targetIndex];
 
-      if (!res.ok) {
-        throw new Error(`Error ${res.status} al eliminar la etapa`);
-      }
+      const newCurrentOrder = target.order;
+      const newTargetOrder = current.order;
 
-      setStages((prev) => prev.filter((s) => s.id !== stage.id));
+      await upsertStage({ ...current, order: newCurrentOrder });
+      await upsertStage({ ...target, order: newTargetOrder });
+
+      const updated = [...stages];
+      updated[index] = { ...current, order: newCurrentOrder };
+      updated[targetIndex] = { ...target, order: newTargetOrder };
+      updated.sort((a, b) => a.order - b.order);
+
+      setStages(updated);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo reordenar las etapas.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (stageId) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await fetch(`${API_BASE}/stages`, { method: "PUT", body: JSON.stringify({}) });
+      setStages((prev) => prev.filter((s) => s.id !== stageId));
     } catch (err) {
       console.error(err);
       setError("No se pudo eliminar la etapa.");
@@ -204,6 +167,32 @@ export default function CohortLifecycleConfiguration() {
 
   return (
     <Box sx={{ width: "100%" }}>
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 1 }}
+      >
+        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
+          Inicio
+        </Link>
+        <Link
+          component={RouterLink}
+          to="/cohorts"
+          underline="hover"
+          color="inherit"
+        >
+          Cohortes
+        </Link>
+        <Link
+          component={RouterLink}
+          to={`/cohorts/${id}`}
+          underline="hover"
+          color="inherit"
+        >
+          Detalle
+        </Link>
+        <Typography color="text.primary">Configuración</Typography>
+      </Breadcrumbs>
+
       <Typography variant="h4" sx={{ mb: 3 }}>
         Configuración del ciclo de vida del Cohorte {id}
       </Typography>

@@ -223,7 +223,7 @@ export default function Cohorts() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/" underline="hover" color="inherit">
+        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
           Inicio
         </Link>
         <Typography color="text.primary">Cohortes</Typography>
