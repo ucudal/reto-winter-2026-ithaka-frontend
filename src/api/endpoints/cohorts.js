@@ -9,8 +9,20 @@ export async function getCohorts(filters = {}) {
 }
 
 export async function createCohort(cohortData) {
-  const response = await apiClient.post("/api/cohorts", cohortData);
-  clearCache("cache_/api/cohorts");
+  const response = await apiClient.put("/api/cohorts", {
+    id: null,
+    ...cohortData,
+  });
+  clearCache();
+  return response.data;
+}
+
+export async function updateCohort(id, cohortData) {
+  const response = await apiClient.put("/api/cohorts", {
+    id,
+    ...cohortData,
+  });
+  clearCache();
   return response.data;
 }
 

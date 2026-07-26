@@ -36,6 +36,9 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import BlockIcon from "@mui/icons-material/Block";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -44,7 +47,7 @@ import ViewListIcon from "@mui/icons-material/ViewList";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 
-import { getCohorts, createCohort } from "../../api/endpoints/cohorts";
+import { getCohorts, createCohort, updateCohort } from "../../api/endpoints/cohorts";
 import { useToast } from "../../ToastContext";
 import EmptyState from "../../components/common/EmptyState";
 
@@ -59,14 +62,16 @@ export default function Cohorts() {
   const [filterSemester, setFilterSemester] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
-  // State for Create Cohort Dialog
+  // State for Create/Edit Cohort Dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editingCohortId, setEditingCohortId] = useState(null);
   const [formData, setFormData] = useState({
     year: new Date().getFullYear(),
     semester: 1,
     start_date: "",
     end_date: "",
+    status: "Active",
     notes: "",
   });
 
@@ -106,28 +111,50 @@ export default function Cohorts() {
     }));
   };
 
-  const handleOpenDialog = () => {
+  const handleOpenCreateDialog = () => {
+    setEditingCohortId(null);
     setFormData({
       year: new Date().getFullYear(),
       semester: 1,
       start_date: "",
       end_date: "",
+      status: "Active",
       notes: "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (cohort) => {
+    setEditingCohortId(cohort.id);
+    setFormData({
+      year: cohort.year,
+      semester: cohort.semester,
+      start_date: cohort.start_date || "",
+      end_date: cohort.end_date || "",
+      status: cohort.status || "Active",
+      notes: cohort.notes || "",
     });
     setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setEditingCohortId(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsCreating(true);
+    setIsSaving(true);
     try {
-      await createCohort(formData);
-      showToast("Cohorte creado exitosamente", "success");
+      if (editingCohortId) {
+        await updateCohort(editingCohortId, formData);
+        showToast("Cohorte actualizado exitosamente", "success");
+      } else {
+        await createCohort(formData);
+        showToast("Cohorte creado exitosamente", "success");
+      }
       setIsDialogOpen(false);
+      setEditingCohortId(null);
       loadCohorts({
         year: filterYear || undefined,
         semester: filterSemester || undefined,
@@ -136,9 +163,36 @@ export default function Cohorts() {
         page_size: 20,
       });
     } catch (err) {
-      showToast(err?.message || "Error al crear el cohorte", "error");
+      showToast(err?.message || "Error al guardar el cohorte", "error");
     } finally {
-      setIsCreating(false);
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleStatus = async (cohort) => {
+    const newStatus = cohort.status === "Active" ? "Inactive" : "Active";
+    try {
+      await updateCohort(cohort.id, {
+        year: cohort.year,
+        semester: cohort.semester,
+        start_date: cohort.start_date,
+        end_date: cohort.end_date,
+        status: newStatus,
+        notes: cohort.notes,
+      });
+      showToast(
+        `Cohorte marcado como ${newStatus === "Active" ? "Activo" : "Inactivo"}`,
+        "success"
+      );
+      loadCohorts({
+        year: filterYear || undefined,
+        semester: filterSemester || undefined,
+        status: filterStatus || undefined,
+        page: 1,
+        page_size: 20,
+      });
+    } catch (err) {
+      showToast(err?.message || "Error al cambiar el estado del cohorte", "error");
     }
   };
 
@@ -194,7 +248,7 @@ export default function Cohorts() {
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ height: 40 }}
-            onClick={handleOpenDialog}
+            onClick={handleOpenCreateDialog}
           >
             Agregar cohorte
           </Button>
@@ -296,25 +350,61 @@ export default function Cohorts() {
                       {cohort.notes || "-"}
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        component={RouterLink}
-                        to={`/cohorts/${cohort.id}`}
-                        aria-label="Ver detalles"
-                      >
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="Ver detalles">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          component={RouterLink}
+                          to={`/cohorts/${cohort.id}`}
+                          aria-label="Ver detalles"
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
 
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        component={RouterLink}
-                        to={`/cohorts/${cohort.id}/configuration`}
-                        aria-label="Configurar cohorte"
+                      <Tooltip title="Editar cohorte">
+                        <IconButton
+                          size="small"
+                          color="info"
+                          onClick={() => handleOpenEditDialog(cohort)}
+                          aria-label="Editar cohorte"
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Configurar cohorte">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          component={RouterLink}
+                          to={`/cohorts/${cohort.id}/configuration`}
+                          aria-label="Configurar cohorte"
+                        >
+                          <SettingsIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip
+                        title={
+                          cohort.status === "Active"
+                            ? "Dar de baja (Inactivar)"
+                            : "Activar cohorte"
+                        }
                       >
-                        <SettingsIcon fontSize="small" />
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          color={cohort.status === "Active" ? "error" : "success"}
+                          onClick={() => handleToggleStatus(cohort)}
+                          aria-label="Cambiar estado"
+                        >
+                          {cohort.status === "Active" ? (
+                            <BlockIcon fontSize="small" />
+                          ) : (
+                            <CheckCircleOutlineIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -359,15 +449,51 @@ export default function Cohorts() {
                     size="small"
                     color={cohort.status === "Active" ? "success" : "default"}
                   />
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    component={RouterLink}
-                    to={`/cohorts/${cohort.id}`}
-                    aria-label="Ver detalles"
-                  >
-                    <VisibilityIcon fontSize="small" />
-                  </IconButton>
+                  <Box>
+                    <Tooltip title="Ver detalles">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        component={RouterLink}
+                        to={`/cohorts/${cohort.id}`}
+                        aria-label="Ver detalles"
+                      >
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Editar cohorte">
+                      <IconButton
+                        size="small"
+                        color="info"
+                        onClick={() => handleOpenEditDialog(cohort)}
+                        aria-label="Editar cohorte"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip
+                      title={
+                        cohort.status === "Active"
+                          ? "Dar de baja (Inactivar)"
+                          : "Activar cohorte"
+                      }
+                    >
+                      <IconButton
+                        size="small"
+                        color={cohort.status === "Active" ? "error" : "success"}
+                        onClick={() => handleToggleStatus(cohort)}
+                        aria-label="Cambiar estado"
+                      >
+                        {cohort.status === "Active" ? (
+                          <BlockIcon fontSize="small" />
+                        ) : (
+                          <CheckCircleOutlineIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </CardActions>
               </Card>
             </Grid>
@@ -375,10 +501,12 @@ export default function Cohorts() {
         </Grid>
       )}
 
-      {/* Create Cohort Dialog */}
+      {/* Create / Edit Cohort Dialog */}
       <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit}>
-          <DialogTitle>Agregar nuevo cohorte</DialogTitle>
+          <DialogTitle>
+            {editingCohortId ? "Editar cohorte" : "Agregar nuevo cohorte"}
+          </DialogTitle>
           <DialogContent dividers>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
               <TextField
@@ -423,6 +551,18 @@ export default function Cohorts() {
                 fullWidth
               />
               <TextField
+                select
+                label="Estado"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                required
+                fullWidth
+              >
+                <MenuItem value="Active">Activo</MenuItem>
+                <MenuItem value="Inactive">Inactivo</MenuItem>
+              </TextField>
+              <TextField
                 label="Notas / Descripción"
                 name="notes"
                 value={formData.notes}
@@ -434,11 +574,11 @@ export default function Cohorts() {
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 2.5 }}>
-            <Button onClick={handleCloseDialog} disabled={isCreating}>
+            <Button onClick={handleCloseDialog} disabled={isSaving}>
               Cancelar
             </Button>
-            <Button type="submit" variant="contained" disabled={isCreating}>
-              {isCreating ? "Guardando..." : "Guardar"}
+            <Button type="submit" variant="contained" disabled={isSaving}>
+              {isSaving ? "Guardando..." : "Guardar"}
             </Button>
           </DialogActions>
         </form>

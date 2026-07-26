@@ -62,7 +62,7 @@ export default function Sidebar({
         {user?.role !== "Student" && navItem("/groups", "Grupos", GroupsIcon)}
       </List>
 
-      {user?.role !== "Student" && (
+      {user?.role === "Coordinator" && (
         <List
           subheader={
             <ListSubheader component="div">
@@ -71,7 +71,7 @@ export default function Sidebar({
           }
         >
           {navItem("/tutors", "Tutores", PeopleIcon)}
-          {user?.role === "Coordinator" && navItem("/students", "Alumnos", SchoolIcon)}
+          {navItem("/students", "Alumnos", SchoolIcon)}
         </List>
       )}
 

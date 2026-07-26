@@ -140,22 +140,6 @@ const appRouter = createBrowserRouter([
                   {
                     path: "/templates",
                     element: (
-                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
-                        <Templates />
-                      </RoleProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: '/templates/:id',
-                    element: (
-                      <RoleProtectedRoute allowedRoles={['Coordinator']}>
-                        <TemplateDetail />
-                      </RoleProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: "/tutors",
-                    element: (
                       <RoleProtectedRoute
                         allowedRoles={[
                           "Coordinator",
@@ -163,6 +147,28 @@ const appRouter = createBrowserRouter([
                           "TechnicalTutor",
                         ]}
                       >
+                        <Templates />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: '/templates/:id',
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          'Coordinator',
+                          'BusinessTutor',
+                          'TechnicalTutor',
+                        ]}
+                      >
+                        <TemplateDetail />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/tutors",
+                    element: (
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <Tutors />
                       </RoleProtectedRoute>
                     ),
