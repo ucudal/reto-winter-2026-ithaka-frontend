@@ -309,7 +309,7 @@ export default function CohortDetail() {
                       <TableCell sx={{ fontWeight: "medium" }}>
                         <Link
                           component={RouterLink}
-                          to={`/groups`}
+                          to={`/groups/${group.id}`}
                           underline="hover"
                         >
                           {group.name}
