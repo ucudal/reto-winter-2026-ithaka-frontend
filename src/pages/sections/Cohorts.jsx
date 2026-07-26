@@ -32,13 +32,17 @@ import {
   InputLabel,
   InputAdornment,
   Tooltip,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -52,6 +56,7 @@ import { useToast } from "../../ToastContext";
 import EmptyState from "../../components/common/EmptyState";
 
 export default function Cohorts() {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [cohorts, setCohorts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -61,6 +66,10 @@ export default function Cohorts() {
   const [filterYear, setFilterYear] = useState("");
   const [filterSemester, setFilterSemester] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+
+  // Action Menu State
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedCohort, setSelectedCohort] = useState(null);
 
   // State for Create/Edit Cohort Dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -103,6 +112,16 @@ export default function Cohorts() {
     }
   }
 
+  const handleMenuOpen = (event, cohort) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedCohort(cohort);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedCohort(null);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -125,6 +144,7 @@ export default function Cohorts() {
   };
 
   const handleOpenEditDialog = (cohort) => {
+    handleMenuClose();
     setEditingCohortId(cohort.id);
     setFormData({
       year: cohort.year,
@@ -170,6 +190,7 @@ export default function Cohorts() {
   };
 
   const handleToggleStatus = async (cohort) => {
+    handleMenuClose();
     const newStatus = cohort.status === "Active" ? "Inactive" : "Active";
     try {
       await updateCohort(cohort.id, {
@@ -350,59 +371,13 @@ export default function Cohorts() {
                       {cohort.notes || "-"}
                     </TableCell>
                     <TableCell align="right">
-                      <Tooltip title="Ver detalles">
+                      <Tooltip title="Opciones">
                         <IconButton
                           size="small"
-                          color="primary"
-                          component={RouterLink}
-                          to={`/cohorts/${cohort.id}`}
-                          aria-label="Ver detalles"
+                          onClick={(e) => handleMenuOpen(e, cohort)}
+                          aria-label="Opciones"
                         >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="Editar cohorte">
-                        <IconButton
-                          size="small"
-                          color="info"
-                          onClick={() => handleOpenEditDialog(cohort)}
-                          aria-label="Editar cohorte"
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="Configurar cohorte">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          component={RouterLink}
-                          to={`/cohorts/${cohort.id}/configuration`}
-                          aria-label="Configurar cohorte"
-                        >
-                          <SettingsIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip
-                        title={
-                          cohort.status === "Active"
-                            ? "Dar de baja (Inactivar)"
-                            : "Activar cohorte"
-                        }
-                      >
-                        <IconButton
-                          size="small"
-                          color={cohort.status === "Active" ? "error" : "success"}
-                          onClick={() => handleToggleStatus(cohort)}
-                          aria-label="Cambiar estado"
-                        >
-                          {cohort.status === "Active" ? (
-                            <BlockIcon fontSize="small" />
-                          ) : (
-                            <CheckCircleOutlineIcon fontSize="small" />
-                          )}
+                          <MoreVertIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     </TableCell>
@@ -449,57 +424,92 @@ export default function Cohorts() {
                     size="small"
                     color={cohort.status === "Active" ? "success" : "default"}
                   />
-                  <Box>
-                    <Tooltip title="Ver detalles">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        component={RouterLink}
-                        to={`/cohorts/${cohort.id}`}
-                        aria-label="Ver detalles"
-                      >
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="Editar cohorte">
-                      <IconButton
-                        size="small"
-                        color="info"
-                        onClick={() => handleOpenEditDialog(cohort)}
-                        aria-label="Editar cohorte"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip
-                      title={
-                        cohort.status === "Active"
-                          ? "Dar de baja (Inactivar)"
-                          : "Activar cohorte"
-                      }
+                  <Tooltip title="Opciones">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleMenuOpen(e, cohort)}
+                      aria-label="Opciones"
                     >
-                      <IconButton
-                        size="small"
-                        color={cohort.status === "Active" ? "error" : "success"}
-                        onClick={() => handleToggleStatus(cohort)}
-                        aria-label="Cambiar estado"
-                      >
-                        {cohort.status === "Active" ? (
-                          <BlockIcon fontSize="small" />
-                        ) : (
-                          <CheckCircleOutlineIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </CardActions>
               </Card>
             </Grid>
           ))}
         </Grid>
       )}
+
+      {/* Action Options Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          elevation: 3,
+          sx: { minWidth: 180, borderRadius: 2 },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (selectedCohort) {
+              navigate(`/cohorts/${selectedCohort.id}`);
+              handleMenuClose();
+            }
+          }}
+        >
+          <ListItemIcon>
+            <VisibilityIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText>Ver detalles</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedCohort) {
+              handleOpenEditDialog(selectedCohort);
+            }
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" color="info" />
+          </ListItemIcon>
+          <ListItemText>Editar cohorte</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedCohort) {
+              navigate(`/cohorts/${selectedCohort.id}/configuration`);
+              handleMenuClose();
+            }
+          }}
+        >
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText>Configurar cohorte</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedCohort) {
+              handleToggleStatus(selectedCohort);
+            }
+          }}
+        >
+          <ListItemIcon>
+            {selectedCohort?.status === "Active" ? (
+              <BlockIcon fontSize="small" color="error" />
+            ) : (
+              <CheckCircleOutlineIcon fontSize="small" color="success" />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {selectedCohort?.status === "Active" ? "Dar de baja" : "Activar cohorte"}
+          </ListItemText>
+        </MenuItem>
+      </Menu>
 
       {/* Create / Edit Cohort Dialog */}
       <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
