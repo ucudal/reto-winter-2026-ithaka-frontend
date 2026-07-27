@@ -231,21 +231,21 @@ export default function CohortLifecycleConfiguration() {
                 <Box>
                   <IconButton
                     disabled={saving}
-                    onClick={() => moveStage(index, -1)}
+                    onClick={() => handleMove(index, "up")}
                   >
                     <ArrowUpwardIcon />
                   </IconButton>
 
                   <IconButton
                     disabled={saving}
-                    onClick={() => moveStage(index, 1)}
+                    onClick={() => handleMove(index, "down")}
                   >
                     <ArrowDownwardIcon />
                   </IconButton>
 
                   <IconButton
                     disabled={saving}
-                    onClick={() => deleteStage(stage)}
+                    onClick={() => handleDelete(stage.id)}
                   >
                     <DeleteIcon />
                   </IconButton>
