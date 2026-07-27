@@ -52,6 +52,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 
 import { getCohorts, createCohort, updateCohort } from "../../api/endpoints/cohorts";
+import { translateStatus } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import EmptyState from "../../components/common/EmptyState";
 
@@ -202,7 +203,7 @@ export default function Cohorts() {
         notes: cohort.notes,
       });
       showToast(
-        `Cohorte marcado como ${newStatus === "Active" ? "Activo" : "Inactivo"}`,
+        `Cohorte marcado como ${translateStatus(newStatus)}`,
         "success"
       );
       loadCohorts({
@@ -355,7 +356,7 @@ export default function Cohorts() {
                     <TableCell>{cohort.group_count ?? 0}</TableCell>
                     <TableCell>
                       <Chip
-                        label={cohort.status === "Active" ? "Activo" : "Inactivo"}
+                        label={translateStatus(cohort.status)}
                         size="small"
                         color={cohort.status === "Active" ? "success" : "default"}
                       />
@@ -420,7 +421,7 @@ export default function Cohorts() {
                 </CardContent>
                 <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
                   <Chip
-                    label={cohort.status === "Active" ? "Activo" : "Inactivo"}
+                    label={translateStatus(cohort.status)}
                     size="small"
                     color={cohort.status === "Active" ? "success" : "default"}
                   />

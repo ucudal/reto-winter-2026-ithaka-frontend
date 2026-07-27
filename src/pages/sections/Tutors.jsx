@@ -39,6 +39,7 @@ import ViewListIcon from "@mui/icons-material/ViewList";
 import SearchIcon from "@mui/icons-material/Search";
 
 import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
+import { translateStatus, translateTutorRole } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -391,15 +392,13 @@ export default function Tutors() {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        {tutor.role === "Business" ? "Negocio" : "Técnico"}
+                        {translateTutorRole(tutor.role)}
                       </TableCell>
                       <TableCell>{tutor.specialty}</TableCell>
                       <TableCell>{tutor.availability}</TableCell>
                       <TableCell>
                         <Chip
-                          label={
-                            tutor.status === "Active" ? "Activo" : "Inactivo"
-                          }
+                          label={translateStatus(tutor.status)}
                           size="small"
                           color={
                             tutor.status === "Active" ? "success" : "default"
@@ -529,9 +528,7 @@ export default function Tutors() {
                       }}
                     >
                       <Chip
-                        label={
-                          tutor.status === "Active" ? "Activo" : "Inactivo"
-                        }
+                        label={translateStatus(tutor.status)}
                         size="small"
                         color={
                           tutor.status === "Active" ? "success" : "default"
