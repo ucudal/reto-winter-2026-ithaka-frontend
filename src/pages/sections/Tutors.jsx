@@ -41,6 +41,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 const TUTOR_FIELDS = [
   { name: "name", label: "Nombre", type: "text", required: true, grid: 12 },
@@ -406,14 +407,25 @@ export default function Tutors() {
                         />
                       </TableCell>
                       <TableCell align="right">
+                        <Tooltip title="Ver perfil">
                         <IconButton
                           size="small"
                           color="primary"
-                          aria-label={`Editar ${tutor.name}`}
-                          onClick={() => handleOpenEdit(tutor)}
+                          component={RouterLink}
+                          to={`/tutors/${tutor.id}`}
                         >
-                          <EditIcon fontSize="small" />
+                          <VisibilityIcon fontSize="small" />
                         </IconButton>
+                      <Tooltip title="Ver perfil">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          component={RouterLink}
+                          to={`/tutors/${tutor.id}`} 
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                         <IconButton
                           size="small"
                           color="error"
@@ -521,6 +533,16 @@ export default function Tutors() {
                         }
                       />
                       <Box>
+                        <Tooltip title="Ver perfil">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          component={RouterLink}
+                          to={`/tutors/${tutor.id}`}
+                        >
+                          Ver
+                        </IconButton>
+                      </Tooltip>
                         <Tooltip title="Editar">
                           <IconButton
                             size="small"

@@ -48,9 +48,12 @@ export default function TutorDetail() {
 
 
   const percentage =
-    capacity?.assigned_hours > 0
-      ? (capacity.consumed_hours / capacity.assigned_hours) * 100
-      : 0;
+  capacity?.assigned_hours > 0
+    ? Math.min(
+        (capacity.consumed_hours / capacity.assigned_hours) * 100,
+        100
+      )
+    : 0;
 
 
   return (
