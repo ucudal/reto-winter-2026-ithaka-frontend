@@ -11,12 +11,10 @@ import {
   Alert,
   Breadcrumbs,
   Link,
-  Chip,
 } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 import { getTutorCapacity } from "../../api/endpoints/tutors";
-
 
 export default function TutorDetail() {
   const { id } = useParams();
@@ -26,35 +24,29 @@ export default function TutorDetail() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-  const loadCapacity = async () => {
-    try {
-      setLoading(true);
-      setError("");
+    const loadCapacity = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const data = await getTutorCapacity(id);
-      console.log(data);
-      setCapacity(data);
+        const data = await getTutorCapacity(id);
+        console.log(data);
+        setCapacity(data);
 
-    } catch (err) {
-      setError(
-        err?.message || "No se pudo cargar la capacidad del tutor."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+      } catch (err) {
+        setError(
+          err?.message || "No se pudo cargar la capacidad del tutor."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  loadCapacity();
-}, [id]);
+    loadCapacity();
+  }, [id]);
 
 
-  const percentage =
-  capacity?.assigned_hours > 0
-    ? Math.min(
-        (capacity.consumed_hours / capacity.assigned_hours) * 100,
-        100
-      )
-    : 0;
+  const percentage = capacity?.usage_percentage ?? 0;
 
 
   return (
@@ -108,19 +100,19 @@ export default function TutorDetail() {
             <CardContent>
 
               <Typography>
-                Horas asignadas:
+                Capacidad máxima:
                 <strong>
                   {" "}
-                  {capacity.assigned_hours} hs
+                  {capacity.max_capacity} hs
                 </strong>
               </Typography>
 
 
               <Typography>
-                Horas consumidas:
+                Horas asignadas:
                 <strong>
                   {" "}
-                  {capacity.consumed_hours} hs
+                  {capacity.assigned_hours} hs
                 </strong>
               </Typography>
 
@@ -139,7 +131,7 @@ export default function TutorDetail() {
                 <Typography sx={{ mb: 1 }}>
                   Uso de capacidad:
                   {" "}
-                  {percentage.toFixed(0)}%
+                  {percentage.toFixed(1)}%
                 </Typography>
 
 
