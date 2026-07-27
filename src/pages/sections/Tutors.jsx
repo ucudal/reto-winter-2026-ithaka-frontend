@@ -407,7 +407,7 @@ export default function Tutors() {
                         />
                       </TableCell>
                       <TableCell align="right">
-                        <Tooltip title="Ver perfil">
+                      <Tooltip title="Ver perfil">
                         <IconButton
                           size="small"
                           color="primary"
@@ -416,16 +416,20 @@ export default function Tutors() {
                         >
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
-                      <Tooltip title="Ver perfil">
+                      </Tooltip>
+
+                      <Tooltip title="Editar">
                         <IconButton
                           size="small"
                           color="primary"
-                          component={RouterLink}
-                          to={`/tutors/${tutor.id}`} 
+                          aria-label={`Editar ${tutor.name}`}
+                          onClick={() => handleOpenEdit(tutor)}
                         >
-                          <VisibilityIcon fontSize="small" />
+                          <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
+
+                      <Tooltip title="Eliminar">
                         <IconButton
                           size="small"
                           color="error"
@@ -433,7 +437,8 @@ export default function Tutors() {
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
-                      </TableCell>
+                      </Tooltip>
+                    </TableCell>
                     </TableRow>
                   ))
                 )}

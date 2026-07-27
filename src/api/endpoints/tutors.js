@@ -9,8 +9,9 @@ export async function upsertTutor(payload) {
   const { data } = await apiClient.put("/api/tutors", payload);
   return data;
 }
-export const getTutorCapacity = async (id) => {
-  const response = await api.get(`/api/tutors/${id}/capacity`);
-  return response.data;
-};
+
+export async function getTutorCapacity(id) {
+  const { data } = await apiClient.get(`/api/tutors/${id}/capacity`);
+  return data;
+}
 

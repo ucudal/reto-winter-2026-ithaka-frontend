@@ -26,25 +26,26 @@ export default function TutorDetail() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadCapacity = async () => {
-      try {
-        setLoading(true);
-        setError("");
+  const loadCapacity = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-        const data = await getTutorCapacity(id);
-        setCapacity(data);
+      const data = await getTutorCapacity(id);
+      console.log(data);
+      setCapacity(data);
 
-      } catch (err) {
-        setError(
-          err?.message || "No se pudo cargar la capacidad del tutor."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+    } catch (err) {
+      setError(
+        err?.message || "No se pudo cargar la capacidad del tutor."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    loadCapacity();
-  }, [id]);
+  loadCapacity();
+}, [id]);
 
 
   const percentage =
