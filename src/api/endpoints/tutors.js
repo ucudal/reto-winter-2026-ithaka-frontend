@@ -5,6 +5,11 @@ export async function getTutors() {
   return Array.isArray(data) ? data : (data?.items ?? []);
 }
 
+export async function getOverloadedTutors() {
+  const { data } = await apiClient.get("/api/tutors/overloaded");
+  return Array.isArray(data) ? data : (data?.items ?? []);
+}
+
 export async function upsertTutor(payload) {
   const { data } = await apiClient.put("/api/tutors", payload);
   return data;
