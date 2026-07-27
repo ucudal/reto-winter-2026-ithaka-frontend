@@ -37,7 +37,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
-// import { apiClient } from '../../api/client' // Línea para llamar a la API real, actualmente comentada para usar datos mockeados
+import { getMaterials, createMaterial } from "../../api/endpoints/materials";
 import ConfirmModal from "../../components/ConfirmModal";
 import CreateMaterialModal from "../../components/CreateMaterialModal";
 import EditMaterialModal from "../../components/EditMaterialModal";
@@ -52,27 +52,6 @@ const columns = [
 ];
 
 const tableColumnCount = columns.length + 1;
-
-const mockMaterials = [
-  {
-    id: 12,
-    stage_id: 2,
-    title: "Business Model Canvas Template",
-    url: "https://drive.google.com/bmc-template",
-  },
-  {
-    id: 13,
-    stage_id: 1,
-    title: "Guía para definir el problema",
-    url: "https://drive.google.com/problem-guide",
-  },
-  {
-    id: 14,
-    stage_id: 3,
-    title: "Plantilla de propuesta de valor",
-    url: "https://drive.google.com/value-proposition",
-  },
-];
 
 function getPlatformDetails(url = "") {
   const lowerUrl = url.toLowerCase();
@@ -144,13 +123,9 @@ function Knowledge() {
     setError(null);
 
     try {
-      // Llamada real a la API:
-      // const { data } = await apiClient.get('/materials')
-      // setMaterials(Array.isArray(data) ? data : [])
+      const { data } = await getMaterials();
+      setMaterials(Array.isArray(data) ? data : [])
 
-      // Datos mockeados:
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simula un retraso de 500 ms para la carga de datos
-      setMaterials(mockMaterials);
     } catch (requestError) {
       setError(requestError);
     } finally {
@@ -199,8 +174,20 @@ function Knowledge() {
     );
   };
 
-  const handleCreateMaterial = (newMaterial) => {
-    setMaterials((currentMaterials) => [newMaterial, ...currentMaterials]);
+  const handleCreateMaterial = async (newMaterial) => {
+    try {
+      const createdMaterial = await createMaterial(newMaterial);
+
+      setMaterials((currentMaterials) => [
+        createdMaterial,
+        ...currentMaterials,
+      ]);
+
+      setIsCreateModalOpen(false);
+
+    } catch (error) {
+      setError(error);
+    }
   };
 
   return (
