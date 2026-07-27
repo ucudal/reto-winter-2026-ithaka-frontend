@@ -30,7 +30,6 @@ export default function TutorDetail() {
         setError("");
 
         const data = await getTutorCapacity(id);
-        console.log(data);
         setCapacity(data);
 
       } catch (err) {
