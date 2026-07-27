@@ -58,6 +58,7 @@ import {
 } from "../../api/endpoints/tutors";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 const TUTOR_FIELDS = [
   { name: "name", label: "Nombre", type: "text", required: true, grid: 12 },
@@ -478,24 +479,42 @@ export default function Tutors() {
                       </TableCell>
                       <TableCell align="right">
                         {tutor.linkedin_url && (
+                          <Tooltip title="Ver LinkedIn">
+                            <IconButton
+                              size="small"
+                              component="a"
+                              href={tutor.linkedin_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Abrir LinkedIn de ${tutor.name}`}
+                            >
+                              <LinkedInIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        <Tooltip title="Ver perfil">
                           <IconButton
                             size="small"
-                            component="a"
-                            href={tutor.linkedin_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Abrir LinkedIn de ${tutor.name}`}
+                            color="primary"
+                            component={RouterLink}
+                            to={`/tutors/${tutor.id}`}
                           >
-                            <LinkedInIcon fontSize="small" />
+                            <VisibilityIcon fontSize="small" />
                           </IconButton>
-                        )}
-                        <IconButton
-                          size="small"
-                          aria-label={`Ver capacidad de ${tutor.name}`}
-                          onClick={() => handleOpenCapacity(tutor)}
-                        >
-                          <AssessmentIcon fontSize="small" />
-                        </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Ver capacidad">
+                          <IconButton
+                            size="small"
+                            aria-label={`Ver capacidad de ${tutor.name}`}
+                            onClick={() => handleOpenCapacity(tutor)}
+                          >
+                            <AssessmentIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Editar">
                         <IconButton
                           size="small"
                           color="primary"
@@ -504,6 +523,9 @@ export default function Tutors() {
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Eliminar">
                         <IconButton
                           size="small"
                           color="error"
@@ -511,7 +533,8 @@ export default function Tutors() {
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
-                      </TableCell>
+                      </Tooltip>
+                    </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -625,6 +648,16 @@ export default function Tutors() {
                             </IconButton>
                           </Tooltip>
                         )}
+                        <Tooltip title="Ver perfil">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            component={RouterLink}
+                            to={`/tutors/${tutor.id}`}
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Ver capacidad">
                           <IconButton
                             size="small"
