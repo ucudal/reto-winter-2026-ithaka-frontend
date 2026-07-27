@@ -18,6 +18,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   TextField,
   Typography,
   Breadcrumbs,
@@ -68,6 +69,9 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Dialog & Form states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -228,7 +232,7 @@ export default function Users() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.map((user, index) => {
+                {users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => {
                   const roleStyle = ROLE_STYLES[user.role] ?? ROLE_STYLES.Student;
 
                   return (
@@ -273,6 +277,20 @@ export default function Users() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={users.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
         )}
       </Paper>
 

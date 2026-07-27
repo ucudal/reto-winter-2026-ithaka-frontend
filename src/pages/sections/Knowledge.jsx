@@ -20,6 +20,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   TextField,
   Tooltip,
   Typography,
@@ -118,6 +119,10 @@ function Knowledge() {
   const [selectedView, setSelectedView] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const [materialToDelete, setMaterialToDelete] = useState(null);
   const [materialToEdit, setMaterialToEdit] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -395,7 +400,9 @@ function Knowledge() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMaterials.map((material) => (
+                filteredMaterials
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((material) => (
                   <TableRow key={material.id} hover>
                     <TableCell>{material.id}</TableCell>
                     <TableCell>{material.stage_id}</TableCell>
@@ -452,6 +459,20 @@ function Knowledge() {
               )}
             </TableBody>
           </Table>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredMaterials.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
         </TableContainer>
       ) : isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>

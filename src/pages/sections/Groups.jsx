@@ -18,6 +18,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Chip,
   IconButton,
   Tooltip,
@@ -46,6 +47,9 @@ function Groups() {
   const [view, setView] = useState("gallery");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [groups, setGroups] = useState([]);
   const [cohorts, setCohorts] = useState([]);
@@ -318,7 +322,7 @@ function Groups() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredGroups.map((group) => (
+                filteredGroups.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((group) => (
                   <TableRow key={group.id} hover>
                     <TableCell sx={{ fontWeight: "medium" }}>
                       {group.name}
@@ -356,6 +360,20 @@ function Groups() {
               )}
             </TableBody>
           </Table>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredGroups.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
         </TableContainer>
       )}
 
