@@ -41,6 +41,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 const TUTOR_FIELDS = [
   { name: "name", label: "Nombre", type: "text", required: true, grid: 12 },
@@ -406,6 +407,18 @@ export default function Tutors() {
                         />
                       </TableCell>
                       <TableCell align="right">
+                      <Tooltip title="Ver perfil">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          component={RouterLink}
+                          to={`/tutors/${tutor.id}`}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Editar">
                         <IconButton
                           size="small"
                           color="primary"
@@ -414,6 +427,9 @@ export default function Tutors() {
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Eliminar">
                         <IconButton
                           size="small"
                           color="error"
@@ -421,7 +437,8 @@ export default function Tutors() {
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
-                      </TableCell>
+                      </Tooltip>
+                    </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -521,6 +538,16 @@ export default function Tutors() {
                         }
                       />
                       <Box>
+                        <Tooltip title="Ver perfil">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          component={RouterLink}
+                          to={`/tutors/${tutor.id}`}
+                        >
+                          Ver
+                        </IconButton>
+                      </Tooltip>
                         <Tooltip title="Editar">
                           <IconButton
                             size="small"
