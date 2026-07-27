@@ -2,6 +2,140 @@
 
 ---
 
+## 🔄 Auditoría 2026-07-25 — Nuevas tareas (solo frontend)
+
+Se verificó el estado real del backend corriendo el router de FastAPI directamente (no contra `api-spec-en.md`, que documenta endpoints "tentativos" no todos implementados) y se comparó contra el código actual del frontend. La mayoría de las tarjetas originales del backlog (`SETUP-1`, `SETUP-2`, `UI-1` a `UI-9`, `AUTH-1/2/3`, `BLOCK-1`, `MOCK-1`, `MOCK-6`, entorno de testing) ya están resueltas en el código actual y no se repiten acá. Las tarjetas de abajo son gaps reales detectados hoy, **accionables 100% desde frontend** (no requieren tocar el repo de backend) — donde algo sí depende de un endpoint que backend todavía no expone, la tarea es mockear/aislar siguiendo el mismo criterio que ya usó el equipo en `DASH-1`/`MOCK-6`, no bloquearse.
+
+### [FRONTEND] [BUG-1] Corregir método HTTP en alta de Cohortes y Grupos (POST inexistente → PUT upsert)
+**Labels:** `easy` `bug`
+
+* **Descripción:** El backend expone `PUT /api/cohorts` y `PUT /api/groups` como upsert (`id: null` = crear, `id` seteado = editar) — igual que ya hace correctamente `upsertTutor` en `tutors.js`. Pero `createCohort` (`src/api/endpoints/cohorts.js:11-15`) y `createGroup` (`src/api/endpoints/groups.js:29-33`) llaman `apiClient.post(...)`, ruta que no existe en el backend (`405 Method Not Allowed`). Hoy mismo, crear una cohorte o un grupo desde la UI falla contra el backend real.
+* **Tareas específicas:**
+   * Cambiar `createCohort` para hacer `apiClient.put("/api/cohorts", { id: null, ...cohortData })`.
+   * Cambiar `createGroup` para hacer `apiClient.put("/api/groups", { id: null, ...payload })`, respetando que `student_ids` es obligatorio y no puede ir vacío (`GroupUpsert` lo rechaza con 400).
+   * Revisar los formularios de alta (`Cohorts.jsx`, `Groups.jsx`) para confirmar que no dependan de un código de estado `201` específico de `POST`.
+
+---
+
+### [FRONTEND] [BUG-2] Corregir capa de Estudiantes al patrón upsert real y sacar el fallback silencioso a mock
+**Labels:** `mid` `bug`
+
+* **Descripción:** `src/api/endpoints/students.js` fue escrito contra un contrato REST clásico que no es el que implementó backend: `createStudent` llama `POST /api/students` (no existe) y `updateStudent` llama `PUT /api/students/${id}` (tampoco existe — el real es `PUT /api/students` con `id` en el body, igual que Cohortes/Grupos/Tutores/Etapas). Además, **todas** las funciones de este archivo atrapan cualquier error y devuelven datos mockeados (`MOCK_STUDENTS`) en silencio — hoy eso significa que un error real de red o un 500 del backend se disfraza de éxito, lo cual ya no tiene sentido porque el módulo de Estudiantes está implementado en backend (`GET`, `GET/{id}`, `PUT`, `DELETE`).
+* **Tareas específicas:**
+   * Reescribir `createStudent`/`updateStudent` para usar `PUT /api/students` con `id: null` o `id` seteado según corresponda.
+   * Quitar el `try/catch` que devuelve `MOCK_STUDENTS` en cualquier error; dejar que el error real se propague (ya existe manejo centralizado en `client.js`/`ErrorState`).
+   * Eliminar `MOCK_STUDENTS` del archivo una vez migrado (o dejarlo solo como fixture de tests si se usa en algún `.test.js`).
+
+---
+
+### [FRONTEND] [BUG-3] Parsear correctamente errores 422 de FastAPI (`detail` como array de objetos)
+**Labels:** `easy` `bug`
+
+* **Descripción:** Este riesgo ya estaba anotado en `DEV-1` del backlog original pero sigue sin resolverse: `messageForStatus` en `src/api/client.js:39-46` devuelve `data?.detail` tal cual. FastAPI, ante un 422 de validación, devuelve `detail` como un **array de objetos** (`[{loc, msg, type}, ...]`), no un string. Hoy, cualquier error de validación (por ejemplo, crear un grupo sin `student_ids`) se va a mostrar en pantalla como `[object Object]`.
+* **Tareas específicas:**
+   * Ajustar `messageForStatus` para detectar cuando `data.detail` es un array y unir los `msg` de cada entrada en un mensaje legible (ej: `"idea: field required; student_ids: ensure this list has at least 1 item"`).
+   * Mantener el caso actual (`detail` string) sin cambios.
+   * Agregar un test en `client.test.js` con un payload 422 real de FastAPI (`{"detail":[{"loc":["body","name"],"msg":"field required","type":"missing"}]}`) para blindar el fix.
+
+---
+
+### [FRONTEND] [BUG-4] No simular acciones que el backend no soporta (Eliminar tutor, Eliminar etapa)
+**Labels:** `mid` `bug`
+
+* **Descripción:** Dos controles de la UI le mienten al usuario sobre lo que realmente pasó en el servidor. El botón "Eliminar" de `Tutors.jsx` (línea ~417-423) no tiene `onClick`: es un botón muerto, sin feedback de que no hace nada. Peor aún, `deleteStage` en `CohortLifecycleConfiguration.jsx:166-188` envía un `PUT /api/stages` con body vacío `{}` (que la API va a rechazar por campos faltantes, o en el peor caso, corromper datos si algún día se relajan las validaciones) y luego **igual borra la etapa del estado local**, mostrando éxito aunque el backend no haya eliminado nada. Como no existe `DELETE /api/tutors/{id}` ni `DELETE /api/stages/{id}` en el backend actual, la única opción resolvible desde frontend hoy es dejar de fingir que la acción funciona.
+* **Tareas específicas:**
+   * En `Tutors.jsx`: deshabilitar el botón "Eliminar" (ambas vistas, tabla y galería) con un `Tooltip` tipo "Baja de tutores no disponible todavía" en vez de dejarlo clickeable sin efecto.
+   * En `CohortLifecycleConfiguration.jsx`: quitar la llamada `fetch` con body vacío de `deleteStage`; reemplazar por el mismo patrón de deshabilitar + tooltip, sin tocar el estado local `stages` (para no mostrar una eliminación que no ocurrió).
+   * Dejar un comentario corto (o ticket) apuntando a que ambos quedan pendientes de un endpoint `DELETE` real del lado de backend.
+
+---
+
+### [FRONTEND] [BUG-5] Migrar `CohortLifecycleConfiguration.jsx` de `fetch` crudo a `apiClient`
+**Labels:** `mid` `refactor`
+
+* **Descripción:** Esta pantalla es la única del proyecto que llama a la API con `fetch` directo a una ruta relativa (`"/api/stages"`, `src/pages/sections/CohortLifecycleConfiguration.jsx:20,41,64`), en vez de usar `apiClient` de `src/api/client.js`. Esto la deja afuera del manejo centralizado de errores (`normalizeError`/`messageForStatus`), no le inyecta el header `Authorization: Bearer` (hoy `stage_api.py` no exige auth, pero si en el futuro se protege, esta pantalla se rompe sin aviso) y no respeta `VITE_API_URL` si backend y frontend no comparten origen.
+* **Tareas específicas:**
+* **Descripción:** Se usa `fetch` directo, ignorando el manejo centralizado de errores y headers de autenticación.
+* **Tareas específicas:**
+   * Crear `upsertStage(payload)` en `src/api/endpoints/stages.js` usando `apiClient.put`.
+   * Reemplazar los usos de `fetch` por funciones de `stages.js`.
+   * Quitar la constante `API_BASE` local.
+
+---
+
+### [FRONTEND] [FEAT-3] Construir el Dashboard real (reemplaza el stub vacío)
+**Labels:** `mid` `feature`
+
+* **Descripción:** `src/pages/sections/Dashboard.jsx` es un stub vacío. Se debe construir contra un mock en `src/data/mockDashboard.js` hasta que exista `GET /api/dashboard/summary`.
+* **Tareas específicas:**
+   * Crear `src/api/endpoints/dashboard.js` devolviendo `mockDashboardSummary`.
+   * Armar tarjetas de métricas, gráfico de `groups_by_stage` y tabla de `alerts`.
+* **Mock a usar (copiar tal cual):**
+```js
+export const mockDashboardSummary = {
+  active_groups: 42,
+  active_tutors: 18,
+  groups_by_stage: [
+    { stage: "Ideación", count: 15 },
+    { stage: "Anteproyecto", count: 18 },
+    { stage: "Proyecto Final", count: 9 },
+  ],
+  capacity: {
+    total_available_hours: 440,
+    total_used_hours: 310,
+    usage_percentage: 70.5,
+  },
+  pending_deliverables: 23,
+  alerts: [
+    { type: "GroupWithoutTutor", group_id: 60, description: "Falta tutor técnico" },
+    { type: "OverloadedTutor", tutor_id: 8, description: "104% de capacidad" },
+  ],
+};
+```
+
+---
+
+### [FRONTEND] [FEAT-4] Aislar `Meetings.jsx` detrás de una capa de API mockeada
+**Labels:** `mid` `refactor`
+
+   * Definir `src/api/endpoints/materials.js` con `getMaterials(stageId?)`/`createMaterial(payload)` contra un mock persistido (mismo patrón que `[FEAT-4]`), respetando la forma `{ stage_id, title, url }` ya documentada en `MOCK-6`.
+   * Conectar `Knowledge.jsx` a esa capa en vez de al array mock inline, sin necesidad de mantener comentado el código real — que quede detrás de un flag o de la propia función mockeada.
+   * Decidir si `Templates.jsx` se une al mismo módulo de materiales o se mantiene separado; si se mantiene, conectarlo por fin a `src/api/endpoints/templates.js` (hoy escrito pero sin usar).
+
+---
+
+### [FRONTEND] [FEAT-6] Resolver `CommentFeed` contra un endpoint que hoy no existe
+**Labels:** `mid` `bug`
+
+* **Descripción:** A diferencia de `Meetings`/`Knowledge`, este componente **no está mockeado** — `src/api/endpoints/comments.js` llama de verdad a `GET/POST /api/deliverables/{id}/comments` y `DELETE /api/comments/{id}`, rutas que no existen en el backend actual (no hay `deliverables_api.py` ni `comments_api.py`). Hoy, cualquier entregable que muestre `CommentFeed` va a mostrar el estado de error real (`"No se pudieron cargar los comentarios"`), no un mock — funcionalmente roto para el usuario.
+* **Tareas específicas:**
+   * Decidir: ocultar la sección de comentarios en la vista de entregable mientras no exista backend (opción rápida), o mockear `comments.js` con el mismo patrón persistente de `[FEAT-4]`/`[FEAT-5]` (opción que mantiene la funcionalidad visible para demos).
+   * Si se opta por mockear: mover la lógica actual detrás de un flag, conservando la firma de las 3 funciones para no tocar `CommentFeed.jsx`.
+   * Si se opta por ocultar: envolver el `<CommentFeed />` donde se use con una condición clara (y un comentario apuntando a por qué), en vez de dejarlo roto en producción.
+
+---
+
+### [FRONTEND] [FEAT-7] Definir el destino de la pantalla de Registro (`Register.jsx`)
+**Labels:** `easy` `design`
+
+* **Descripción:** No es un bug de código sino una decisión de producto pendiente. `Register.jsx` simula un alta de usuario y redirige a `/login` sin llamar a ninguna API — pero el contrato real de backend **no tiene un endpoint público de auto-registro**: la única forma de crear usuarios es `POST/PUT /api/users`, restringido al rol `Coordinator`, y ya está resuelto en `Users.jsx`. Es decir, el flujo de "Crear una cuenta" que hoy cuelga del Login no tiene ningún backend al que conectarse, ni lo va a tener con el modelo de permisos actual.
+* **Tareas específicas:**
+   * Confirmar con Ithaka/coordinador del reto si el alta de usuarios siempre va a ser exclusiva del Coordinador (lo más probable, dado el contrato) o si en algún momento se espera auto-registro.
+   * Si se confirma que es exclusiva del Coordinador: quitar el link "¿No tienes cuenta? Regístrate" de `Login.jsx` y la ruta `/register`, dejando la gestión de usuarios solo en `/users`.
+   * Si se decide mantenerla como demo: marcarla visualmente como "Próximamente" y no simular un éxito falso.
+
+---
+
+### [FRONTEND] [FEAT-8] Revisar el uso de `group.links` en `StudentsWorkspace.jsx`
+**Labels:** `easy` `bug`
+
+* **Descripción:** `StudentsWorkspace.jsx:301` renderiza `group.links`, pero el modelo `Group` del backend no tiene ninguna columna `links` (solo existe la entidad `Document`, polimórfica y sin router propio todavía). Hoy esa sección de la vista del estudiante siempre va a mostrar vacío/`undefined`, no porque no haya links cargados sino porque el campo no existe en la respuesta real de `GET /api/groups/{id}`.
+* **Tareas específicas:**
+   * Confirmar si "links del grupo" (repositorio, informe, pitch, one pager — ver la tabla de referencia real del cliente al final de este documento) se va a modelar como campos directos en `Group` o como `Document`s asociados, y comunicarlo al equipo de backend.
+   * Mientras no esté resuelto, ocultar o marcar como "próximamente" esa sección en `StudentsWorkspace.jsx` en vez de dejarla mostrando datos vacíos sin explicación.
+
+---
+
 ## 📋 Por Hacer
 
 ### [SETUP-1] Configurar variables de entorno (dotenv)
