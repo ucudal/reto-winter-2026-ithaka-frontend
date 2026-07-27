@@ -36,7 +36,16 @@ export function setAuthToken(token) {
   }
 }
 
+function formatValidationDetail(detail) {
+  return detail
+    .map((item) => item?.msg || item?.message || 'Dato invalido')
+    .join('; ')
+}
+
 function messageForStatus(status, data) {
+  if (Array.isArray(data?.detail)) {
+    return formatValidationDetail(data.detail)
+  }
   return (
     data?.detail ||
     data?.message ||

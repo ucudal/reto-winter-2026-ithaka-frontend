@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Box,
   Paper,
@@ -8,7 +7,8 @@ import {
   Alert,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { loginUser } from "../../api/endpoints/auth";
 import "./Login.css";
@@ -29,6 +29,7 @@ const inputSx = {
     transition: "background-color 5000s ease-in-out 0s",
   },
 };
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -45,13 +46,13 @@ export default function Login() {
     const e = {};
 
     if (!email) {
-      e.email = "Ingrese su email";
+      e.email = "Please enter your email";
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
-      e.email = "Email inválido";
+      e.email = "Invalid email";
     }
 
     if (!password) {
-      e.password = "Ingrese la contraseña";
+      e.password = "Please enter your password";
     }
 
     setErrors(e);
@@ -71,7 +72,7 @@ export default function Login() {
       login(data.token, data.user);
       navigate("/dashboard");
     } catch (err) {
-      setLoginError(err?.message || "Usuario o contraseña incorrectos");
+      setLoginError(err?.message || "Incorrect email or password");
     } finally {
       setSubmitting(false);
     }
@@ -95,12 +96,12 @@ export default function Login() {
           <img src={logo} alt="ITHAKA" className="login-logo" />
         </div>
 
-        <Typography 
-          variant="h5" 
+        <Typography
+          variant="h5"
           className="login-title"
           style={{ color: theme.palette.text.primary }}
         >
-          Iniciar sesión
+          Sign in
         </Typography>
 
         {loginError && (
@@ -112,7 +113,7 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="Usuario"
+            label="Email"
             margin="normal"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -125,7 +126,7 @@ export default function Login() {
           <TextField
             fullWidth
             type="password"
-            label="Contraseña"
+            label="Password"
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -142,21 +143,8 @@ export default function Login() {
             className="login-button"
             disabled={submitting}
           >
-            {submitting ? "Cargando..." : "CONTINUAR"}
+            {submitting ? "Loading..." : "CONTINUE"}
           </Button>
-          <Typography
-            variant="body2"
-            align="center"
-            className="login-register"
-          >
-            <Link
-              to="/register"
-              className="login-register-link"
-              style={{ color: theme.palette.secondary.main }}
-            >
-              Registrarse
-            </Link>
-          </Typography>
         </form>
       </Paper>
     </Box>
