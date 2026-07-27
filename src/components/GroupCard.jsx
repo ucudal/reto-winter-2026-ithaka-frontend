@@ -7,14 +7,11 @@ import {
   AvatarGroup,
   Box,
   Divider,
-  LinearProgress,
   CardActionArea,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import EventIcon from "@mui/icons-material/Event";
 
 export default function GroupCard({ group }) {
   const getInitials = (name) => {
@@ -29,30 +26,16 @@ export default function GroupCard({ group }) {
   const technicalTutorName = group.technicalTutor?.name;
   const businessTutorName = group.businessTutor?.name;
 
-  // Render a mock date or warning/status based on group properties to match the design aesthetics
+  // Estado real: falta de tutor asignado (mismo criterio que la alerta GroupWithoutTutor del dashboard).
   const renderStatus = () => {
-    if (group.status === "Overloaded") {
-      return (
-        <Chip
-          icon={<ErrorOutlineIcon fontSize="small" style={{ color: "#fff" }} />}
-          label="Sobrecarga"
-          size="small"
-          sx={{
-            bgcolor: "#d32f2f",
-            color: "#fff",
-            fontWeight: "bold",
-            alignSelf: "flex-start",
-            "& .MuiChip-icon": { color: "#fff" },
-          }}
-        />
-      );
-    }
+    const missingBusiness = !businessTutorName;
+    const missingTechnical = !technicalTutorName;
 
-    if (group.status === "Late" || group.id % 3 === 0) {
+    if (missingBusiness && missingTechnical) {
       return (
         <Chip
           icon={<WarningAmberIcon fontSize="small" style={{ color: "#fff" }} />}
-          label="Entrega atrasada"
+          label="Sin tutores asignados"
           size="small"
           sx={{
             bgcolor: "#ed6c02",
@@ -65,14 +48,14 @@ export default function GroupCard({ group }) {
       );
     }
 
-    if (group.status === "Meeting" || group.id === 4) {
+    if (missingBusiness || missingTechnical) {
       return (
         <Chip
-          icon={<EventIcon fontSize="small" style={{ color: "#fff" }} />}
-          label="En reunión"
+          icon={<WarningAmberIcon fontSize="small" style={{ color: "#fff" }} />}
+          label={missingBusiness ? "Falta tutor de negocio" : "Falta tutor técnico"}
           size="small"
           sx={{
-            bgcolor: "#0288d1",
+            bgcolor: "#ed6c02",
             color: "#fff",
             fontWeight: "bold",
             alignSelf: "flex-start",
@@ -82,19 +65,25 @@ export default function GroupCard({ group }) {
       );
     }
 
-    // Default: Next delivery info
-    const mockDay = (group.id * 7) % 28 + 1;
-    return (
-      <Box display="flex" alignItems="center" gap={1} color="text.secondary">
-        <CalendarTodayIcon fontSize="small" sx={{ fontSize: 16 }} />
-        <Typography variant="caption">
-          Próxima entrega {mockDay} de Agosto
-        </Typography>
-      </Box>
-    );
-  };
+    if (group.status === "Inactive") {
+      return (
+        <Chip
+          icon={<ErrorOutlineIcon fontSize="small" style={{ color: "#fff" }} />}
+          label="Inactivo"
+          size="small"
+          sx={{
+            bgcolor: "#757575",
+            color: "#fff",
+            fontWeight: "bold",
+            alignSelf: "flex-start",
+            "& .MuiChip-icon": { color: "#fff" },
+          }}
+        />
+      );
+    }
 
-  const progress = 35 + (group.id * 15) % 55; // Generate stable mock progress percentages (e.g. 35% - 90%)
+    return null;
+  };
 
   const studentFirstNames = group.students?.map((s) => s.name.split(" ")[0]).join(", ") || "";
   const tutorFirstNames = [
@@ -229,34 +218,13 @@ export default function GroupCard({ group }) {
             </Box>
           </Box>
 
-          {/* Stage Progress Bar */}
-          <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
-            <Typography
-              variant="body2"
+          {/* Etapa actual */}
+          <Box display="flex" alignItems="center" mt={1}>
+            <Chip
+              label={group.currentStage?.name || "Sin etapa"}
+              size="small"
               color="primary"
-              fontWeight="bold"
-              sx={{
-                fontSize: 12,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "40%",
-              }}
-            >
-              {group.currentStage?.name || "Sin etapa"}
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={{
-                width: "55%",
-                height: 5,
-                borderRadius: 2,
-                bgcolor: "grey.200",
-                "& .MuiLinearProgress-bar": {
-                  borderRadius: 2,
-                },
-              }}
+              variant="outlined"
             />
           </Box>
 

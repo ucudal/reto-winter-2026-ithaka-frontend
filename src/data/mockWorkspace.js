@@ -1,38 +1,5 @@
-export const mockDeliverables = [
-  {
-    id: 501,
-    groupId: 45,
-    title: "Entrega de Business Model Canvas",
-    stage: "Preliminary Project",
-    dueDate: "2026-07-20",
-    status: "pending",
-  },
-  {
-    id: 502,
-    groupId: 45,
-    title: "Pitch deck versión 1",
-    stage: "Preliminary Project",
-    dueDate: "2026-07-29",
-    status: "pending",
-  },
-  {
-    id: 503,
-    groupId: 45,
-    title: "Guía de problema validado",
-    stage: "Idea",
-    dueDate: "2026-07-10",
-    status: "submitted",
-  },
-  {
-    id: 504,
-    groupId: 46,
-    title: "Documentación técnica MVP",
-    stage: "Development",
-    dueDate: "2026-08-10",
-    status: "pending",
-  },
-];
-
+// Reuniones/minutas todavía no tienen endpoint en el backend (no existe meetings_api.py),
+// así que esto sigue siendo mock hasta que ese módulo exista.
 export const mockMinutes = [
   {
     id: 601,
