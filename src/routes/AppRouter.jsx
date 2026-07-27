@@ -16,7 +16,6 @@ import GroupDetail from "../pages/sections/GroupDetail.jsx";
 import Templates from "../pages/sections/Templates.jsx";
 import TemplateDetail from "../pages/sections/TemplateDetail.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
-import TutorsCapacity from "../pages/sections/TutorsCapacity.jsx";
 import Knowledge from "../pages/sections/Knowledge.jsx";
 import Users from "../pages/sections/Users.jsx";
 import Settings from "../pages/sections/Settings.jsx";
@@ -172,14 +171,6 @@ const appRouter = createBrowserRouter([
                     element: (
                       <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <Tutors />
-                      </RoleProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: "/tutors/capacity",
-                    element: (
-                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
-                        <TutorsCapacity />
                       </RoleProtectedRoute>
                     ),
                   },

@@ -37,6 +37,9 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SearchIcon from "@mui/icons-material/Search";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+
+import TutorsCapacityModal from "../../components/TutorsCapacityModal.jsx";
 
 import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
 import { useToast } from "../../ToastContext";
@@ -89,6 +92,7 @@ export default function Tutors() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProperty, setFilterProperty] = useState("name");
   const [view, setView] = useState("list");
+  const [capacityModalOpen, setCapacityModalOpen] = useState(false);
 
   const [editingTutor, setEditingTutor] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -196,6 +200,15 @@ export default function Tutors() {
               <MenuItem value="gallery">Galería</MenuItem>
             </Select>
           </FormControl>
+
+          <Button
+            variant="outlined"
+            startIcon={<MonitorHeartIcon />}
+            sx={{ height: 40 }}
+            onClick={() => setCapacityModalOpen(true)}
+          >
+            Capacidad
+          </Button>
 
           <Button
             variant="contained"
@@ -585,6 +598,11 @@ export default function Tutors() {
         record={editingTutor}
         onSubmit={handleSaveTutor}
         loading={saving}
+      />
+
+      <TutorsCapacityModal
+        open={capacityModalOpen}
+        onClose={() => setCapacityModalOpen(false)}
       />
     </Box>
   );
