@@ -1,4 +1,4 @@
-import apiClient from "../client";
+import { apiClient } from "../client";
 
 const STORAGE_KEY = 'mock_meetings';
 
