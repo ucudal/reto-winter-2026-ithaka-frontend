@@ -20,6 +20,7 @@ import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
 import { useAuth } from "../context/AuthContext.jsx";
+import TaskIcon from "@mui/icons-material/Task";
 
 export default function Sidebar({
   open,
