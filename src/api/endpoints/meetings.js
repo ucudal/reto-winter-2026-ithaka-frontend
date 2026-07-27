@@ -1,4 +1,4 @@
-import { apiClient } from '../client';
+import apiClient from "../client";
 
 const STORAGE_KEY = 'mock_meetings';
 
@@ -6,27 +6,41 @@ const initialMeetings = [
   {
     id: '1',
     title: 'Daily Standup',
-    date: '2026-07-27',
-    time: '09:00',
-    description: 'Frontend team daily synchronization.'
+    start: '2026-07-27T09:00:00',
+    end: '2026-07-27T09:30:00',
+    extendedProps: {
+      group: '',
+      tutors: [],
+      participants: [],
+      attendance: {},
+      link: '',
+      notes: 'Frontend team daily synchronization.'
+    }
   },
   {
     id: '2',
     title: 'Code Review - FEAT-4',
-    date: '2026-07-28',
-    time: '14:30',
-    description: 'Reviewing the mocked meetings API layer.'
+    start: '2026-07-28T14:30:00',
+    end: '2026-07-28T15:30:00',
+    extendedProps: {
+      group: '',
+      tutors: [],
+      participants: [],
+      attendance: {},
+      link: '',
+      notes: 'Reviewing the mocked meetings API layer.'
+    }
   }
 ];
 
 const getStoredMeetings = () => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(initialMeetings));
     return initialMeetings;
   }
   try {
-    return JSON.parse(data);
+    return JSON.parse(stored);
   } catch (e) {
     return initialMeetings;
   }
@@ -43,44 +57,34 @@ export const getMeetings = async () => {
 export const createMeeting = async (meetingData) => {
   const meetings = getStoredMeetings();
   const newMeeting = {
-    id: Date.now().toString(),
-    ...meetingData
+    id: String(Date.now()),
+    ...meetingData,
   };
   meetings.push(newMeeting);
   saveStoredMeetings(meetings);
   return Promise.resolve(newMeeting);
 };
 
-export const updateMeeting = async (id, updatedData) => {
+export const updateMeeting = async (id, meetingData) => {
   const meetings = getStoredMeetings();
-  let updatedMeeting = null;
-  
-  const newMeetings = meetings.map(meeting => {
-    if (meeting.id === String(id)) {
-      updatedMeeting = { ...meeting, ...updatedData };
-      return updatedMeeting;
-    }
-    return meeting;
-  });
-
-  if (!updatedMeeting) {
+  const index = meetings.findIndex(m => String(m.id) === String(id));
+  if (index === -1) {
     throw new Error(`Meeting with id ${id} not found`);
   }
-
-  saveStoredMeetings(newMeetings);
-  return Promise.resolve(updatedMeeting);
+  meetings[index] = { ...meetings[index], ...meetingData, id };
+  saveStoredMeetings(meetings);
+  return Promise.resolve(meetings[index]);
 };
 
 export const deleteMeeting = async (id) => {
-  try {
-    await apiClient.delete(`/meetings/${id}`);
-  } catch (error) {
+  // Desacoplamos la llamada de red para que no bloquee la eliminación local
+  apiClient.delete(`/meetings/${id}`).catch((error) => {
     console.error("Error al eliminar en el backend", error);
-  }
-  
+  });
+
   const meetings = getStoredMeetings();
-  const filteredMeetings = meetings.filter(meeting => meeting.id !== String(id));
-  
+  const filteredMeetings = meetings.filter(meeting => String(meeting.id) !== String(id));
+
   saveStoredMeetings(filteredMeetings);
   return Promise.resolve({ success: true, id });
 };
