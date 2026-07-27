@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
   Box,
@@ -8,7 +8,6 @@ import {
   Chip,
   Divider,
   FormControl,
-  IconButton,
   InputLabel,
   Link,
   ListItemText,
@@ -22,7 +21,6 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Link as RouterLink } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
@@ -32,6 +30,7 @@ import timeGridPlugin from "@fullcalendar/react/timegrid";
 import esLocale from "@fullcalendar/react/locales/es";
 import classicThemePlugin from "@fullcalendar/react/themes/classic";
 import ReactQuill from "react-quill";
+import { getMeetings, createMeeting, updateMeeting, deleteMeeting } from "../../api/endpoints/meetings";
 import "@fullcalendar/react/skeleton.css";
 import "@fullcalendar/react/themes/classic/theme.css";
 import "@fullcalendar/react/themes/classic/palette.css";
@@ -65,74 +64,6 @@ const participants = [
   "Joaquín Pereira",
 ];
 
-const mockedMeetings = [
-  {
-    id: "1",
-    title: "Seguimiento Grupo 1",
-    start: "2026-07-22T10:00:00",
-    end: "2026-07-22T11:00:00",
-    extendedProps: {
-      group: "Grupo 1",
-      tutors: ["Ana Pérez", "Juan Silva"],
-      participants: ["Sofía Martínez", "Mateo Fernández"],
-      attendance: {
-        "Sofía Martínez": true,
-        "Mateo Fernández": true,
-      },
-      link: "https://meet.google.com/abc-defg-hij",
-    },
-  },
-  {
-    id: "2",
-    title: "Revisión técnica Grupo 2",
-    start: "2026-07-23T09:30:00",
-    end: "2026-07-23T10:30:00",
-    extendedProps: {
-      group: "Grupo 2",
-      tutors: ["María Rodríguez"],
-      participants: ["Valentina López", "Santiago García"],
-      attendance: {
-        "Valentina López": true,
-        "Santiago García": false,
-      },
-      link: "https://teams.microsoft.com/l/meetup-join/revision-grupo-2",
-    },
-  },
-  {
-    id: "3",
-    title: "Tutoría Grupo 3",
-    start: "2026-07-23T15:00:00",
-    end: "2026-07-23T16:00:00",
-    extendedProps: {
-      group: "Grupo 3",
-      tutors: ["Carlos Gómez"],
-      participants: ["Camila Rodríguez", "Joaquín Pereira"],
-      attendance: {
-        "Camila Rodríguez": false,
-        "Joaquín Pereira": false,
-      },
-      link: "https://meet.google.com/uvw-xyz-123",
-    },
-  },
-  {
-    id: "4",
-    title: "Planificación de próximos pasos",
-    start: "2026-07-24T11:00:00",
-    end: "2026-07-24T12:00:00",
-    extendedProps: {
-      group: "Grupo 1",
-      tutors: ["Ana Pérez"],
-      participants: ["Sofía Martínez", "Mateo Fernández", "Valentina López"],
-      attendance: {
-        "Sofía Martínez": true,
-        "Mateo Fernández": false,
-        "Valentina López": true,
-      },
-      link: "https://teams.microsoft.com/l/meetup-join/planificacion",
-    },
-  },
-];
-
 const padNumber = (value) => String(value).padStart(2, "0");
 
 const formatDateInput = (date) =>
@@ -147,7 +78,6 @@ const createMeetingForm = (
   startDate = new Date(),
   endDate = new Date(startDate.getTime() + 60 * 60 * 1000),
 ) => {
-
   return {
     title: "",
     group: "",
@@ -193,12 +123,24 @@ function Meetings() {
 
   const calendarRef = useRef(null);
   const [selectedView, setSelectedView] = useState("timeGridWeek");
-  const [meetings, setMeetings] = useState(mockedMeetings);
+  const [meetings, setMeetings] = useState([]);
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [popoverMode, setPopoverMode] = useState("create");
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [meetingForm, setMeetingForm] = useState(createMeetingForm);
+
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        const data = await getMeetings();
+        setMeetings(data);
+      } catch (err) {
+        console.error("Error loading meetings", err);
+      }
+    };
+    fetchMeetings();
+  }, []);
 
   const filteredMeetings = useMemo(() => {
     if (!user) return [];
@@ -221,7 +163,6 @@ function Meetings() {
 
   const handleViewChange = (event) => {
     const view = event.target.value;
-
     setSelectedView(view);
     calendarRef.current?.getApi().changeView(view);
   };
@@ -243,10 +184,10 @@ function Meetings() {
     setMeetingForm(
       isMonthView
         ? {
-          ...newMeetingForm,
-          startTime: "",
-          endTime: "",
-        }
+            ...newMeetingForm,
+            startTime: "",
+            endTime: "",
+          }
         : newMeetingForm,
     );
     setSelectedMeetingId(null);
@@ -298,14 +239,18 @@ function Meetings() {
     calendarRef.current?.getApi().unselect();
   };
 
-  const handleDeleteMeeting = () => {
+  const handleDeleteMeeting = async () => {
     if (!selectedMeetingId) return;
 
-    // await apiClient.delete(`/api/meetings/${selectedMeetingId}`);
-    setMeetings((currentMeetings) =>
-      currentMeetings.filter((meeting) => meeting.id !== selectedMeetingId),
-    );
-    handleClosePopover();
+    try {
+      await deleteMeeting(selectedMeetingId);
+      setMeetings((currentMeetings) =>
+        currentMeetings.filter((meeting) => meeting.id !== selectedMeetingId),
+      );
+      handleClosePopover();
+    } catch (err) {
+      console.error("Error deleting meeting", err);
+    }
   };
 
   const handleFormChange = (event) => {
@@ -317,27 +262,43 @@ function Meetings() {
     }));
   };
 
-  const handleNotesChange = (notes) => {
+  const handleNotesChange = async (notes) => {
     setMeetingForm((currentForm) => ({ ...currentForm, notes }));
 
     if (selectedMeetingId) {
-      setMeetings((currentMeetings) =>
-        currentMeetings.map((meeting) =>
-          meeting.id === selectedMeetingId
-            ? {
-              ...meeting,
-              extendedProps: {
-                ...meeting.extendedProps,
-                notes,
-              },
-            }
-            : meeting,
-        ),
-      );
+      try {
+        const currentMeeting = meetings.find(m => m.id === selectedMeetingId);
+        const updatedData = {
+          title: currentMeeting.title,
+          start: currentMeeting.start,
+          end: currentMeeting.end,
+          extendedProps: {
+            ...currentMeeting.extendedProps,
+            notes,
+          },
+        };
+        await updateMeeting(selectedMeetingId, updatedData);
+
+        setMeetings((currentMeetings) =>
+          currentMeetings.map((meeting) =>
+            meeting.id === selectedMeetingId
+              ? {
+                  ...meeting,
+                  extendedProps: {
+                    ...meeting.extendedProps,
+                    notes,
+                  },
+                }
+              : meeting,
+          ),
+        );
+      } catch (err) {
+        console.error("Error updating notes", err);
+      }
     }
   };
 
-  const handleAttendanceChange = (participant) => {
+  const handleAttendanceChange = async (participant) => {
     const attendance = {
       ...meetingForm.attendance,
       [participant]: !meetingForm.attendance[participant],
@@ -349,19 +310,35 @@ function Meetings() {
     }));
 
     if (selectedMeetingId) {
-      setMeetings((currentMeetings) =>
-        currentMeetings.map((meeting) =>
-          meeting.id === selectedMeetingId
-            ? {
-              ...meeting,
-              extendedProps: {
-                ...meeting.extendedProps,
-                attendance,
-              },
-            }
-            : meeting,
-        ),
-      );
+      try {
+        const currentMeeting = meetings.find(m => m.id === selectedMeetingId);
+        const updatedData = {
+          title: currentMeeting.title,
+          start: currentMeeting.start,
+          end: currentMeeting.end,
+          extendedProps: {
+            ...currentMeeting.extendedProps,
+            attendance,
+          },
+        };
+        await updateMeeting(selectedMeetingId, updatedData);
+
+        setMeetings((currentMeetings) =>
+          currentMeetings.map((meeting) =>
+            meeting.id === selectedMeetingId
+              ? {
+                  ...meeting,
+                  extendedProps: {
+                    ...meeting.extendedProps,
+                    attendance,
+                  },
+                }
+              : meeting,
+          ),
+        );
+      } catch (err) {
+        console.error("Error updating attendance", err);
+      }
     }
   };
 
@@ -378,15 +355,16 @@ function Meetings() {
     meetingForm.startTime &&
     meetingForm.endTime &&
     !hasInvalidTime;
+
   const isViewingMeeting = popoverMode === "view";
   const isEditingMeeting = popoverMode === "edit";
 
-  const handleSubmitMeeting = (event) => {
+  const handleSubmitMeeting = async (event) => {
     event.preventDefault();
 
     if (!canCreateMeeting) return;
 
-    const meetingData = {
+    const meetingPayload = {
       title: meetingForm.title.trim(),
       start: `${meetingForm.date}T${meetingForm.startTime}:00`,
       end: `${meetingForm.date}T${meetingForm.endTime}:00`,
@@ -405,28 +383,25 @@ function Meetings() {
       },
     };
 
-    setMeetings((currentMeetings) => {
+    try {
       if (isEditingMeeting) {
-        return currentMeetings.map((meeting) =>
-          meeting.id === selectedMeetingId
-            ? {
-              ...meeting,
-              ...meetingData,
-            }
-            : meeting,
+        const updated = await updateMeeting(selectedMeetingId, meetingPayload);
+        setMeetings((currentMeetings) =>
+          currentMeetings.map((meeting) =>
+            meeting.id === selectedMeetingId
+              ? { ...meeting, ...updated }
+              : meeting,
+          ),
         );
+      } else {
+        const created = await createMeeting(meetingPayload);
+        setMeetings((currentMeetings) => [...currentMeetings, created]);
       }
 
-      return [
-        ...currentMeetings,
-        {
-          id: `mock-${Date.now()}`,
-          ...meetingData,
-        },
-      ];
-    });
-
-    handleClosePopover();
+      handleClosePopover();
+    } catch (err) {
+      console.error("Error saving meeting", err);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -461,7 +436,6 @@ function Meetings() {
         >
           Inicio
         </Link>
-
         <Typography color="text.primary">Reuniones</Typography>
       </Breadcrumbs>
 
@@ -496,7 +470,6 @@ function Meetings() {
               ))}
             </Select>
           </FormControl>
-
         </Box>
       </Box>
 
@@ -620,7 +593,6 @@ function Meetings() {
           },
         }}
       >
-
         <Tabs
           value={activeTab}
           onChange={(_event, newValue) => setActiveTab(newValue)}
