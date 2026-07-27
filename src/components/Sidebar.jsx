@@ -17,6 +17,7 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -71,6 +72,7 @@ export default function Sidebar({
           }
         >
           {navItem("/tutors", "Tutores", PeopleIcon)}
+          {navItem("/tutors/capacity", "Capacidad", MonitorHeartIcon)}
           {navItem("/students", "Alumnos", SchoolIcon)}
         </List>
       )}

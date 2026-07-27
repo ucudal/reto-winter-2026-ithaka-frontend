@@ -18,7 +18,7 @@ import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 import { getTutors, getTutorCapacity } from "../../api/endpoints/tutors";
-import { getDashboardSummary } from "../../api/endpoints/dashboard";
+import { getGroups } from "../../api/endpoints/groups";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import EmptyState from "../../components/common/EmptyState";
@@ -34,22 +34,19 @@ function usageColor(usagePercentage) {
   return "success";
 }
 
-const ALERT_CONFIG = {
-  GroupWithoutTutor: {
-    label: "Grupo sin tutor",
-    icon: GroupRemoveIcon,
-    severity: "error",
-  },
-  OverloadedTutor: {
-    label: "Tutor sobrecargado",
-    icon: WarningAmberIcon,
-    severity: "warning",
-  },
+const ALERT_ICON = {
+  GroupWithoutTutor: GroupRemoveIcon,
+  OverloadedTutor: WarningAmberIcon,
+};
+
+const ALERT_SEVERITY = {
+  GroupWithoutTutor: "error",
+  OverloadedTutor: "warning",
 };
 
 export default function TutorsCapacity() {
   const [tutorsCapacity, setTutorsCapacity] = useState([]);
-  const [alerts, setAlerts] = useState([]);
+  const [groupAlerts, setGroupAlerts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -62,14 +59,7 @@ export default function TutorsCapacity() {
       setLoading(true);
       setError("");
 
-      const [tutorsData, summary] = await Promise.all([
-        getTutors(),
-        getDashboardSummary(),
-      ]);
-
-      const tutors = Array.isArray(tutorsData)
-        ? tutorsData
-        : (tutorsData?.items ?? []);
+      const [tutors, groups] = await Promise.all([getTutors(), getGroups()]);
 
       const capacities = await Promise.all(
         tutors.map(async (tutor) => {
@@ -82,8 +72,27 @@ export default function TutorsCapacity() {
         }),
       );
 
+      const missingTutorAlerts = groups.flatMap((group) => {
+        const alerts = [];
+        if (!group.businessTutor) {
+          alerts.push({
+            type: "GroupWithoutTutor",
+            key: `group-${group.id}-business`,
+            description: `${group.name} no tiene tutor de negocio asignado.`,
+          });
+        }
+        if (!group.technicalTutor) {
+          alerts.push({
+            type: "GroupWithoutTutor",
+            key: `group-${group.id}-technical`,
+            description: `${group.name} no tiene tutor técnico asignado.`,
+          });
+        }
+        return alerts;
+      });
+
       setTutorsCapacity(capacities);
-      setAlerts(summary?.alerts ?? []);
+      setGroupAlerts(missingTutorAlerts);
     } catch (err) {
       setError(
         err?.message || "No se pudo cargar el panel de capacidad de tutores.",
@@ -93,9 +102,21 @@ export default function TutorsCapacity() {
     }
   }
 
+  const overloadedAlerts = useMemo(
+    () =>
+      tutorsCapacity
+        .filter((tutor) => tutor.capacity?.overloaded)
+        .map((tutor) => ({
+          type: "OverloadedTutor",
+          key: `tutor-${tutor.id}`,
+          description: `${tutor.name} superó su capacidad asignada (${tutor.capacity.usage_percentage}%).`,
+        })),
+    [tutorsCapacity],
+  );
+
   const criticalAlerts = useMemo(
-    () => alerts.filter((alert) => ALERT_CONFIG[alert.type]),
-    [alerts],
+    () => [...overloadedAlerts, ...groupAlerts],
+    [overloadedAlerts, groupAlerts],
   );
 
   if (loading) return <LoadingStateComponent />;
@@ -127,16 +148,15 @@ export default function TutorsCapacity() {
         </Alert>
       ) : (
         <Stack spacing={1.5} sx={{ mb: 4 }}>
-          {criticalAlerts.map((alert, index) => {
-            const config = ALERT_CONFIG[alert.type];
-            const AlertIcon = config.icon;
+          {criticalAlerts.map((alert) => {
+            const AlertIcon = ALERT_ICON[alert.type];
             return (
               <Alert
-                key={`${alert.type}-${alert.group_id ?? alert.tutor_id ?? index}`}
-                severity={config.severity}
+                key={alert.key}
+                severity={ALERT_SEVERITY[alert.type]}
                 icon={<AlertIcon fontSize="inherit" />}
               >
-                <strong>{config.label}:</strong> {alert.description}
+                {alert.description}
               </Alert>
             );
           })}
@@ -174,6 +194,7 @@ export default function TutorsCapacity() {
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {tutor.role}
+                          {tutor.specialty ? ` · ${tutor.specialty}` : ""}
                         </Typography>
                       </Box>
                       {capacity?.overloaded && (
