@@ -7,9 +7,13 @@ import {
   CardContent,
   CircularProgress,
   Alert,
+  AlertTitle,
   Breadcrumbs,
   Chip,
   Tooltip,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +31,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 
 import { getDashboardSummary } from "../../api/endpoints/dashboard";
+import { getOverloadedTutors } from "../../api/endpoints/tutors";
 
 // Cupo de referencia por grupo definido en la propuesta (22 hs de acompañamiento).
 const GROUP_HOURS_QUOTA = 22;
@@ -111,6 +116,7 @@ export default function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
+  const [overloadedTutors, setOverloadedTutors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -122,8 +128,12 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError("");
-      const data = await getDashboardSummary();
-      setSummary(data);
+      const [summaryData, overloadedData] = await Promise.all([
+        getDashboardSummary(),
+        getOverloadedTutors(),
+      ]);
+      setSummary(summaryData);
+      setOverloadedTutors(overloadedData);
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los datos del resumen del Dashboard.");
     } finally {
@@ -236,6 +246,29 @@ export default function Dashboard() {
           />
         </Grid>
       </Grid>
+
+      {overloadedTutors.length > 0 && (
+        <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
+          <AlertTitle>Tutores con sobrecarga ({overloadedTutors.length})</AlertTitle>
+          <List dense disablePadding>
+            {overloadedTutors.map((tutor) => (
+              <ListItem
+                key={tutor.id ?? tutor.tutor_id}
+                disableGutters
+                secondaryAction={
+                  <Chip
+                    label={`${tutor.usage_percentage}% de uso`}
+                    color="error"
+                    size="small"
+                  />
+                }
+              >
+                <ListItemText primary={tutor.name} />
+              </ListItem>
+            ))}
+          </List>
+        </Alert>
+      )}
 
       {/* Los 4 gráficos, 2 por línea */}
       <Grid container spacing={2} sx={{ mb: 2, flexShrink: 0 }}>
