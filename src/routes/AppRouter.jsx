@@ -204,7 +204,6 @@ const appRouter = createBrowserRouter([
                     ),
                   },
                   {
-                    path: "/knowledge",
                     path: "/settings",
                     element: (
                       <RoleProtectedRoute
