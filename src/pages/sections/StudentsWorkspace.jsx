@@ -21,9 +21,9 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import { useAuth } from "../../context/AuthContext";
-import { mockDeliverables, mockMinutes } from "../../data/mockWorkspace";
+import { mockMinutes } from "../../data/mockWorkspace";
 import EmptyState from "../../components/common/EmptyState";
-import { getGroupById } from "../../api/endpoints/groups";
+import { getGroupById, getGroupDeliverables } from "../../api/endpoints/groups";
 
 const LINK_LABELS = {
   Drive: "Drive",
@@ -49,8 +49,14 @@ function formatDate(isoDate) {
 }
 
 function getDueMeta(dueDate, status) {
-  if (status === "submitted") {
+  if (status === "Approved") {
+    return { label: "Aprobado", color: "success" };
+  }
+  if (status === "Delivered" || status === "Submitted") {
     return { label: "Entregado", color: "success" };
+  }
+  if (status === "Rejected") {
+    return { label: "Rechazado", color: "error" };
   }
 
   const today = new Date();
@@ -77,6 +83,7 @@ function getDueMeta(dueDate, status) {
 export default function StudentWorkspace() {
   const { user } = useAuth();
   const [group, setGroup] = useState(null);
+  const [rawDeliverables, setRawDeliverables] = useState([]);
   const [loadingWorkspace, setLoadingWorkspace] = useState(true);
 
   useEffect(() => {
@@ -85,19 +92,26 @@ export default function StudentWorkspace() {
         setLoadingWorkspace(false);
         return;
       }
-      
+
       const realGroupId = user.student?.group_id;
       if (realGroupId) {
         try {
           const realGroup = await getGroupById(realGroupId);
           setGroup(realGroup);
+          try {
+            const deliverablesData = await getGroupDeliverables(realGroupId);
+            setRawDeliverables(deliverablesData || []);
+          } catch (err) {
+            console.error("Error fetching deliverables for student workspace:", err);
+            setRawDeliverables([]);
+          }
           setLoadingWorkspace(false);
           return;
         } catch (err) {
           console.error("Error fetching real group for student workspace:", err);
         }
       }
-      
+
       setGroup(null);
       setLoadingWorkspace(false);
     }
@@ -105,12 +119,16 @@ export default function StudentWorkspace() {
   }, [user]);
 
   const deliverables = useMemo(() => {
-    if (!group) return [];
-    return mockDeliverables
-      .filter((d) => d.groupId === group.id)
-      .map((d) => ({ ...d, meta: getDueMeta(d.dueDate, d.status) }))
+    return rawDeliverables
+      .map((d) => ({
+        id: d.id,
+        title: d.stageName || `Etapa #${d.stageId}`,
+        dueDate: d.expectedDate,
+        status: d.status,
+        meta: getDueMeta(d.expectedDate, d.status),
+      }))
       .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-  }, [group]);
+  }, [rawDeliverables]);
 
   const minutes = useMemo(() => {
     if (!group) return [];
@@ -138,7 +156,9 @@ export default function StudentWorkspace() {
     );
   }
 
-  const nextDeliverable = deliverables.find((d) => d.status !== "submitted");
+  const nextDeliverable = deliverables.find(
+    (d) => !["Delivered", "Approved"].includes(d.status),
+  );
   const teammates = group.students.filter((s) =>
     s.email ? s.email !== user.email : s.name !== user.name
   );
@@ -407,7 +427,7 @@ export default function StudentWorkspace() {
                           {deliverable.title}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {deliverable.stage}
+                          Fecha esperada: {formatDate(deliverable.dueDate)}
                         </Typography>
                       </Box>
 

@@ -18,6 +18,7 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  Menu,
   List,
   ListItem,
   ListItemText,
@@ -31,11 +32,13 @@ import {
   updateGroupTutors,
   getGroupDeliverables,
 } from "../../api/endpoints/groups";
+import { updateDeliverable } from "../../api/endpoints/deliverables";
 import { getCohortStages } from "../../api/endpoints/cohorts";
 import { getTutors } from "../../api/endpoints/tutors";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import EmptyState from "../../components/common/EmptyState";
+import { useToast } from "../../ToastContext";
 
 const CARD_SX = {
   borderRadius: 2,
@@ -73,6 +76,7 @@ export default function GroupDetail() {
   const location = useLocation();
   const highlightDeliverableId = location.state?.highlightDeliverableId ?? null;
   const highlightedRowRef = useRef(null);
+  const { showToast } = useToast();
 
   const [group, setGroup] = useState(null);
   const [cohort, setCohort] = useState(null);
@@ -84,6 +88,10 @@ export default function GroupDetail() {
   const [loadingTutors, setLoadingTutors] = useState(false);
   const [loadingDeliverables, setLoadingDeliverables] = useState(false);
   const [error, setError] = useState("");
+
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState(null);
+  const [statusMenuDeliverable, setStatusMenuDeliverable] = useState(null);
+  const [updatingDeliverableId, setUpdatingDeliverableId] = useState(null);
 
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [selectedStageId, setSelectedStageId] = useState("");
@@ -131,6 +139,38 @@ export default function GroupDetail() {
       console.error("Error al cargar entregables:", err);
     } finally {
       setLoadingDeliverables(false);
+    }
+  };
+
+  const openStatusMenu = (event, deliverable) => {
+    event.stopPropagation();
+    setStatusMenuAnchor(event.currentTarget);
+    setStatusMenuDeliverable(deliverable);
+  };
+
+  const closeStatusMenu = () => {
+    setStatusMenuAnchor(null);
+    setStatusMenuDeliverable(null);
+  };
+
+  const handleChangeDeliverableStatus = async (newStatus) => {
+    if (!statusMenuDeliverable || newStatus === statusMenuDeliverable.status) {
+      closeStatusMenu();
+      return;
+    }
+    const deliverableId = statusMenuDeliverable.id;
+    closeStatusMenu();
+    try {
+      setUpdatingDeliverableId(deliverableId);
+      const updated = await updateDeliverable(deliverableId, { status: newStatus });
+      setDeliverables((prev) =>
+        prev.map((d) => (d.id === deliverableId ? { ...d, status: updated.status } : d)),
+      );
+      showToast("Estado del entregable actualizado.", "success");
+    } catch (err) {
+      showToast(err?.message || "No se pudo actualizar el estado del entregable.", "error");
+    } finally {
+      setUpdatingDeliverableId(null);
     }
   };
 
@@ -480,7 +520,18 @@ export default function GroupDetail() {
                                 <Typography variant="body2" fontWeight={500}>
                                   {deliverable.stageName || `Etapa #${deliverable.stageId}`}
                                 </Typography>
-                                <Chip label={statusMeta.label} color={statusMeta.color} size="small" />
+                                <Chip
+                                  label={statusMeta.label}
+                                  color={statusMeta.color}
+                                  size="small"
+                                  onClick={(e) => openStatusMenu(e, deliverable)}
+                                  disabled={updatingDeliverableId === deliverable.id}
+                                  icon={
+                                    updatingDeliverableId === deliverable.id ? (
+                                      <CircularProgress size={12} sx={{ color: "inherit" }} />
+                                    ) : undefined
+                                  }
+                                />
                                 {overdue && (
                                   <Chip label="Vencido" color="error" size="small" variant="outlined" />
                                 )}
@@ -499,6 +550,19 @@ export default function GroupDetail() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Menú: cambiar estado de un entregable */}
+      <Menu anchorEl={statusMenuAnchor} open={Boolean(statusMenuAnchor)} onClose={closeStatusMenu}>
+        {Object.entries(DELIVERABLE_STATUS).map(([statusKey, meta]) => (
+          <MenuItem
+            key={statusKey}
+            selected={statusMenuDeliverable?.status === statusKey}
+            onClick={() => handleChangeDeliverableStatus(statusKey)}
+          >
+            {meta.label}
+          </MenuItem>
+        ))}
+      </Menu>
 
       {/* Dialog: cambiar etapa */}
       <Dialog open={stageDialogOpen} onClose={() => setStageDialogOpen(false)} fullWidth maxWidth="xs">

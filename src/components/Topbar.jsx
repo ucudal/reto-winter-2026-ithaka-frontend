@@ -28,7 +28,6 @@ import {
 import logo from "../assets/img/logo-bw.png";
 import personFilled from "../assets/img/userFilled.png";
 import UserProfileDrawer from "./UserProfileDrawer";
-import { usersMock } from "../utils/userData";
 import { getDashboardSummary } from "../api/endpoints/dashboard";
 
 // severity: clave de theme.palette usada para el color (nunca color-solo: siempre va con label).
@@ -93,7 +92,7 @@ function Topbar({ onMenuClick, onLogout }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { user } = useAuth();
 
-  const currentUser = user || usersMock?.tutor;
+  const currentUser = user;
   const isCoordinator = user?.role === "Coordinator";
 
   useEffect(() => {
