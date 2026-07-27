@@ -2,74 +2,154 @@ import React, { useState } from "react";
 import {
   Box,
   Typography,
-  Button,
-  TextField,
-  MenuItem,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
   IconButton,
   Breadcrumbs,
   Link,
+  Tabs,
+  Tab,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Menu,
+  MenuItem,
+  TextField,
+  Tooltip,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import EditNoteIcon from "@mui/icons-material/EditNote";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import GroupsIcon from "@mui/icons-material/Groups";
+import AddIcon from "@mui/icons-material/Add";
 
 const initialDeliverablesData = [
   {
-    id: 5,
-    group_id: 45,
+    id: 1,
+    group_id: 8,
+    group_name: "Grupo 8 - Proyecto Ithaka",
+    stage_name: "Etapa 1: Diagnóstico",
     expected_date: "2026-04-20",
-    status: "Out of date",
+    status: "Overdue",
   },
   {
-    id: 6,
-    group_id: 46,
+    id: 2,
+    group_id: 9,
+    group_name: "Grupo 9 - Innovación Tech",
+    stage_name: "Etapa 1: Diagnóstico",
     expected_date: "2026-07-31",
     status: "Pending",
   },
   {
-    id: 7,
-    group_id: 47,
+    id: 3,
+    group_id: 10,
+    group_name: "Grupo 10 - EcoStart",
+    stage_name: "Etapa 2: Propuesta",
     expected_date: "2026-08-10",
-    status: "Pending",
+    status: "In review",
   },
 ];
 
 export default function Deliverables() {
   const [deliverables, setDeliverables] = useState(initialDeliverablesData);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterProperty, setFilterProperty] = useState("group_id");
+  const [currentTab, setCurrentTab] = useState("ALL");
 
-  const filteredDeliverables = deliverables.filter((deliverable) => {
-    const valueToSearch = deliverable[filterProperty]?.toString().toLowerCase() || "";
-    return valueToSearch.includes(searchTerm.toLowerCase());
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedDeliverableId, setSelectedDeliverableId] = useState(null);
+
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [newDeliverable, setNewDeliverable] = useState({
+    group_id: "",
+    group_name: "",
+    stage_name: "",
+    expected_date: "",
+    status: "Pending",
   });
 
+  const searchedDeliverables = deliverables.filter((item) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      item.group_name.toLowerCase().includes(term) ||
+      item.stage_name.toLowerCase().includes(term) ||
+      item.id.toString().includes(term)
+    );
+  });
+
+  const filteredDeliverables = searchedDeliverables.filter((item) => {
+    if (currentTab === "ALL") return true;
+    return item.status === currentTab;
+  });
+
+  const handleOpenStatusMenu = (event, id) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedDeliverableId(id);
+  };
+
+  const handleCloseStatusMenu = () => {
+    setAnchorEl(null);
+    setSelectedDeliverableId(null);
+  };
+
+  const handleChangeStatus = (newStatus) => {
+    setDeliverables((prev) =>
+      prev.map((item) =>
+        item.id === selectedDeliverableId ? { ...item, status: newStatus } : item
+      )
+    );
+    handleCloseStatusMenu();
+  };
+
+  const handleCreateDeliverable = () => {
+    if (!newDeliverable.stage_name || !newDeliverable.group_name || !newDeliverable.expected_date) {
+      return;
+    }
+
+    const createdItem = {
+      id: deliverables.length + 1,
+      group_id: Number(newDeliverable.group_id) || deliverables.length + 10,
+      group_name: newDeliverable.group_name,
+      stage_name: newDeliverable.stage_name,
+      expected_date: newDeliverable.expected_date,
+      status: newDeliverable.status,
+    };
+
+    setDeliverables([createdItem, ...deliverables]);
+    setOpenCreateModal(false);
+    setNewDeliverable({
+      group_id: "",
+      group_name: "",
+      stage_name: "",
+      expected_date: "",
+      status: "Pending",
+    });
+  };
+
   const renderStatusChip = (status) => {
-    if (status === "Pending") {
-      return <Chip label="Pendiente" size="small" color="warning" />;
+    switch (status) {
+      case "Pending":
+        return <Chip label="Pendiente" size="small" color="warning" />;
+      case "Overdue":
+        return <Chip label="Atrasado" size="small" color="error" />;
+      case "Approved":
+        return <Chip label="Aprobado" size="small" color="success" />;
+      case "In review":
+        return <Chip label="En Revisión" size="small" color="info" />;
+      default:
+        return <Chip label={status} size="small" color="default" />;
     }
-    if (status === "Out of date") {
-      return <Chip label="Atrasado" size="small" color="error" />;
-    }
-    return <Chip label={status} size="small" color="default" />;
   };
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" />}
-        sx={{ mb: 1 }}
-      >
+      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 1 }}>
         <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
           Inicio
         </Link>
@@ -80,112 +160,223 @@ export default function Deliverables() {
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-end",
+          alignItems: "flex-start",
           mb: 3,
           flexWrap: "wrap",
           gap: 2,
         }}
       >
-        <Typography variant="h4">Entregables</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} sx={{ height: 40 }}>
+        <Box>
+          <Typography variant="h4" fontWeight="bold">
+           Entregables
+          </Typography>
+        </Box>
+
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          sx={{ height: 40 }}
+          onClick={() => setOpenCreateModal(true)}
+        >
           Agregar entregable
         </Button>
       </Box>
 
-      <Paper sx={{ p: 2, borderRadius: 2 }}>
-        <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
+      <Paper sx={{ mb: 3, borderRadius: 2 }}>
+        <Tabs
+          value={currentTab}
+          onChange={(e, newValue) => setCurrentTab(newValue)}
+          indicatorColor="primary"
+          textColor="primary"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab label="Todos" value="ALL" />
+          <Tab label="Pendientes" value="Pending" />
+          <Tab label="En revisión" value="In review" />
+          <Tab label="Aprobados" value="Approved" />
+          <Tab label="Atrasados" value="Overdue" />
+        </Tabs>
+      </Paper>
+
+      <Box sx={{ mb: 3 }}>
+        <TextField
+          label="Buscar por grupo o etapa"
+          placeholder="Ej. Grupo 8, Etapa 1..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          fullWidth
+          sx={{ backgroundColor: "#fff", borderRadius: 1 }}
+        />
+      </Box>
+
+      <Grid container spacing={2}>
+        {filteredDeliverables.map((item) => (
+          <Grid item xs={12} sm={6} md={4} key={item.id}>
+            <Card
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                },
+              }}
+            >
+              <CardContent>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    mb: 1.5,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" fontWeight="bold">
+                    ENTREGABLE #{item.id}
+                  </Typography>
+                  {renderStatusChip(item.status)}
+                </Box>
+
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{ fontSize: "1.05rem", fontWeight: "bold", mb: 1 }}
+                >
+                  {item.stage_name}
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 1,
+                    color: "text.secondary",
+                  }}
+                >
+                  <GroupsIcon fontSize="small" />
+                  <Typography variant="body2">{item.group_name}</Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    color: "text.secondary",
+                  }}
+                >
+                  <CalendarTodayIcon fontSize="small" />
+                  <Typography variant="body2">
+                    Fecha límite: <strong>{item.expected_date}</strong>
+                  </Typography>
+                </Box>
+              </CardContent>
+
+              <CardActions sx={{ justifyContent: "flex-end", px: 2, pb: 2, pt: 0 }}>
+                <Tooltip title="Cambiar estado del entregable">
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={(e) => handleOpenStatusMenu(e, item.id)}
+                  >
+                    <EditNoteIcon />
+                  </IconButton>
+                </Tooltip>
+              </CardActions>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseStatusMenu}
+      >
+        <MenuItem onClick={() => handleChangeStatus("Pending")}>
+          Marcar como Pendiente
+        </MenuItem>
+        <MenuItem onClick={() => handleChangeStatus("In review")}>
+          Marcar como En Revisión
+        </MenuItem>
+        <MenuItem onClick={() => handleChangeStatus("Approved")}>
+          Marcar como Aprobado
+        </MenuItem>
+        <MenuItem onClick={() => handleChangeStatus("Overdue")}>
+          Marcar como Atrasado
+        </MenuItem>
+      </Menu>
+
+      <Dialog
+        open={openCreateModal}
+        onClose={() => setOpenCreateModal(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Nuevo Entregable</DialogTitle>
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}
+        >
           <TextField
-            label="Buscar"
-            placeholder="Ingrese un dato"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            label="Nombre de la etapa / hito"
+            placeholder="Ej. Etapa 1: Diagnóstico"
+            value={newDeliverable.stage_name}
+            onChange={(e) =>
+              setNewDeliverable({ ...newDeliverable, stage_name: e.target.value })
+            }
             fullWidth
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                height: 60,
-              },
-            }}
+            sx={{ mt: 1 }}
+          />
+          <TextField
+            label="Nombre del grupo"
+            placeholder="Ej. Grupo 8 - Proyecto Ithaka"
+            value={newDeliverable.group_name}
+            onChange={(e) =>
+              setNewDeliverable({ ...newDeliverable, group_name: e.target.value })
+            }
+            fullWidth
+          />
+          <TextField
+            type="date"
+            label="Fecha esperada de entrega"
+            InputLabelProps={{ shrink: true }}
+            value={newDeliverable.expected_date}
+            onChange={(e) =>
+              setNewDeliverable({
+                ...newDeliverable,
+                expected_date: e.target.value,
+              })
+            }
+            fullWidth
           />
           <TextField
             select
-            label="Filtrar por"
-            value={filterProperty}
-            onChange={(e) => setFilterProperty(e.target.value)}
-            variant="filled"
-            sx={{
-              width: 280,
-              "& .MuiFilledInput-root": {
-                height: 60,
-                backgroundColor: "#f5f5f5",
-                "&:hover": {
-                  backgroundColor: "#f5f5f5",
-                },
-                "&.Mui-focused": {
-                  backgroundColor: "#f5f5f5",
-                },
-                "&:before": {
-                  borderBottom: "1px solid #BDBDBD",
-                },
-                "&:after": {
-                  borderBottom: "2px solid #1976d2",
-                },
-              },
-              "& .MuiInputLabel-root": {
-                color: "#1976d2",
-              },
-              "& .MuiInputLabel-root.Mui-focused": {
-                color: "#1976d2",
-              },
-            }}
+            label="Estado inicial"
+            value={newDeliverable.status}
+            onChange={(e) =>
+              setNewDeliverable({ ...newDeliverable, status: e.target.value })
+            }
+            fullWidth
           >
-            <MenuItem value="group_id">ID Grupo</MenuItem>
-            <MenuItem value="expected_date">Fecha esperada</MenuItem>
-            <MenuItem value="status">Estado</MenuItem>
+            <MenuItem value="Pending">Pendiente</MenuItem>
+            <MenuItem value="In review">En revisión</MenuItem>
+            <MenuItem value="Approved">Aprobado</MenuItem>
+            <MenuItem value="Overdue">Atrasado</MenuItem>
           </TextField>
-        </Box>
-
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: "bold" }}>ID Entregable</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>ID Grupo</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Fecha esperada</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Estado</TableCell>
-                <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                  Acciones
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredDeliverables.map((deliverable) => (
-                <TableRow key={deliverable.id} hover>
-                  <TableCell>#{deliverable.id}</TableCell>
-                  <TableCell>Grupo {deliverable.group_id}</TableCell>
-                  <TableCell>{deliverable.expected_date}</TableCell>
-                  <TableCell>{renderStatusChip(deliverable.status)}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      aria-label={`Editar ${deliverable.id}`}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      aria-label={`Eliminar ${deliverable.id}`}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCreateModal(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleCreateDeliverable}>
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
