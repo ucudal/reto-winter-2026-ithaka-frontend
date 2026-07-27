@@ -36,6 +36,7 @@ import ViewListIcon from '@mui/icons-material/ViewList'
 import CloudQueueIcon from '@mui/icons-material/CloudQueue'
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
 import EmptyState from '../../components/common/EmptyState'
+import GenericCreateModal from "../../components/common/GenericCreateModal";
 
 const mockTemplates = [
   {
@@ -81,18 +82,52 @@ function getPlatformIcon(platform = "") {
 
 function Templates() {
   const navigate = useNavigate()
+  const [templates, setTemplates] = useState(mockTemplates);
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('name')
   const [view, setView] = useState('list')
 
   const filteredTemplates = useMemo(() => {
-    return mockTemplates.filter((template) => {
+    return templates.filter((template) => {
       const value =
         template[filter]?.toLowerCase() || ''
       return value.includes(search.toLowerCase())
     })
-  }, [search, filter])
+  }, [templates, search, filter])
 
+  const [openModal, setOpenModal] = useState(false);
+  const templateFields = [
+    {
+      name: "name",
+      label: "Nombre",
+      type: "text",
+      required: true,
+    },
+    {
+      name: "description",
+      label: "Descripción",
+      type: "textarea",
+      required: true,
+    },
+    {
+      name: "content",
+      label: "Contenido",
+      type: "editor",
+      required: true,
+    },
+  ];
+  const handleCreateTemplate = (data) => {
+    const newTemplate = {
+      id: Date.now(),
+      platform: "Drive",
+      type: "Deliverable",
+      ...data,
+    };
+
+    setTemplates((prev) => [...prev, newTemplate]);
+
+    setOpenModal(false);
+  };
   return (
     <Box sx={{ width: '100%' }}>
       <Breadcrumbs
@@ -153,6 +188,7 @@ function Templates() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
+            onClick={() => setOpenModal(true)}
             sx={{ height: 40 }}
           >
             Nuevo Template
@@ -314,8 +350,21 @@ function Templates() {
           )}
         </Grid>
       )}
+      <GenericCreateModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        title="Nuevo Template"
+        fields={templateFields}
+        initialValues={{
+          name: "",
+          description: "",
+          content: "",
+        }}
+        onSubmit={handleCreateTemplate}
+      />
     </Box>
   )
+
 }
 
 export default Templates

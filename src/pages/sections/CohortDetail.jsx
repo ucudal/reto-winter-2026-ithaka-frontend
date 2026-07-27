@@ -167,7 +167,7 @@ export default function CohortDetail() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/" underline="hover" color="inherit">
+        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
           Inicio
         </Link>
         <Link
@@ -309,7 +309,7 @@ export default function CohortDetail() {
                       <TableCell sx={{ fontWeight: "medium" }}>
                         <Link
                           component={RouterLink}
-                          to={`/groups`}
+                          to={`/groups/${group.id}`}
                           underline="hover"
                         >
                           {group.name}
