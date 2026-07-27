@@ -34,7 +34,7 @@ import GroupsGrid from "../../components/GroupsGrid";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import GenericCreateModal from "../../components/common/GenericCreateModal";
-import { getGroups, createGroup } from "../../api/endpoints/groups";
+import {getGroups,saveGroup,deleteGroup,} from "../../api/endpoints/groups";
 import { getCohorts } from "../../api/endpoints/cohorts";
 
 function Groups() {
@@ -76,10 +76,17 @@ function Groups() {
   const handleCreateGroup = async (formData) => {
     try {
       setCreating(true);
-      await createGroup({
+      await saveGroup({
+        id: 0,
         name: formData.name,
         cohort_id: Number(formData.cohort_id),
-        idea: formData.idea || null,
+        current_stage_id: null,
+        idea: formData.idea || "",
+        major: "",
+        status: "Active",
+        student_ids: [],
+        business_tutor_id: null,
+        technical_tutor_id: null,
       });
       setCreateModalOpen(false);
       await loadGroups();

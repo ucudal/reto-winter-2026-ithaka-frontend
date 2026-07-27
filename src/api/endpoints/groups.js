@@ -26,10 +26,16 @@ export async function getGroups(filters = {}) {
   return items.map(mapGroup);
 }
 
-export async function createGroup(payload) {
-  const response = await apiClient.post("/api/groups", payload);
+export async function saveGroup(payload) {
+  const response = await apiClient.put("/api/groups", payload);
   clearCache();
   return mapGroup(response.data);
+}
+
+export async function deleteGroup(id) {
+  const response = await apiClient.delete(`/api/groups/${id}`);
+  clearCache();
+  return response.data;
 }
 
 export async function getGroupById(id) {
