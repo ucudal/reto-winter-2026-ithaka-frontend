@@ -123,7 +123,7 @@ function Knowledge() {
     setError(null);
 
     try {
-      const { data } = await getMaterials();
+      const data = await getMaterials();
       setMaterials(Array.isArray(data) ? data : [])
 
     } catch (requestError) {
