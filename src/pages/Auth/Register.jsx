@@ -1,11 +1,8 @@
-import { Box, Button, Typography, TextField, Paper, Alert } from '@mui/material'
+import { Box, Button, Typography, TextField, Paper } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../assets/img/logo.png'
-import { registerUser } from '../../api/endpoints/auth'
-import { useAuth } from '../../AuthContext'
-import { useToast } from '../../ToastContext'
 import './Register.css'
 
 const inputSx = {
@@ -27,17 +24,12 @@ const inputSx = {
 function Register() {
   const navigate = useNavigate()
   const theme = useTheme()
-  const { login: setAuthContext } = useAuth()
-  const { showToast } = useToast()
-  
   const [formValues, setFormValues] = useState({
     name: '',
     email: '',
     password: '',
   })
   const [errors, setErrors] = useState({})
-  const [submitError, setSubmitError] = useState('')
-  const [loading, setLoading] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -52,7 +44,6 @@ function Register() {
       ...currentErrors,
       [name]: '',
     }))
-    setSubmitError('')
   }
 
   const validateForm = () => {
@@ -74,37 +65,11 @@ function Register() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault()
 
-    if (!validateForm()) return
-
-    setLoading(true)
-    setSubmitError('')
-
-    try {
-      const data = await registerUser(
-        formValues.name.trim(),
-        formValues.email.trim(),
-        formValues.password,
-        'Student'
-      )
-
-      if (data?.token && data?.user) {
-        setAuthContext(data.token, data.user)
-        showToast('¡Cuenta creada e inicio de sesión exitoso!', 'success')
-        
-        const targetRoute = data.user.role === 'Student' ? '/workspace' : '/dashboard'
-        navigate(targetRoute, { replace: true })
-      } else {
-        navigate('/login')
-      }
-    } catch (err) {
-      const msg = err?.message || 'Error al registrar el usuario'
-      setSubmitError(msg)
-      showToast(msg, 'error')
-    } finally {
-      setLoading(false)
+    if (validateForm()) {
+      navigate('/login')
     }
   }
 
@@ -137,15 +102,9 @@ function Register() {
           Crear una cuenta
         </Typography>
 
-        {submitError && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }}>
-            {submitError}
-          </Alert>
-        )}
-
         <TextField
           name="name"
-          label="Nombre completo"
+          label="Nombre"
           variant="outlined"
           fullWidth
           margin="normal"
@@ -154,12 +113,11 @@ function Register() {
           error={Boolean(errors.name)}
           helperText={errors.name}
           sx={inputSx}
-          disabled={loading}
         />
 
         <TextField
           name="email"
-          label="Correo electrónico"
+          label="Usuario"
           variant="outlined"
           fullWidth
           margin="normal"
@@ -169,7 +127,6 @@ function Register() {
           error={Boolean(errors.email)}
           helperText={errors.email}
           sx={inputSx}
-          disabled={loading}
         />
 
         <TextField
@@ -184,7 +141,6 @@ function Register() {
           error={Boolean(errors.password)}
           helperText={errors.password}
           sx={inputSx}
-          disabled={loading}
         />
 
         <Button
@@ -192,9 +148,8 @@ function Register() {
           variant="contained"
           fullWidth
           className="login-button"
-          disabled={loading}
         >
-          {loading ? 'REGISTRANDO...' : 'CONTINUAR'}
+          CONTINUAR
         </Button>
 
         <Typography variant="body2" align="center" className="login-register">

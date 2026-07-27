@@ -50,3 +50,21 @@ export async function updateGroupTutors(id, payload) {
   clearCache();
   return mapGroup(response.data);
 }
+
+function mapDeliverable(raw) {
+  return {
+    id: raw.id,
+    groupId: raw.group_id,
+    stageId: raw.stage_id,
+    stageName: raw.stage_name,
+    expectedDate: raw.expected_date,
+    status: raw.status,
+  };
+}
+
+export async function getGroupDeliverables(id) {
+  const response = await cachedGet(`/api/groups/${id}/deliverables`);
+  const data = response.data;
+  const items = Array.isArray(data) ? data : (data?.items ?? []);
+  return items.map(mapDeliverable);
+}
