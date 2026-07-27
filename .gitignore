@@ -18,6 +18,10 @@ build/
 k8s/secret.yaml
 k8s/*-secret.yaml
 
+# SonarQube (scanner) y reportes de cobertura
+.scannerwork/
+coverage/
+
 # logs
 *.log
 npm-debug.log*

@@ -32,21 +32,31 @@ import {
   InputLabel,
   InputAdornment,
   Tooltip,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import BlockIcon from "@mui/icons-material/Block";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import SearchIcon from "@mui/icons-material/Search";
+import SettingsIcon from "@mui/icons-material/Settings";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 
-import { getCohorts, createCohort } from "../../api/endpoints/cohorts";
+import { getCohorts, createCohort, updateCohort } from "../../api/endpoints/cohorts";
 import { useToast } from "../../ToastContext";
 import EmptyState from "../../components/common/EmptyState";
 
 export default function Cohorts() {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [cohorts, setCohorts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -57,14 +67,20 @@ export default function Cohorts() {
   const [filterSemester, setFilterSemester] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
-  // State for Create Cohort Dialog
+  // Action Menu State
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedCohort, setSelectedCohort] = useState(null);
+
+  // State for Create/Edit Cohort Dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editingCohortId, setEditingCohortId] = useState(null);
   const [formData, setFormData] = useState({
     year: new Date().getFullYear(),
     semester: 1,
     start_date: "",
     end_date: "",
+    status: "Active",
     notes: "",
   });
 
@@ -96,6 +112,16 @@ export default function Cohorts() {
     }
   }
 
+  const handleMenuOpen = (event, cohort) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedCohort(cohort);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedCohort(null);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -104,28 +130,51 @@ export default function Cohorts() {
     }));
   };
 
-  const handleOpenDialog = () => {
+  const handleOpenCreateDialog = () => {
+    setEditingCohortId(null);
     setFormData({
       year: new Date().getFullYear(),
       semester: 1,
       start_date: "",
       end_date: "",
+      status: "Active",
       notes: "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (cohort) => {
+    handleMenuClose();
+    setEditingCohortId(cohort.id);
+    setFormData({
+      year: cohort.year,
+      semester: cohort.semester,
+      start_date: cohort.start_date || "",
+      end_date: cohort.end_date || "",
+      status: cohort.status || "Active",
+      notes: cohort.notes || "",
     });
     setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setEditingCohortId(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsCreating(true);
+    setIsSaving(true);
     try {
-      await createCohort(formData);
-      showToast("Cohorte creado exitosamente", "success");
+      if (editingCohortId) {
+        await updateCohort(editingCohortId, formData);
+        showToast("Cohorte actualizado exitosamente", "success");
+      } else {
+        await createCohort(formData);
+        showToast("Cohorte creado exitosamente", "success");
+      }
       setIsDialogOpen(false);
+      setEditingCohortId(null);
       loadCohorts({
         year: filterYear || undefined,
         semester: filterSemester || undefined,
@@ -134,9 +183,37 @@ export default function Cohorts() {
         page_size: 20,
       });
     } catch (err) {
-      showToast(err?.message || "Error al crear el cohorte", "error");
+      showToast(err?.message || "Error al guardar el cohorte", "error");
     } finally {
-      setIsCreating(false);
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleStatus = async (cohort) => {
+    handleMenuClose();
+    const newStatus = cohort.status === "Active" ? "Inactive" : "Active";
+    try {
+      await updateCohort(cohort.id, {
+        year: cohort.year,
+        semester: cohort.semester,
+        start_date: cohort.start_date,
+        end_date: cohort.end_date,
+        status: newStatus,
+        notes: cohort.notes,
+      });
+      showToast(
+        `Cohorte marcado como ${newStatus === "Active" ? "Activo" : "Inactivo"}`,
+        "success"
+      );
+      loadCohorts({
+        year: filterYear || undefined,
+        semester: filterSemester || undefined,
+        status: filterStatus || undefined,
+        page: 1,
+        page_size: 20,
+      });
+    } catch (err) {
+      showToast(err?.message || "Error al cambiar el estado del cohorte", "error");
     }
   };
 
@@ -146,7 +223,7 @@ export default function Cohorts() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/" underline="hover" color="inherit">
+        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
           Inicio
         </Link>
         <Typography color="text.primary">Cohortes</Typography>
@@ -192,7 +269,7 @@ export default function Cohorts() {
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ height: 40 }}
-            onClick={handleOpenDialog}
+            onClick={handleOpenCreateDialog}
           >
             Agregar cohorte
           </Button>
@@ -294,15 +371,15 @@ export default function Cohorts() {
                       {cohort.notes || "-"}
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        component={RouterLink}
-                        to={`/cohorts/${cohort.id}`}
-                        aria-label="Ver detalles"
-                      >
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="Opciones">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleMenuOpen(e, cohort)}
+                          aria-label="Opciones"
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -347,15 +424,15 @@ export default function Cohorts() {
                     size="small"
                     color={cohort.status === "Active" ? "success" : "default"}
                   />
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    component={RouterLink}
-                    to={`/cohorts/${cohort.id}`}
-                    aria-label="Ver detalles"
-                  >
-                    <VisibilityIcon fontSize="small" />
-                  </IconButton>
+                  <Tooltip title="Opciones">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleMenuOpen(e, cohort)}
+                      aria-label="Opciones"
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </CardActions>
               </Card>
             </Grid>
@@ -363,10 +440,83 @@ export default function Cohorts() {
         </Grid>
       )}
 
-      {/* Create Cohort Dialog */}
+      {/* Action Options Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          elevation: 3,
+          sx: { minWidth: 180, borderRadius: 2 },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (selectedCohort) {
+              navigate(`/cohorts/${selectedCohort.id}`);
+              handleMenuClose();
+            }
+          }}
+        >
+          <ListItemIcon>
+            <VisibilityIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText>Ver detalles</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedCohort) {
+              handleOpenEditDialog(selectedCohort);
+            }
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" color="info" />
+          </ListItemIcon>
+          <ListItemText>Editar cohorte</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedCohort) {
+              navigate(`/cohorts/${selectedCohort.id}/configuration`);
+              handleMenuClose();
+            }
+          }}
+        >
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText>Configurar cohorte</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedCohort) {
+              handleToggleStatus(selectedCohort);
+            }
+          }}
+        >
+          <ListItemIcon>
+            {selectedCohort?.status === "Active" ? (
+              <BlockIcon fontSize="small" color="error" />
+            ) : (
+              <CheckCircleOutlineIcon fontSize="small" color="success" />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {selectedCohort?.status === "Active" ? "Dar de baja" : "Activar cohorte"}
+          </ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Create / Edit Cohort Dialog */}
       <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit}>
-          <DialogTitle>Agregar nuevo cohorte</DialogTitle>
+          <DialogTitle>
+            {editingCohortId ? "Editar cohorte" : "Agregar nuevo cohorte"}
+          </DialogTitle>
           <DialogContent dividers>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
               <TextField
@@ -411,6 +561,18 @@ export default function Cohorts() {
                 fullWidth
               />
               <TextField
+                select
+                label="Estado"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                required
+                fullWidth
+              >
+                <MenuItem value="Active">Activo</MenuItem>
+                <MenuItem value="Inactive">Inactivo</MenuItem>
+              </TextField>
+              <TextField
                 label="Notas / Descripción"
                 name="notes"
                 value={formData.notes}
@@ -422,11 +584,11 @@ export default function Cohorts() {
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 2.5 }}>
-            <Button onClick={handleCloseDialog} disabled={isCreating}>
+            <Button onClick={handleCloseDialog} disabled={isSaving}>
               Cancelar
             </Button>
-            <Button type="submit" variant="contained" disabled={isCreating}>
-              {isCreating ? "Guardando..." : "Guardar"}
+            <Button type="submit" variant="contained" disabled={isSaving}>
+              {isSaving ? "Guardando..." : "Guardar"}
             </Button>
           </DialogActions>
         </form>

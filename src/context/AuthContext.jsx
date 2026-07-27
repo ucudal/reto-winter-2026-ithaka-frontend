@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { Box, CircularProgress } from "@mui/material";
 import { getAuthToken, setAuthToken } from "../api/client";
 import { getCurrentUser } from "../api/endpoints/auth";
+import { clearCache } from "../utils/cache";
 
 const AuthContext = createContext(null);
 
@@ -35,6 +36,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    localStorage.clear();
     setAuthToken(null);
     setUser(null);
     setIsAuthenticated(false);
