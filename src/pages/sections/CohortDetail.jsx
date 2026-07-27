@@ -31,8 +31,30 @@ import {
   getCohortGroups,
   getCohortStages,
 } from "../../api/endpoints/cohorts";
+import { getStageExpectedDeliverables } from "../../api/endpoints/stages";
 import EmptyState from "../../components/common/EmptyState";
 import { sanitizeText } from "../../utils/sanitize";
+
+const DELIVERABLE_STATUS = {
+  Pending: { label: "Pendiente", color: "warning" },
+  Submitted: { label: "Entregado", color: "info" },
+  Delivered: { label: "Entregado", color: "info" },
+  Approved: { label: "Aprobado", color: "success" },
+  Rejected: { label: "Rechazado", color: "error" },
+};
+
+function getStatusChip(status) {
+  return (
+    DELIVERABLE_STATUS[status] || { label: status || "—", color: "default" }
+  );
+}
+
+function formatExpectedDate(isoDate) {
+  if (!isoDate) return "—";
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return isoDate;
+  return `${day}/${month}/${year}`;
+}
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -55,6 +77,7 @@ export default function CohortDetail() {
   const [cohort, setCohort] = useState(null);
   const [groups, setGroups] = useState([]);
   const [stages, setStages] = useState([]);
+  const [deliverablesByStage, setDeliverablesByStage] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tabValue, setTabValue] = useState(0);
@@ -82,6 +105,20 @@ export default function CohortDetail() {
       // Sort stages by order
       const sortedStages = (stagesData || []).sort((a, b) => a.order - b.order);
       setStages(sortedStages);
+
+      // Cargar los entregables esperados de cada etapa en paralelo.
+      // Si una etapa falla, se deja vacía sin romper el resto.
+      const deliverableEntries = await Promise.all(
+        sortedStages.map(async (stage) => {
+          try {
+            const data = await getStageExpectedDeliverables(stage.id);
+            return [stage.id, data || []];
+          } catch {
+            return [stage.id, []];
+          }
+        }),
+      );
+      setDeliverablesByStage(Object.fromEntries(deliverableEntries));
     } catch (err) {
       setError(
         err?.message || "No se pudieron cargar los detalles del cohorte.",
@@ -130,7 +167,7 @@ export default function CohortDetail() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/" underline="hover" color="inherit">
+        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
           Inicio
         </Link>
         <Link
@@ -272,7 +309,7 @@ export default function CohortDetail() {
                       <TableCell sx={{ fontWeight: "medium" }}>
                         <Link
                           component={RouterLink}
-                          to={`/groups`}
+                          to={`/groups/${group.id}`}
                           underline="hover"
                         >
                           {group.name}
@@ -307,36 +344,103 @@ export default function CohortDetail() {
             />
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {stages.map((stage, idx) => (
-                <Card
-                  key={stage.id}
-                  variant="outlined"
-                  sx={{ borderRadius: 2 }}
-                >
-                  <CardContent
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 3,
-                      py: "16px !important",
-                    }}
+              {stages.map((stage, idx) => {
+                const deliverables = deliverablesByStage[stage.id] || [];
+
+                return (
+                  <Card
+                    key={stage.id}
+                    variant="outlined"
+                    sx={{ borderRadius: 2 }}
                   >
-                    <Avatar
-                      sx={{ bgcolor: "primary.main", width: 40, height: 40 }}
-                    >
-                      {stage.order}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {stage.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Paso número {idx + 1} en el ciclo de vida del proyecto
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))}
+                    <CardContent sx={{ py: "16px !important" }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 3 }}
+                      >
+                        <Avatar
+                          sx={{
+                            bgcolor: "primary.main",
+                            width: 40,
+                            height: 40,
+                          }}
+                        >
+                          {stage.order}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {stage.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Paso número {idx + 1} en el ciclo de vida del
+                            proyecto
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Box sx={{ mt: 2, pl: { xs: 0, sm: 9 } }}>
+                        <Typography
+                          variant="subtitle2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
+                          Entregables esperados
+                        </Typography>
+
+                        {deliverables.length === 0 ? (
+                          <Typography variant="body2" color="text.secondary">
+                            No hay entregables esperados para esta etapa.
+                          </Typography>
+                        ) : (
+                          <TableContainer>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell sx={{ fontWeight: "bold" }}>
+                                    Grupo
+                                  </TableCell>
+                                  <TableCell sx={{ fontWeight: "bold" }}>
+                                    Fecha esperada
+                                  </TableCell>
+                                  <TableCell sx={{ fontWeight: "bold" }}>
+                                    Estado
+                                  </TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {deliverables.map((deliverable) => {
+                                  const statusChip = getStatusChip(
+                                    deliverable.status,
+                                  );
+
+                                  return (
+                                    <TableRow key={deliverable.id} hover>
+                                      <TableCell>
+                                        Grupo #{deliverable.group_id}
+                                      </TableCell>
+                                      <TableCell>
+                                        {formatExpectedDate(
+                                          deliverable.expected_date,
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Chip
+                                          label={statusChip.label}
+                                          size="small"
+                                          color={statusChip.color}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </Box>
           )}
         </Paper>

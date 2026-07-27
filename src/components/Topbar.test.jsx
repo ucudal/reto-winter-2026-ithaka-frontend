@@ -3,14 +3,17 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { MemoryRouter } from "react-router-dom";
 import Topbar from "./Topbar";
 import { ThemeModeProvider } from "../context/ThemeContext";
 
 function renderWithTheme(ui) {
   return render(
-    <ThemeModeProvider>
-      {ui}
-    </ThemeModeProvider>
+    <MemoryRouter>
+      <ThemeModeProvider>
+        {ui}
+      </ThemeModeProvider>
+    </MemoryRouter>
   );
 }
 

@@ -1,16 +1,11 @@
-import { apiClient, cachedGet } from "../client";
+import { apiClient } from "../client";
 
 export async function getTutors() {
-  const response = await cachedGet("/api/tutors");
-  return response.data;
+  const { data } = await apiClient.get("/api/tutors");
+  return Array.isArray(data) ? data : (data?.items ?? []);
 }
 
-export async function getTutorById(id) {
-  const response = await cachedGet(`/api/tutors/${id}`);
-  return response.data;
-}
-
-export async function getTutorCapacity(id) {
-  const response = await apiClient.get(`/api/tutors/${id}/capacity`);
-  return response.data;
+export async function upsertTutor(payload) {
+  const { data } = await apiClient.put("/api/tutors", payload);
+  return data;
 }

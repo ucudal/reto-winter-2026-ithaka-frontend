@@ -7,7 +7,6 @@ import {
   ListItemText,
   ListSubheader,
 } from "@mui/material";
-
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
@@ -15,14 +14,19 @@ import SchoolIcon from "@mui/icons-material/School";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
-
 import { Link, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH } from "../theme/constants";
 import { useAuth } from "../context/AuthContext.jsx";
 
-export default function Sidebar({ open, variant = "permanent", onClose, onNavigate }) {
+export default function Sidebar({
+  open,
+  variant = "permanent",
+  onClose,
+  onNavigate,
+}) {
   const location = useLocation();
   const { user } = useAuth();
   const isTemporary = variant === "temporary";
@@ -45,27 +49,54 @@ export default function Sidebar({ open, variant = "permanent", onClose, onNaviga
     <>
       <Toolbar />
 
-      <List subheader={<ListSubheader component="div">Proyectos</ListSubheader>}>
+      <List
+        subheader={
+          <ListSubheader component="div">
+            Proyectos
+          </ListSubheader>
+        }
+      >
         {navItem("/dashboard", "Resumen", DashboardIcon)}
-        {navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
-        {navItem("/groups", "Grupos", GroupsIcon)}
+        {user?.role === "Student" && navItem("/workspace", "Mi espacio", WorkspacesIcon)}
+        {user?.role === "Coordinator" && navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
+        {user?.role !== "Student" && navItem("/groups", "Grupos", GroupsIcon)}
       </List>
 
-      <List subheader={<ListSubheader component="div">Equipo</ListSubheader>}>
-        {navItem("/tutors", "Tutores", PeopleIcon)}
-        {navItem("/tutors/capacity", "Capacidad", MonitorHeartIcon)}
-        {navItem("/students", "Alumnos", SchoolIcon)}
-      </List>
+      {user?.role === "Coordinator" && (
+        <List
+          subheader={
+            <ListSubheader component="div">
+              Equipo
+            </ListSubheader>
+          }
+        >
+          {navItem("/tutors", "Tutores", PeopleIcon)}
+          {navItem("/students", "Alumnos", SchoolIcon)}
+        </List>
+      )}
 
-      {user?.role === "Coordinator" ? (
-        <List subheader={<ListSubheader component="div">Administración</ListSubheader>}>
+      {user?.role === "Coordinator" && (
+        <List
+          subheader={
+            <ListSubheader component="div">
+              Administración
+            </ListSubheader>
+          }
+        >
           {navItem("/users", "Usuarios", ManageAccountsIcon)}
         </List>
-      ) : null}
+      )}
 
-      <List subheader={<ListSubheader component="div">Herramientas</ListSubheader>}>
-        {navItem("/templates", "Templates", AssignmentOutlinedIcon)}
+      <List
+        subheader={
+          <ListSubheader component="div">
+            Herramientas
+          </ListSubheader>
+        }
+      >
+        {user?.role !== "Student" && navItem("/templates", "Templates", AssignmentOutlinedIcon)}
         {navItem("/knowledge", "Materiales", MenuBookIcon)}
+        {navItem("/meetings", "Reuniones", AccessTimeIcon)}
       </List>
     </>
   );
