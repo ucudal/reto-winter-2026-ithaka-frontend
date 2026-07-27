@@ -19,8 +19,8 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { useParams, Link as RouterLink } from "react-router-dom";
+import { getStages, upsertStage } from "../../api/endpoints/stages";
 
-const API_BASE = "/api";
 
 export default function CohortLifecycleConfiguration() {
   const { id } = useParams();
@@ -41,10 +41,7 @@ export default function CohortLifecycleConfiguration() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/stages`);
-      if (!res.ok) throw new Error(`Error ${res.status} al obtener etapas`);
-      const all = await res.json();
-
+      const all = await getStages();
       const cohortStages = all
         .filter((s) => s.cohort_id === cohortId)
         .sort((a, b) => a.order - b.order);
@@ -63,15 +60,7 @@ export default function CohortLifecycleConfiguration() {
   }, [loadStages]);
 
 
-  const upsertStage = async (stagePayload) => {
-    const res = await fetch(`${API_BASE}/stages`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(stagePayload),
-    });
-    if (!res.ok) throw new Error(`Error ${res.status} al guardar la etapa`);
-    return res.json();
-  };
+  
 
   const handleAddStage = async () => {
     if (!newStage.name) return;
@@ -140,7 +129,7 @@ export default function CohortLifecycleConfiguration() {
     setSaving(true);
     setError(null);
     try {
-      await fetch(`${API_BASE}/stages`, { method: "PUT", body: JSON.stringify({}) });
+      await upsertStage({});
       setStages((prev) => prev.filter((s) => s.id !== stageId));
     } catch (err) {
       console.error(err);
