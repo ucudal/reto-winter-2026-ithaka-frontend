@@ -51,12 +51,17 @@ import SearchIcon from "@mui/icons-material/Search";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
+<<<<<<< HEAD
+import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
+import { translateStatus, translateTutorRole } from "../../utils/translate";
+=======
 import {
   getTutors,
   upsertTutor,
   getTutorCapacity,
   getTutorGroups,
 } from "../../api/endpoints/tutors";
+>>>>>>> testing
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -468,13 +473,18 @@ export default function Tutors() {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={
-                            tutor.role === "Business"
-                              ? "Negocio"
-                              : tutor.role === "Technical"
-                              ? "Técnico"
-                              : tutor.role
-                          }
+                          label={translateTutorRole(tutor.role)}
+                          size="small"
+                          color={tutor.role === "Business" ? "primary" : "info"}
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>{tutor.specialty || "-"}</TableCell>
+                      <TableCell>{tutor.availability || "-"}</TableCell>
+                      <TableCell>{tutor.max_capacity ?? 0} hs</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={translateStatus(tutor.status)}
                           size="small"
                           color={tutor.role === "Business" ? "primary" : "info"}
                           variant="outlined"
@@ -653,9 +663,7 @@ export default function Tutors() {
                       }}
                     >
                       <Chip
-                        label={
-                          tutor.status === "Active" ? "Activo" : "Inactivo"
-                        }
+                        label={translateStatus(tutor.status)}
                         size="small"
                         color={
                           tutor.status === "Active" ? "success" : "default"

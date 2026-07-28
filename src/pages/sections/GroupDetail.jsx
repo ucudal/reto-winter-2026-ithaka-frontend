@@ -38,6 +38,7 @@ import { getTutors } from "../../api/endpoints/tutors";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import EmptyState from "../../components/common/EmptyState";
+import { translateStatus } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 
 const CARD_SX = {
@@ -296,7 +297,7 @@ export default function GroupDetail() {
             {group.name}
           </Typography>
           <Chip
-            label={group.status === "Active" ? "Activo" : group.status}
+            label={translateStatus(group.status)}
             color={group.status === "Active" ? "success" : "default"}
             size="small"
           />

@@ -34,6 +34,7 @@ import {
 import { getStageExpectedDeliverables } from "../../api/endpoints/stages";
 import EmptyState from "../../components/common/EmptyState";
 import { sanitizeText } from "../../utils/sanitize";
+import { translateStatus } from "../../utils/translate";
 
 const DELIVERABLE_STATUS = {
   Pending: { label: "Pendiente", color: "warning" },
@@ -196,7 +197,7 @@ export default function CohortDetail() {
             Cohorte {cohort.year} - {cohort.semester}° semestre
           </Typography>
           <Chip
-            label={cohort.status === "Active" ? "Activo" : "Inactivo"}
+            label={translateStatus(cohort.status)}
             color={cohort.status === "Active" ? "success" : "default"}
           />
         </Box>
@@ -317,9 +318,7 @@ export default function CohortDetail() {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={
-                            group.status === "Active" ? "Activo" : group.status
-                          }
+                          label={translateStatus(group.status)}
                           size="small"
                           color={
                             group.status === "Active" ? "success" : "default"
