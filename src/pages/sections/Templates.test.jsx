@@ -1,411 +1,273 @@
-import {
-  render,
-  screen,
-  waitFor,
-  fireEvent,
-} from "@testing-library/react";
-
-import {
-  describe,
-  expect,
-  it,
-  vi,
-  beforeEach,
-} from "vitest";
-
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-
 import Templates from "./Templates";
 
+import { getMaterials } from "../../api/endpoints/materials";
 
-const renderWithRouter = (component) => {
-  return render(
-    <MemoryRouter>
-      {component}
-    </MemoryRouter>
-  );
-};
-
-
-beforeEach(() => {
-  vi.clearAllMocks();
-});
-
-
-// Mock API
 vi.mock("../../api/endpoints/materials", () => ({
   getMaterials: vi.fn(),
 }));
 
+vi.mock("../../components/common/ErrorState", () => ({
+  default: ({ title, message }) => (
+    <div>
+      <span>{title}</span>
+      <span>{message}</span>
+    </div>
+  ),
+}));
 
-// Mock GenericCreateModal
-vi.mock(
-  "../../components/common/GenericCreateModal",
-  () => ({
-    default: ({ open, onSubmit }) =>
-      open ? (
-        <div data-testid="create-modal">
-          <button
-            onClick={() =>
-              onSubmit({
-                name: "Nuevo template",
-                description: "Descripción nueva",
-                content: "Contenido",
-              })
-            }
-          >
-            Guardar
-          </button>
-        </div>
-      ) : null,
-  })
-);
+vi.mock("../../components/common/EmptyState", () => ({
+  default: ({ title, description }) => (
+    <div>
+      <span>{title}</span>
+      <span>{description}</span>
+    </div>
+  ),
+}));
 
-
-// Mock EmptyState
-vi.mock(
-  "../../components/common/EmptyState",
-  () => ({
-    default: ({ title }) => (
-      <div>{title}</div>
-    ),
-  })
-);
-
-
-// Mock ErrorState
-vi.mock(
-  "../../components/common/ErrorState",
-  () => ({
-    default: ({ title, message }) => (
-      <div>
-        {title}
-        {message}
+vi.mock("../../components/common/GenericCreateModal", () => ({
+  default: ({ open, onSubmit }) =>
+    open ? (
+      <div data-testid="create-modal">
+        <button
+          onClick={() =>
+            onSubmit({
+              name: "Nuevo template",
+              description: "Descripción",
+              content: "Contenido",
+            })
+          }
+        >
+          Guardar
+        </button>
       </div>
-    ),
-  })
-);
+    ) : null,
+}));
+
+const mockMaterials = [
+  {
+    id: 1,
+    title: "Template React",
+    url: "https://drive.google.com/file",
+  },
+  {
+    id: 2,
+    title: "Template GitHub",
+    url: "https://github.com/example",
+  },
+];
+
+
+function renderComponent() {
+  return render(
+    <MemoryRouter>
+      <Templates />
+    </MemoryRouter>
+  );
+}
 
 
 describe("Templates", () => {
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
 
   it("renders page title", async () => {
+    getMaterials.mockResolvedValue(mockMaterials);
 
-    const { getMaterials } = await import(
-      "../../api/endpoints/materials"
-    );
-
-    getMaterials.mockResolvedValue([]);
-
-
-    renderWithRouter(<Templates />);
-
+    renderComponent();
 
     await waitFor(() => {
       expect(
-        screen.getByText("Templates")
+        screen.getByRole("heading", {
+          name: "Templates",
+        })
       ).toBeInTheDocument();
     });
-
   });
-
 
 
   it("loads templates from API", async () => {
+    getMaterials.mockResolvedValue(mockMaterials);
 
-    const { getMaterials } = await import(
-      "../../api/endpoints/materials"
-    );
-
-
-    getMaterials.mockResolvedValue([
-      {
-        id: 1,
-        title: "Plantilla entrega final",
-        url: "https://drive.google.com/file",
-        type: "Documento",
-      },
-    ]);
-
-
-    renderWithRouter(<Templates />);
-
+    renderComponent();
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          "Plantilla entrega final"
-        )
+        screen.getByText("Template React")
       ).toBeInTheDocument();
     });
 
-
-    expect(getMaterials)
-      .toHaveBeenCalled();
-
+    expect(getMaterials).toHaveBeenCalledTimes(1);
   });
-
 
 
   it("shows empty state when there are no templates", async () => {
-
-    const { getMaterials } = await import(
-      "../../api/endpoints/materials"
-    );
-
-
     getMaterials.mockResolvedValue([]);
 
-
-    renderWithRouter(<Templates />);
-
+    renderComponent();
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          "No hay templates"
-        )
+        screen.getByText("No hay templates")
       ).toBeInTheDocument();
     });
-
   });
 
 
-
   it("filters templates by name", async () => {
+    getMaterials.mockResolvedValue(mockMaterials);
 
-    const { getMaterials } = await import(
-      "../../api/endpoints/materials"
-    );
-
-
-    getMaterials.mockResolvedValue([
-      {
-        id: 1,
-        title: "Template React",
-        url: "https://github.com/react",
-        type: "Documento",
-      },
-      {
-        id: 2,
-        title: "Template Backend",
-        url: "https://drive.google.com",
-        type: "Documento",
-      },
-    ]);
-
-
-    renderWithRouter(<Templates />);
+    renderComponent();
 
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          "Template React"
-        )
+        screen.getByText("Template React")
       ).toBeInTheDocument();
     });
 
 
-    const input = screen.getByLabelText(
-      "Buscar"
-    );
+    const input = screen.getByLabelText("Buscar");
 
 
     fireEvent.change(input, {
       target: {
-        value: "React",
+        value: "GitHub",
       },
     });
 
 
     expect(
-      screen.getByText(
-        "Template React"
-      )
+      screen.getByText("Template GitHub")
     ).toBeInTheDocument();
 
 
     expect(
-      screen.queryByText(
-        "Template Backend"
-      )
+      screen.queryByText("Template React")
     ).not.toBeInTheDocument();
-
   });
-
 
 
   it("changes to gallery view", async () => {
+    getMaterials.mockResolvedValue(mockMaterials);
 
-    const { getMaterials } = await import(
-      "../../api/endpoints/materials"
-    );
-
-
-    getMaterials.mockResolvedValue([
-      {
-        id: 1,
-        title: "Template React",
-        url: "https://github.com/react",
-        type: "Documento",
-      },
-    ]);
-
-
-    renderWithRouter(<Templates />);
+    renderComponent();
 
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          "Template React"
-        )
+        screen.getByText("Template React")
       ).toBeInTheDocument();
     });
 
 
-    const select = screen.getByRole(
-      "combobox",
-      {
-        name: "Vista",
-      }
+    const selects = screen.getAllByRole("combobox");
+
+
+    // Primer combobox = selector de Vista
+    fireEvent.mouseDown(selects[0]);
+
+
+    fireEvent.click(
+      screen.getByText("Galería")
     );
 
 
-    fireEvent.mouseDown(select);
-
-
-    const gallery = await screen.findByText(
-      "Galería"
-    );
-
-
-    fireEvent.click(gallery);
-
-
-    expect(
-      screen.getByText(
-        "Template React"
-      )
-    ).toBeInTheDocument();
-
+    await waitFor(() => {
+      expect(
+        screen.getByText("Template React")
+      ).toBeInTheDocument();
+    });
   });
-
 
 
   it("opens create template modal", async () => {
+    getMaterials.mockResolvedValue(mockMaterials);
 
-    const { getMaterials } = await import(
-      "../../api/endpoints/materials"
-    );
-
-
-    getMaterials.mockResolvedValue([]);
-
-
-    renderWithRouter(<Templates />);
+    renderComponent();
 
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          "Nuevo Template"
-        )
+        screen.getByRole("button", {
+          name: /Nuevo Template/i,
+        })
       ).toBeInTheDocument();
     });
 
 
-    const button = screen.getByRole(
-      "button",
-      {
+    fireEvent.click(
+      screen.getByRole("button", {
         name: /Nuevo Template/i,
-      }
+      })
     );
-
-
-    fireEvent.click(button);
 
 
     expect(
-      screen.getByTestId(
-        "create-modal"
-      )
+      screen.getByTestId("create-modal")
     ).toBeInTheDocument();
-
   });
-
 
 
   it("creates a new template", async () => {
+    getMaterials.mockResolvedValue(mockMaterials);
 
-    const { getMaterials } = await import(
-      "../../api/endpoints/materials"
-    );
-
-
-    getMaterials.mockResolvedValue([]);
+    renderComponent();
 
 
-    renderWithRouter(<Templates />);
-
-
-    fireEvent.click(
-      screen.getByRole(
-        "button",
-        {
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
           name: /Nuevo Template/i,
-        }
-      )
+        })
+      ).toBeInTheDocument();
+    });
+
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Nuevo Template/i,
+      })
     );
 
 
     fireEvent.click(
-      screen.getByText(
-        "Guardar"
-      )
+      screen.getByText("Guardar")
     );
 
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          "Nuevo template"
-        )
+        screen.getByText("Nuevo template")
       ).toBeInTheDocument();
     });
-
   });
-
 
 
   it("shows error state when API fails", async () => {
-
-    const { getMaterials } = await import(
-      "../../api/endpoints/materials"
-    );
-
-
     getMaterials.mockRejectedValue(
-      new Error(
-        "Error de servidor"
-      )
+      new Error("Error de servidor")
     );
 
 
-    renderWithRouter(<Templates />);
+    renderComponent();
 
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          "Error cargando templates"
-        )
+        screen.getByText("Error cargando templates")
       ).toBeInTheDocument();
     });
 
-  });
 
+    expect(
+      screen.getByText("Error de servidor")
+    ).toBeInTheDocument();
+  });
 
 });
