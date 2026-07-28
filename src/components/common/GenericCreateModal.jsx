@@ -53,10 +53,14 @@ export default function GenericCreateModal({
     const newErrors = {};
 
     fields.forEach((field) => {
+      const value = formData[field.name];
+      const isEmpty = Array.isArray(value)
+        ? value.length === 0
+        : value === undefined || value === null || value === "";
 
       if (
         field.required &&
-        !formData[field.name]
+        isEmpty
       ) {
         newErrors[field.name] =
           `${field.label} es requerido`;
@@ -65,10 +69,10 @@ export default function GenericCreateModal({
 
       if (
         field.validate &&
-        formData[field.name]
+        !isEmpty
       ) {
         const error = field.validate(
-          formData[field.name]
+          value
         );
 
         if (error) {
@@ -106,11 +110,21 @@ export default function GenericCreateModal({
             fullWidth
             label={field.label}
             name={field.name}
-            value={formData[field.name] ?? ""}
+            value={formData[field.name] ?? (field.multiple ? [] : "")}
             onChange={handleChange}
             required={field.required}
             error={Boolean(errors[field.name])}
             helperText={errors[field.name]}
+            SelectProps={{
+              multiple: Boolean(field.multiple),
+              renderValue: field.multiple
+                ? (selected) =>
+                    field.options
+                      ?.filter((option) => selected.includes(option.value))
+                      .map((option) => option.label)
+                      .join(", ")
+                : undefined,
+            }}
           >
             {
               field.options?.map((option) => (
@@ -206,7 +220,7 @@ export default function GenericCreateModal({
       fullWidth
     >
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
 
 
         <DialogTitle>

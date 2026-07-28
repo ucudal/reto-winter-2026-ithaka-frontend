@@ -20,6 +20,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   TextField,
   Tooltip,
   Typography,
@@ -37,7 +38,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
-// import { apiClient } from '../../api/client' // Línea para llamar a la API real, actualmente comentada para usar datos mockeados
+import { getMaterials, createMaterial } from "../../api/endpoints/materials";
 import ConfirmModal from "../../components/ConfirmModal";
 import CreateMaterialModal from "../../components/CreateMaterialModal";
 import EditMaterialModal from "../../components/EditMaterialModal";
@@ -52,27 +53,6 @@ const columns = [
 ];
 
 const tableColumnCount = columns.length + 1;
-
-const mockMaterials = [
-  {
-    id: 12,
-    stage_id: 2,
-    title: "Business Model Canvas Template",
-    url: "https://drive.google.com/bmc-template",
-  },
-  {
-    id: 13,
-    stage_id: 1,
-    title: "Guía para definir el problema",
-    url: "https://drive.google.com/problem-guide",
-  },
-  {
-    id: 14,
-    stage_id: 3,
-    title: "Plantilla de propuesta de valor",
-    url: "https://drive.google.com/value-proposition",
-  },
-];
 
 function getPlatformDetails(url = "") {
   const lowerUrl = url.toLowerCase();
@@ -118,6 +98,10 @@ function Knowledge() {
   const [selectedView, setSelectedView] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const [materialToDelete, setMaterialToDelete] = useState(null);
   const [materialToEdit, setMaterialToEdit] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -144,13 +128,9 @@ function Knowledge() {
     setError(null);
 
     try {
-      // Llamada real a la API:
-      // const { data } = await apiClient.get('/materials')
-      // setMaterials(Array.isArray(data) ? data : [])
+      const data = await getMaterials();
+      setMaterials(Array.isArray(data) ? data : [])
 
-      // Datos mockeados:
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simula un retraso de 500 ms para la carga de datos
-      setMaterials(mockMaterials);
     } catch (requestError) {
       setError(requestError);
     } finally {
@@ -199,8 +179,20 @@ function Knowledge() {
     );
   };
 
-  const handleCreateMaterial = (newMaterial) => {
-    setMaterials((currentMaterials) => [newMaterial, ...currentMaterials]);
+  const handleCreateMaterial = async (newMaterial) => {
+    try {
+      const createdMaterial = await createMaterial(newMaterial);
+
+      setMaterials((currentMaterials) => [
+        createdMaterial,
+        ...currentMaterials,
+      ]);
+
+      setIsCreateModalOpen(false);
+
+    } catch (error) {
+      setError(error);
+    }
   };
 
   return (
@@ -395,7 +387,9 @@ function Knowledge() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMaterials.map((material) => (
+                filteredMaterials
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((material) => (
                   <TableRow key={material.id} hover>
                     <TableCell>{material.id}</TableCell>
                     <TableCell>{material.stage_id}</TableCell>
@@ -452,6 +446,20 @@ function Knowledge() {
               )}
             </TableBody>
           </Table>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredMaterials.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
         </TableContainer>
       ) : isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>

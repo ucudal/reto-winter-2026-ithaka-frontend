@@ -24,13 +24,13 @@ export default function Settings() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    setSuccessMessage('Changes saved successfully!');
+    setSuccessMessage('¡Cambios guardados exitosamente!');
   };
 
   return (
     <Box sx={{ maxWidth: 'md', mx: 'auto', p: { xs: 2, sm: 3 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Typography variant="h4" fontWeight="bold" color="text.primary">
-        Account Settings
+        Configuración de la Cuenta
       </Typography>
 
       {successMessage && (
@@ -46,50 +46,50 @@ export default function Settings() {
           variant="fullWidth"
           sx={{ borderBottom: 1, borderColor: 'divider' }}
         >
-          <Tab label="Personal Information" />
-          <Tab label="Security" />
-          <Tab label="Visual Preferences" />
+          <Tab label="Información Personal" />
+          <Tab label="Seguridad" />
+          <Tab label="Preferencias Visuales" />
         </Tabs>
 
         <Box component="form" onSubmit={handleSave} sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
           
           {currentTab === 0 && (
             <>
-              <Typography variant="h6" fontWeight="600">Personal Information</Typography>
-              <TextField label="Full Name" defaultValue="Luca" variant="outlined" fullWidth size="small" />
-              <TextField label="Email Address" defaultValue="luca@example.com" variant="outlined" fullWidth size="small" />
+              <Typography variant="h6" fontWeight="600">Información Personal</Typography>
+              <TextField label="Nombre Completo" defaultValue="Luca" variant="outlined" fullWidth size="small" />
+              <TextField label="Correo Electrónico" defaultValue="luca@example.com" variant="outlined" fullWidth size="small" />
               <Button type="submit" variant="contained" sx={{ alignSelf: 'flex-start', textTransform: 'none' }}>
-                Save Changes
+                Guardar Cambios
               </Button>
             </>
           )}
 
           {currentTab === 1 && (
             <>
-              <Typography variant="h6" fontWeight="600">Change Password</Typography>
-              <TextField label="Current Password" type="password" variant="outlined" fullWidth size="small" />
-              <TextField label="New Password" type="password" variant="outlined" fullWidth size="small" />
-              <TextField label="Confirm New Password" type="password" variant="outlined" fullWidth size="small" />
+              <Typography variant="h6" fontWeight="600">Cambiar Contraseña</Typography>
+              <TextField label="Contraseña Actual" type="password" variant="outlined" fullWidth size="small" />
+              <TextField label="Nueva Contraseña" type="password" variant="outlined" fullWidth size="small" />
+              <TextField label="Confirmar Nueva Contraseña" type="password" variant="outlined" fullWidth size="small" />
               <Button type="submit" variant="contained" sx={{ alignSelf: 'flex-start', textTransform: 'none' }}>
-                Update Password
+                Actualizar Contraseña
               </Button>
             </>
           )}
 
           {currentTab === 2 && (
             <>
-              <Typography variant="h6" fontWeight="600">Visual Preferences</Typography>
+              <Typography variant="h6" fontWeight="600">Preferencias Visuales</Typography>
               <FormControlLabel
                 control={<Switch defaultChecked />}
-                label="Enable Dark Mode / System Theme"
+                label="Activar Modo Oscuro / Tema del Sistema"
               />
               <Divider />
               <FormControlLabel
                 control={<Switch />}
-                label="Receive Email Notifications"
+                label="Recibir Notificaciones por Correo"
               />
               <Button type="submit" variant="contained" sx={{ alignSelf: 'flex-start', textTransform: 'none' }}>
-                Save Preferences
+                Guardar Preferencias
               </Button>
             </>
           )}
