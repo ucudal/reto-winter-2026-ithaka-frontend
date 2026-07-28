@@ -41,6 +41,7 @@ import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import ViewModuleIcon from '@mui/icons-material/ViewModule'
 import ViewListIcon from '@mui/icons-material/ViewList'
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
+import LinkedInIcon from '@mui/icons-material/LinkedIn'
 
 import { getStudents } from '../../api/endpoints/students'
 import EmptyState from '../../components/common/EmptyState'

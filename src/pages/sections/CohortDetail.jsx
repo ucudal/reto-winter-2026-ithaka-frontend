@@ -34,10 +34,11 @@ import {
 import { getStageExpectedDeliverables } from "../../api/endpoints/stages";
 import EmptyState from "../../components/common/EmptyState";
 import { sanitizeText } from "../../utils/sanitize";
+import { translateStatus } from "../../utils/translate";
 
 const DELIVERABLE_STATUS = {
   Pending: { label: "Pendiente", color: "warning" },
-  Submitted: { label: "Entregado", color: "info" },
+  Submitted: { label: "Enviado", color: "info" },
   Delivered: { label: "Entregado", color: "info" },
   Approved: { label: "Aprobado", color: "success" },
   Rejected: { label: "Rechazado", color: "error" },
@@ -196,7 +197,7 @@ export default function CohortDetail() {
             Cohorte {cohort.year} - {cohort.semester}° semestre
           </Typography>
           <Chip
-            label={cohort.status === "Active" ? "Activo" : "Inactivo"}
+            label={translateStatus(cohort.status)}
             color={cohort.status === "Active" ? "success" : "default"}
           />
         </Box>
@@ -317,9 +318,7 @@ export default function CohortDetail() {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={
-                            group.status === "Active" ? "Activo" : group.status
-                          }
+                          label={translateStatus(group.status)}
                           size="small"
                           color={
                             group.status === "Active" ? "success" : "default"

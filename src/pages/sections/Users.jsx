@@ -33,19 +33,20 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getUsers, createUser, updateUser, deleteUser } from "../../api/endpoints/users";
+import { translateUserRole } from "../../utils/translate";
 
 const ROLE_OPTIONS = [
-  { value: "Student", label: "Student" },
-  { value: "TechnicalTutor", label: "Technical Tutor" },
-  { value: "BusinessTutor", label: "Business Tutor" },
-  { value: "Coordinator", label: "Coordinator" },
+  { value: "Student", label: translateUserRole("Student") },
+  { value: "TechnicalTutor", label: translateUserRole("TechnicalTutor") },
+  { value: "BusinessTutor", label: translateUserRole("BusinessTutor") },
+  { value: "Coordinator", label: translateUserRole("Coordinator") },
 ];
 
 const ROLE_STYLES = {
-  Coordinator: { label: "Coordinator", color: "warning" },
-  BusinessTutor: { label: "Business Tutor", color: "info" },
-  TechnicalTutor: { label: "Technical Tutor", color: "success" },
-  Student: { label: "Student", color: "default" },
+  Coordinator: { label: translateUserRole("Coordinator"), color: "warning" },
+  BusinessTutor: { label: translateUserRole("BusinessTutor"), color: "info" },
+  TechnicalTutor: { label: translateUserRole("TechnicalTutor"), color: "success" },
+  Student: { label: translateUserRole("Student"), color: "default" },
 };
 
 function normalizeUsersResponse(data) {
