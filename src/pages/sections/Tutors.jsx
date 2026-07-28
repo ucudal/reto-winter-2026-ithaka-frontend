@@ -51,17 +51,13 @@ import SearchIcon from "@mui/icons-material/Search";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
-<<<<<<< HEAD
-import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
-import { translateStatus, translateTutorRole } from "../../utils/translate";
-=======
 import {
   getTutors,
   upsertTutor,
   getTutorCapacity,
   getTutorGroups,
 } from "../../api/endpoints/tutors";
->>>>>>> testing
+import { translateStatus, translateTutorRole } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
 import VisibilityIcon from "@mui/icons-material/Visibility";
