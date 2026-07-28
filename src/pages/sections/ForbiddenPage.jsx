@@ -1,9 +1,12 @@
 import { Box, Typography, Button } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { getHomePathForRole } from "../../routes/roleHome";
 
 function ForbiddenPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <Box
@@ -34,24 +37,18 @@ function ForbiddenPage() {
           403
         </Typography>
 
-        <Typography
-          variant="h5"
-          sx={{ mt: 2 }}
-        >
+        <Typography variant="h5" sx={{ mt: 2 }}>
           Acceso denegado
         </Typography>
 
-        <Typography
-          color="text.secondary"
-          sx={{ mt: 2, mb: 4 }}
-        >
+        <Typography color="text.secondary" sx={{ mt: 2, mb: 4 }}>
           No tienes permisos para acceder a esta página.
         </Typography>
 
         <Button
           variant="contained"
           size="large"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate(getHomePathForRole(user?.role))}
         >
           Volver al inicio
         </Button>

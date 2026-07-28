@@ -40,6 +40,7 @@ import ErrorState from "../../components/common/ErrorState";
 import EmptyState from "../../components/common/EmptyState";
 import { translateStatus } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
+import CommentFeed from "../../components/CommentFeed";
 
 const CARD_SX = {
   borderRadius: 2,
@@ -113,37 +114,42 @@ export default function GroupDetail() {
   }, [id]);
 
   useEffect(() => {
-    if (highlightDeliverableId && highlightedRowRef.current) {
-      highlightedRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [highlightDeliverableId, deliverables]);
+    let ignore = false;
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const loadGroup = async (groupId) => {
-    try {
-      setLoading(true);
-      setError("");
+        const [groupData, deliverablesData] = await Promise.all([
+          getGroupById(Number(id)),
+          getGroupDeliverables(Number(id)),
+        ]);
 
-      const groupData = await getGroupById(groupId);
-      setGroup(groupData);
-      setCohort(groupData.cohort);
-    } catch (err) {
-      setError(err?.message || "No se pudo cargar el grupo.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (ignore) return;
 
-  const loadDeliverables = async (groupId) => {
-    try {
-      setLoadingDeliverables(true);
-      const data = await getGroupDeliverables(groupId);
-      setDeliverables(data || []);
-    } catch (err) {
-      console.error("Error al cargar entregables:", err);
-    } finally {
-      setLoadingDeliverables(false);
+        setGroup(groupData);
+        setCohort(groupData.cohort);
+        setDeliverables(deliverablesData || []);
+      } catch (err) {
+        if (!ignore) {
+          setError(err?.message || "No se pudo cargar el grupo.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+          setLoadingDeliverables(false);
+        }
+      }
+    };
+
+    if (id) {
+      fetchData();
     }
-  };
+
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
 
   const openStatusMenu = (event, deliverable) => {
     event.stopPropagation();
@@ -259,7 +265,7 @@ export default function GroupDetail() {
   if (error && !group) {
     return (
       <Box sx={{ width: "100%" }}>
-        <ErrorState message={error} onRetry={() => loadGroup(Number(id))} />
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
       </Box>
     );
   }
@@ -320,7 +326,7 @@ export default function GroupDetail() {
 
       {error && (
         <Box sx={{ mb: 1.5 }}>
-          <ErrorState message={error} onRetry={() => loadGroup(Number(id))} />
+          <ErrorState message={error} onRetry={() => window.location.reload()} />
         </Box>
       )}
 
@@ -527,6 +533,7 @@ export default function GroupDetail() {
                             borderRadius: 1,
                             bgcolor: isHighlighted ? "warning.light" : "transparent",
                             transition: "background-color 0.3s",
+                            display: "block",
                           }}
                         >
                           <ListItemText
@@ -535,6 +542,7 @@ export default function GroupDetail() {
                                 <Typography variant="body2" fontWeight={500}>
                                   {deliverable.stageName || `Etapa #${deliverable.stageId}`}
                                 </Typography>
+
                                 <Chip
                                   label={statusMeta.label}
                                   color={statusMeta.color}
@@ -547,14 +555,24 @@ export default function GroupDetail() {
                                     ) : undefined
                                   }
                                 />
+
                                 {overdue && (
-                                  <Chip label="Vencido" color="error" size="small" variant="outlined" />
+                                  <Chip
+                                    label="Vencido"
+                                    color="error"
+                                    size="small"
+                                    variant="outlined"
+                                  />
                                 )}
                               </Box>
                             }
                             secondary={`Fecha esperada: ${deliverable.expectedDate}`}
                             secondaryTypographyProps={{ variant: "caption" }}
                           />
+
+                          <Box sx={{ mt: 2 }}>
+                            <CommentFeed deliverableId={deliverable.id} />
+                          </Box>
                         </ListItem>
                       );
                     })}

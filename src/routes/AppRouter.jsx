@@ -46,14 +46,7 @@ const appRouter = createBrowserRouter([
                   {
                     path: "/dashboard",
                     element: (
-                      <RoleProtectedRoute
-                        allowedRoles={[
-                          "Coordinator",
-                          "BusinessTutor",
-                          "TechnicalTutor",
-                          "Student",
-                        ]}
-                      >
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <Dashboard />
                       </RoleProtectedRoute>
                     ),
@@ -149,13 +142,13 @@ const appRouter = createBrowserRouter([
                     ),
                   },
                   {
-                    path: '/templates/:id',
+                    path: "/templates/:id",
                     element: (
                       <RoleProtectedRoute
                         allowedRoles={[
-                          'Coordinator',
-                          'BusinessTutor',
-                          'TechnicalTutor',
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
                         ]}
                       >
                         <TemplateDetail />

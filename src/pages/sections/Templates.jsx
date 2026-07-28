@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Box,
   Breadcrumbs,
   Button,
+  CircularProgress,
   IconButton,
   InputAdornment,
   Link,
@@ -36,28 +37,9 @@ import ViewListIcon from '@mui/icons-material/ViewList'
 import CloudQueueIcon from '@mui/icons-material/CloudQueue'
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
 import EmptyState from '../../components/common/EmptyState'
+import ErrorState from '../../components/common/ErrorState'
 import GenericCreateModal from "../../components/common/GenericCreateModal";
-
-const mockTemplates = [
-  {
-    id: 1,
-    name: 'Business Model Canvas',
-    platform: 'Drive',
-    type: 'Deliverable',
-    description: 'Plantilla para desarrollar el modelo de negocio.',
-    content:
-      '1. Propuesta de valor\n2. Segmentos de clientes\n3. Canales',
-  },
-  {
-    id: 2,
-    name: 'Informe Final',
-    platform: 'Drive',
-    type: 'Deliverable',
-    description: 'Estructura base para el informe final.',
-    content:
-      'Introducción\nDesarrollo\nResultados\nConclusiones',
-  },
-]
+import { getMaterials } from "../../api/endpoints/materials";
 
 function getPlatformIcon(platform = "") {
   const lower = platform.toLowerCase();
@@ -80,22 +62,102 @@ function getPlatformIcon(platform = "") {
   return <span>{platform}</span>;
 }
 
+function getPlatformLabel(url = "") {
+  const normalized = url.toLowerCase();
+  if (normalized.includes("drive.google.com") || normalized.includes("docs.google.com")) {
+    return "Drive";
+  }
+  if (normalized.includes("sharepoint.com")) {
+    return "SharePoint";
+  }
+  if (normalized.includes("github.com")) {
+    return "GitHub";
+  }
+  if (normalized.includes("youtube.com") || normalized.includes("youtu.be")) {
+    return "YouTube";
+  }
+  return "Enlace";
+}
+
+function mapMaterialToTemplate(material) {
+  return {
+    id: material.id,
+    name: material.title || material.name || `Material ${material.id}`,
+    platform: getPlatformLabel(material.url || material.description || ""),
+    type: material.type || "Material",
+    description: material.url || material.description || "",
+    content: material.url || material.description || "",
+  };
+}
+
 function Templates() {
   const navigate = useNavigate()
-  const [templates, setTemplates] = useState(mockTemplates);
+  const [templates, setTemplates] = useState([]);
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('name')
   const [view, setView] = useState('list')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadTemplates() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const materials = await getMaterials()
+        if (!isMounted) return
+        const mappedTemplates = Array.isArray(materials)
+          ? materials.map(mapMaterialToTemplate)
+          : []
+        setTemplates(mappedTemplates)
+      } catch (err) {
+        if (!isMounted) return
+        setError(err?.message || 'No se pudieron cargar los templates.')
+      } finally {
+        if (!isMounted) return
+        setLoading(false)
+      }
+    }
+
+    loadTemplates()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
       const value =
-        template[filter]?.toLowerCase() || ''
+        template[filter]?.toString().toLowerCase() || ''
       return value.includes(search.toLowerCase())
     })
   }, [templates, search, filter])
 
   const [openModal, setOpenModal] = useState(false);
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error) {
+    return <ErrorState title='Error cargando templates' message={error} />
+  }
+
   const templateFields = [
     {
       name: "name",
