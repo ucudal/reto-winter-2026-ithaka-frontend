@@ -11,6 +11,7 @@ vi.mock('../../api/endpoints/groups', () => ({
   getGroups: vi.fn(),
   saveGroup: vi.fn(),
   deleteGroup: vi.fn(),
+  getGroupById: vi.fn(),
 }));
 
 vi.mock('../../api/endpoints/cohorts', () => ({
@@ -23,6 +24,11 @@ vi.mock('../../api/endpoints/students', () => ({
 
 vi.mock('../../api/endpoints/tutors', () => ({
   getTutors: vi.fn(),
+  getTutorGroups: vi.fn(),
+}));
+
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({ user: { role: 'Coordinator', tutor: null } }),
 }));
 
 describe('Groups Component', () => {
