@@ -38,7 +38,9 @@ import { getTutors } from "../../api/endpoints/tutors";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import EmptyState from "../../components/common/EmptyState";
+import { translateStatus } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
+import CommentFeed from "../../components/CommentFeed";
 
 const CARD_SX = {
   borderRadius: 2,
@@ -50,7 +52,7 @@ const CARD_SX = {
 
 const DELIVERABLE_STATUS = {
   Pending: { label: "Pendiente", color: "warning" },
-  Submitted: { label: "Entregado", color: "info" },
+  Submitted: { label: "Enviado", color: "info" },
   Delivered: { label: "Entregado", color: "info" },
   Approved: { label: "Aprobado", color: "success" },
   Rejected: { label: "Rechazado", color: "error" },
@@ -96,11 +98,13 @@ export default function GroupDetail() {
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [selectedStageId, setSelectedStageId] = useState("");
   const [savingStage, setSavingStage] = useState(false);
+  const [stagesLoadFailed, setStagesLoadFailed] = useState(false);
 
   const [tutorsDialogOpen, setTutorsDialogOpen] = useState(false);
   const [selectedBusinessTutorId, setSelectedBusinessTutorId] = useState("");
   const [selectedTechnicalTutorId, setSelectedTechnicalTutorId] = useState("");
   const [savingTutors, setSavingTutors] = useState(false);
+  const [tutorsLoadFailed, setTutorsLoadFailed] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -182,6 +186,7 @@ export default function GroupDetail() {
   const openStageDialog = async () => {
     setSelectedStageId(group.currentStage?.id ?? "");
     setStageDialogOpen(true);
+    setStagesLoadFailed(false);
     if (stages.length === 0) {
       try {
         setLoadingStages(true);
@@ -189,6 +194,11 @@ export default function GroupDetail() {
         setStages(stagesData || []);
       } catch (err) {
         console.error("Error al cargar etapas:", err);
+        setStagesLoadFailed(true);
+        showToast(
+          err?.message || "No se pudieron cargar las etapas del cohorte.",
+          "error",
+        );
       } finally {
         setLoadingStages(false);
       }
@@ -213,6 +223,7 @@ export default function GroupDetail() {
     setSelectedBusinessTutorId(group.businessTutor?.id ?? "");
     setSelectedTechnicalTutorId(group.technicalTutor?.id ?? "");
     setTutorsDialogOpen(true);
+    setTutorsLoadFailed(false);
     if (tutors.length === 0) {
       try {
         setLoadingTutors(true);
@@ -220,6 +231,11 @@ export default function GroupDetail() {
         setTutors(tutorsData || []);
       } catch (err) {
         console.error("Error al cargar tutores:", err);
+        setTutorsLoadFailed(true);
+        showToast(
+          err?.message || "No se pudo cargar la lista de tutores.",
+          "error",
+        );
       } finally {
         setLoadingTutors(false);
       }
@@ -301,7 +317,7 @@ export default function GroupDetail() {
             {group.name}
           </Typography>
           <Chip
-            label={group.status === "Active" ? "Activo" : group.status}
+            label={translateStatus(group.status)}
             color={group.status === "Active" ? "success" : "default"}
             size="small"
           />
@@ -517,6 +533,7 @@ export default function GroupDetail() {
                             borderRadius: 1,
                             bgcolor: isHighlighted ? "warning.light" : "transparent",
                             transition: "background-color 0.3s",
+                            display: "block",
                           }}
                         >
                           <ListItemText
@@ -525,6 +542,7 @@ export default function GroupDetail() {
                                 <Typography variant="body2" fontWeight={500}>
                                   {deliverable.stageName || `Etapa #${deliverable.stageId}`}
                                 </Typography>
+
                                 <Chip
                                   label={statusMeta.label}
                                   color={statusMeta.color}
@@ -537,14 +555,24 @@ export default function GroupDetail() {
                                     ) : undefined
                                   }
                                 />
+
                                 {overdue && (
-                                  <Chip label="Vencido" color="error" size="small" variant="outlined" />
+                                  <Chip
+                                    label="Vencido"
+                                    color="error"
+                                    size="small"
+                                    variant="outlined"
+                                  />
                                 )}
                               </Box>
                             }
                             secondary={`Fecha esperada: ${deliverable.expectedDate}`}
                             secondaryTypographyProps={{ variant: "caption" }}
                           />
+
+                          <Box sx={{ mt: 2 }}>
+                            <CommentFeed deliverableId={deliverable.id} />
+                          </Box>
                         </ListItem>
                       );
                     })}
@@ -598,7 +626,7 @@ export default function GroupDetail() {
           <Button onClick={() => setStageDialogOpen(false)} disabled={savingStage}>
             Cancelar
           </Button>
-          <Button variant="contained" onClick={handleSaveStage} disabled={savingStage || !selectedStageId || loadingStages}>
+          <Button variant="contained" onClick={handleSaveStage} disabled={savingStage || !selectedStageId || loadingStages || stagesLoadFailed}>
             {savingStage ? "Guardando..." : "Guardar"}
           </Button>
         </DialogActions>
@@ -650,7 +678,7 @@ export default function GroupDetail() {
           <Button onClick={() => setTutorsDialogOpen(false)} disabled={savingTutors}>
             Cancelar
           </Button>
-          <Button variant="contained" onClick={handleSaveTutors} disabled={savingTutors || loadingTutors}>
+          <Button variant="contained" onClick={handleSaveTutors} disabled={savingTutors || loadingTutors || tutorsLoadFailed}>
             {savingTutors ? "Guardando..." : "Guardar"}
           </Button>
         </DialogActions>

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   Box,
   Button,
+  CircularProgress,
   Paper,
   Typography,
 } from '@mui/material'
@@ -11,33 +12,49 @@ import { useParams, useNavigate } from 'react-router-dom'
 
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-
-
-const mockTemplates = {
-  1: {
-    name: 'Business Model Canvas',
-    content:
-      'Propuesta de valor<br/>Segmentos de clientes<br/>Canales',
-  },
-
-  2: {
-    name: 'Informe Final',
-    content:
-      'Introducción<br/>Desarrollo<br/>Conclusiones',
-  },
-}
-
+import ErrorState from '../../components/common/ErrorState'
+import { getMaterialById } from '../../api/endpoints/materials'
 
 function TemplateDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const template = mockTemplates[id]
+  const [template, setTemplate] = useState(null)
+  const [content, setContent] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const [content, setContent] = useState(
-    template?.content || ''
-  )
+  useEffect(() => {
+    let mounted = true
 
+    async function loadTemplate() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const material = await getMaterialById(id)
+        if (!mounted) return
+        if (!material) {
+          setError('Template no encontrado')
+          return
+        }
+        setTemplate(material)
+        setContent(material.content || material.url || material.description || '')
+      } catch (err) {
+        if (!mounted) return
+        setError(err?.message || 'No se pudo cargar el template.')
+      } finally {
+        if (!mounted) return
+        setLoading(false)
+      }
+    }
+
+    loadTemplate()
+
+    return () => {
+      mounted = false
+    }
+  }, [id])
 
   const handleSave = () => {
     console.log('Guardando template:', {
@@ -48,6 +65,24 @@ function TemplateDetail() {
     navigate('/templates')
   }
 
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error) {
+    return <ErrorState title='Error cargando template' message={error} />
+  }
 
   return (
     <Box sx={{ width: '100%' }}>

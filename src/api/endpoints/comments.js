@@ -8,7 +8,7 @@ export async function getDeliverableComments(deliverableId) {
 }
 
 export async function createDeliverableComment(deliverableId, payload) {
-  const { data } = await apiClient.post(
+  const { data } = await apiClient.put(
     `/api/deliverables/${deliverableId}/comments`,
     payload,
   );
