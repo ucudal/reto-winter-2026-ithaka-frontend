@@ -39,7 +39,7 @@ import ViewListIcon from "@mui/icons-material/ViewList";
 import SearchIcon from "@mui/icons-material/Search";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 
-import TutorsCapacityModal from "../../components/TutorsCapacityModal.jsx";
+import TutorsCapacityPanel from "../../components/TutorsCapacityPanel.jsx";
 
 import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
 import { useToast } from "../../ToastContext";
@@ -92,7 +92,7 @@ export default function Tutors() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProperty, setFilterProperty] = useState("name");
   const [view, setView] = useState("list");
-  const [capacityModalOpen, setCapacityModalOpen] = useState(false);
+  const [showCapacity, setShowCapacity] = useState(false);
 
   const [editingTutor, setEditingTutor] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -205,9 +205,9 @@ export default function Tutors() {
             variant="outlined"
             startIcon={<MonitorHeartIcon />}
             sx={{ height: 40 }}
-            onClick={() => setCapacityModalOpen(true)}
+            onClick={() => setShowCapacity((prev) => !prev)}
           >
-            Capacidad
+            {showCapacity ? "Tutores" : "Capacidad"}
           </Button>
 
           <Button
@@ -220,6 +220,9 @@ export default function Tutors() {
         </Box>
       </Box>
 
+      {showCapacity ? (
+        <TutorsCapacityPanel />
+      ) : (
       <Paper sx={{ p: 2, borderRadius: 2 }}>
         <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
           <TextField
@@ -420,38 +423,38 @@ export default function Tutors() {
                         />
                       </TableCell>
                       <TableCell align="right">
-                      <Tooltip title="Ver perfil">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          component={RouterLink}
-                          to={`/tutors/${tutor.id}`}
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                        <Tooltip title="Ver perfil">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            component={RouterLink}
+                            to={`/tutors/${tutor.id}`}
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
 
-                      <Tooltip title="Editar">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          aria-label={`Editar ${tutor.name}`}
-                          onClick={() => handleOpenEdit(tutor)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                        <Tooltip title="Editar">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            aria-label={`Editar ${tutor.name}`}
+                            onClick={() => handleOpenEdit(tutor)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
 
-                      <Tooltip title="Eliminar">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          aria-label={`Eliminar ${tutor.name}`}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+                        <Tooltip title="Eliminar">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            aria-label={`Eliminar ${tutor.name}`}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -552,15 +555,15 @@ export default function Tutors() {
                       />
                       <Box>
                         <Tooltip title="Ver perfil">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          component={RouterLink}
-                          to={`/tutors/${tutor.id}`}
-                        >
-                          Ver
-                        </IconButton>
-                      </Tooltip>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            component={RouterLink}
+                            to={`/tutors/${tutor.id}`}
+                          >
+                            Ver
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Editar">
                           <IconButton
                             size="small"
@@ -589,6 +592,7 @@ export default function Tutors() {
           </Grid>
         )}
       </Paper>
+      )}
 
       <GenericEditModal
         open={Boolean(editingTutor)}
@@ -598,11 +602,6 @@ export default function Tutors() {
         record={editingTutor}
         onSubmit={handleSaveTutor}
         loading={saving}
-      />
-
-      <TutorsCapacityModal
-        open={capacityModalOpen}
-        onClose={() => setCapacityModalOpen(false)}
       />
     </Box>
   );
