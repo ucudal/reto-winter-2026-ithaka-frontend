@@ -118,6 +118,63 @@ Desde la auditoría del 25/07 el backend avanzó mucho: paginación agregada a E
 
 ---
 
+### [FRONTEND] [BUG-13] El resaltado del entregable (al entrar desde la notificación) es casi invisible en modo oscuro
+**Labels:** `mid` `bug`
+
+* **Descripción:** Justo la funcionalidad que armamos para que al hacer click en la alerta de "Entregable vencido" se vea resaltada la fila correspondiente (`GroupDetail.jsx:513`, `bgcolor: isHighlighted ? "warning.light" : "transparent"`) no se ve bien en modo oscuro. `warning.light` en dark mode (default de MUI, no hay override en `palette.js`) es `#ffb74d` (naranja pálido), y el texto de esa fila usa `text.primary`, que en `darkPalette` es `#E7ECF3` (casi blanco) — **texto casi blanco sobre naranja pálido casi blanco**, contraste calculado ≈1.46:1 (WCAG exige ≥4.5:1). En modo claro el mismo combo da ≈8.3:1 y se ve perfecto — el bug es específico de dark mode.
+* **Tareas específicas:**
+   * Cambiar el color de resaltado a algo con contraste garantizado en ambos modos — por ejemplo `alpha(theme.palette.warning.main, 0.24)` en vez de `warning.light` a secas, o definir explícitamente un color de highlight en `palette.js` para light y dark.
+   * Probar visualmente el flujo completo (notificación → `GroupDetail` → fila resaltada) en modo oscuro antes de dar esto por cerrado — es fácil de verificar y es la razón de ser de la funcionalidad.
+
+---
+
+### [FRONTEND] [BUG-14] Colores hardcodeados no respetan el tema oscuro/claro (avatares y chips de estado)
+**Labels:** `mid` `bug`
+
+* **Descripción:** Varios lugares usan colores hex fijos en vez de tokens de tema, lo que rompe en modo oscuro específicamente:
+   * `GroupCard.jsx:124-135` y `GroupDetail.jsx:284-292` — el avatar con la inicial del grupo usa `bgcolor: "grey.300"` (no cambia entre modos) combinado con `color: "text.secondary"` (sí cambia). En dark mode, `text.secondary` es un gris claro pensado para fondos oscuros — sobre `grey.300` (siempre claro) da **texto claro sobre fondo claro**, contraste ≈1.85:1.
+   * `GroupCard.jsx:152-158` y `:190-197` — los avatares superpuestos de "Integrantes"/"Tutores" tienen `border: "2px solid #fff"` hardcodeado. En dark mode (fondo de card `#131B2C`) queda un anillo blanco llamativo alrededor de cada avatar que no combina con nada.
+   * `GroupCard.jsx:44-90` — los chips de estado ("Sin tutores asignados", "Falta tutor...") usan `bgcolor: "#ed6c02", color: "#fff"` hardcodeado — aparte de no ser theme-aware, el contraste blanco-sobre-`#ed6c02` da ≈3.1:1, por debajo del mínimo AA (4.5:1) en cualquier modo.
+* **Tareas específicas:**
+   * Reemplazar `grey.300` por un token que sí cambie de modo (o fijar explícitamente qué combinación de fondo/texto usar en el avatar, sin mezclar uno fijo con uno theme-aware).
+   * Cambiar el borde hardcodeado `#fff` de los `AvatarGroup` por `(theme) => theme.palette.background.paper`.
+   * Cambiar los chips de estado de `GroupCard.jsx` para usar `theme.palette.warning.main`/`grey` reales en vez de hex fijos, y verificar que el contraste quede sobre 4.5:1.
+
+---
+
+### [FRONTEND] [BUG-15] Chips con texto largo se cortan a mitad de palabra (sin "…") dentro de Cards
+**Labels:** `easy` `bug`
+
+* **Descripción:** MUI aplica `overflow: hidden` por defecto a `Card`. Varios `Chip` con texto dinámico dentro de una Card no tienen `maxWidth`/`textOverflow: "ellipsis"` para achicarse prolijamente — si el contenido es largo, se recorta abruptamente a mitad de palabra en vez de mostrar "…":
+   * `Dashboard.jsx` — el `chipLabel` de `SectionHeader` (usado en "Más en: {etapa}" y "{N} cohortes activas") solo tiene `flexShrink: 0`, sin `maxWidth`.
+   * `GroupCard.jsx:230-237` — el chip de etapa actual (`group.currentStage?.name`).
+   * `GroupDetail.jsx:418-424` — el chip de "Etapa del proyecto".
+* **Tareas específicas:**
+   * Agregar `maxWidth` + `sx={{ "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" } }}` (o envolver el label en un `Typography noWrap`) a los tres chips mencionados.
+
+---
+
+### [FRONTEND] [BUG-16] El Dashboard ya construido muestra datos globales de Coordinador a Estudiantes y Tutores (#181)
+**Labels:** `hard` `bug`
+
+* **Descripción:** Cuando `Dashboard.jsx` era un stub vacío, esto era solo una preocupación a futuro — ahora que está construido de verdad, es un bug real y actual. La ruta `/dashboard` (`AppRouter.jsx:52-64`) sigue habilitada para los 4 roles (`Coordinator`, `BusinessTutor`, `TechnicalTutor`, `Student`), pero el contenido que muestra es **explícitamente de gestión/Coordinador**: capacidad y sobrecarga de *todos* los tutores, grupos por cohorte/etapa del sistema entero, entregables pendientes globales. La propuesta original es clara en que "controlar capacidad disponible" y "detectar sobrecarga de tutores" son necesidades del Coordinador, no de un tutor individual ni de un estudiante — hoy cualquier tutor o estudiante que entre a `/dashboard` ve cuánta capacidad tienen *otros* tutores, cuántos grupos hay en cada etapa del sistema completo, etc. No es solo un tema de alcance: es mostrarle a alguien información de gestión que no le corresponde ver.
+* **Tareas específicas:**
+   * Decidir entre dos caminos: (a) restringir `/dashboard` a `Coordinator` únicamente, redirigiendo a Student/Tutor a `/workspace` o `/groups` al loguearse (hay que ajustar el `navigate("/dashboard")` fijo que hoy hace `Login.jsx` tras un login exitoso, para todos los roles); o (b) construir una versión reducida del Dashboard por rol (un tutor ve solo el resumen de sus propios grupos, un estudiante ve el estado de su propio proyecto).
+   * Si se elige (a): actualizar `Login.jsx` para redirigir según `role` en vez de siempre a `/dashboard`, y sacar "Resumen" del sidebar para los roles que ya no lo vean.
+
+---
+
+### [FRONTEND] [BUG-17] `Groups.jsx` sigue mostrando todos los grupos a un tutor, no solo los suyos (#182)
+**Labels:** `hard` `bug`
+
+* **Descripción:** `getGroups()` (`src/api/endpoints/groups.js:22-27`) se llama sin ningún filtro, y el backend (`GET /api/groups`) no escopea por usuario — así que un `BusinessTutor`/`TechnicalTutor` ve **todos los grupos del sistema** en `Groups.jsx`, no solo aquellos donde es tutor asignado. La propuesta pide explícitamente "ver grupos **asignados**", no todos. Lo interesante es que el backend **ya tiene el mecanismo para esto** — `CohortService._filter_groups_for_user` (usado en `GET /api/cohorts/{id}/grupos`) ya filtra por rol: Coordinator ve todo, un tutor solo ve grupos donde es tutor, un estudiante solo el propio — pero ese filtro existe solo para ese endpoint puntual, no para el listado general `/api/groups` que usa esta pantalla.
+* **Tareas específicas:**
+   * Pedirle a backend que aplique el mismo criterio de `_filter_groups_for_user` a `GET /api/groups` (reusando la lógica que ya existe, no inventando una nueva), o exponer un parámetro/endpoint equivalente para listados generales.
+   * Del lado frontend, una vez que el backend filtre: confirmar que `Groups.jsx` no necesite ningún cambio (si el filtro es transparente vía el token del usuario logueado, la pantalla ya debería mostrar lo correcto sin tocar código).
+   * Mismo problema aplica a `Meetings.jsx` (hoy mock): el filtro actual (`Meetings.jsx`) solo distingue `Student` — Coordinator y ambos roles de Tutor ven/pueden editar reuniones de *todos* los grupos, no solo los propios. Dejarlo anotado para cuando exista el backend real de reuniones.
+
+---
+
 ### [FRONTEND] Endurecer dos detalles menores de `client.js` y `AuthContext.jsx` (#179)
 **Labels:** `easy` `chore`
 
