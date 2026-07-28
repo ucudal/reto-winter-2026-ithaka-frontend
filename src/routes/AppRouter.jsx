@@ -5,7 +5,6 @@ import ProtectedRoute from "./ProtectedRoute.jsx";
 import RouteErrorBoundary from "./RouteErrorBoundary.jsx";
 
 import Login from "../pages/Auth/Login.jsx";
-import Register from "../pages/Auth/Register.jsx";
 import Dashboard from "../pages/sections/Dashboard.jsx";
 import StudentWorkspace from "../pages/sections/StudentsWorkspace.jsx";
 import Students from "../pages/sections/Students.jsx";
@@ -34,10 +33,6 @@ const appRouter = createBrowserRouter([
       {
         path: "/login",
         element: <Login />,
-      },
-      {
-        path: "/register",
-        element: <Register />,
       },
       {
         element: <ProtectedRoute />,
