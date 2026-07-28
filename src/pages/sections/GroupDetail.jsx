@@ -107,13 +107,6 @@ export default function GroupDetail() {
   const [tutorsLoadFailed, setTutorsLoadFailed] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      loadGroup(Number(id));
-      loadDeliverables(Number(id));
-    }
-  }, [id]);
-
-  useEffect(() => {
     let ignore = false;
     const fetchData = async () => {
       try {
