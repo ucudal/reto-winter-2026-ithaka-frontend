@@ -50,6 +50,38 @@ describe('normalizeError', () => {
     expect(result.message).toBe('El campo email es invalido')
   })
 
+it('joins the "msg" fields when "detail" is a FastAPI validation array', () => {
+    const fastApiValidationError = {
+      response: {
+        status: 422,
+        data: {
+          detail: [
+            {
+              type: 'missing',
+              loc: ['body', 'email'],
+              msg: 'Field required',
+              input: {},
+            },
+            {
+              type: 'string_too_short',
+              loc: ['body', 'password'],
+              msg: 'String should have at least 8 characters',
+              input: '123',
+            },
+          ],
+        },
+      },
+    }
+
+    const result = normalizeError(fastApiValidationError)
+
+    expect(result).toBeInstanceOf(ApiError)
+    expect(result.status).toBe(422)
+    expect(result.message).toBe(
+      'Field required; String should have at least 8 characters',
+    )
+  })
+
   it('falls back to a default message by status when there is no detail', () => {
     const error = {
       response: { status: 404, data: {} },

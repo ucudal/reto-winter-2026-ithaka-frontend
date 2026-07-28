@@ -36,9 +36,17 @@ import ErrorState from "../../components/common/ErrorState";
 import GenericCreateModal from "../../components/common/GenericCreateModal";
 import {getGroups,saveGroup,deleteGroup,} from "../../api/endpoints/groups";
 import { getCohorts } from "../../api/endpoints/cohorts";
+
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ConfirmModal from "../../components/ConfirmModal";
+
+import { getStudents } from "../../api/endpoints/students";
+
+const CREATE_GROUP_INITIAL_VALUES = {
+  student_ids: [],
+};
+
 
 function Groups() {
   const [view, setView] = useState("gallery");
@@ -47,6 +55,7 @@ function Groups() {
 
   const [groups, setGroups] = useState([]);
   const [cohorts, setCohorts] = useState([]);
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -64,13 +73,15 @@ function Groups() {
       setLoading(true);
       setError("");
 
-      const [groupsData, cohortsData] = await Promise.all([
+      const [groupsData, cohortsData, studentsData] = await Promise.all([
         getGroups(),
         getCohorts(),
+        getStudents(),
       ]);
 
       setGroups(groupsData);
       setCohorts(Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []));
+      setStudents(Array.isArray(studentsData) ? studentsData : (studentsData?.items ?? []));
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los grupos.");
     } finally {
@@ -152,6 +163,19 @@ function Groups() {
       })),
     },
     { name: "idea", label: "Idea de proyecto", type: "textarea" },
+    {
+      name: "student_ids",
+      label: "Alumnos",
+      type: "select",
+      multiple: true,
+      required: true,
+      options: students
+        .filter((student) => student.group_id == null)
+        .map((student) => ({
+          value: student.id,
+          label: student.name,
+        })),
+    },
   ];
 
   const filteredGroups = useMemo(() => {
@@ -429,6 +453,7 @@ function Groups() {
         onClose={() => setCreateModalOpen(false)}
         title="Agregar grupo"
         fields={createFields}
+        initialValues={CREATE_GROUP_INITIAL_VALUES}
         onSubmit={handleCreateGroup}
         loading={creating}
       />

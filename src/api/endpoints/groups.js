@@ -26,8 +26,18 @@ export async function getGroups(filters = {}) {
   return items.map(mapGroup);
 }
 
+
 export async function saveGroup(payload) {
-  const response = await apiClient.put("/api/groups", payload);
+
+  if (!Array.isArray(payload.student_ids) || payload.student_ids.length === 0) {
+    throw new Error("Selecciona al menos un alumno para crear el grupo.");
+  }
+
+  const response = await apiClient.put("/api/groups", {
+    id: null,
+    ...payload,
+  });
+
   clearCache();
   return mapGroup(response.data);
 }
