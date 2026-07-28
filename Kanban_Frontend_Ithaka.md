@@ -2,6 +2,134 @@
 
 ---
 
+## 🔄 Auditoría 2026-07-28 — Nuevas tareas (solo frontend)
+
+Desde la auditoría del 25/07 el backend avanzó mucho: paginación agregada a Estudiantes/Cohortes/Grupos/Entregables/Tutores/Usuarios, autenticación real en Cohortes (con scoping por rol en `/cohortes/{id}/grupos`), y dos módulos nuevos que antes no existían: **Comentarios** (`/api/deliverables/{id}/comments`) y **Documentos** (`/api/groups/{id}/documents`, `/api/deliverables/{id}/documents`). Del lado frontend, en paralelo ya se resolvieron solos: `[FEAT-4]` (Materiales ya conectado a `/api/materials`, ya no es mock), `[FEAT-7]` (Registro ahora es un "Coming Soon" sin llamada falsa, alineado con que el backend no tiene endpoint de auto-registro) y `[BUG-5]` (`CohortLifecycleConfiguration.jsx` ya usa `apiClient`, no `fetch` crudo) — no se repiten acá. También corregí `[BUG-4]` más abajo: el proyecto usa **PUT como convención de borrado** (no todo pasa por `DELETE`), así que "eliminar tutor" resulta que sí es accionable hoy (vía `status: "Inactive"`) — solo "eliminar etapa" sigue realmente bloqueado, porque `Stage` no tiene ningún campo de estado. Lo demás de abajo es lo que quedó pendiente o apareció nuevo, verificado contra el código real de ambos repos hoy.
+
+### [FRONTEND] [BUG-6] Paginación fantasma: Grupos, Alumnos, Usuarios y Tutores solo muestran los primeros 10 registros, siempre (#169)
+**Labels:** `hard` `bug`
+
+* **Descripción:** El backend ya soporta paginación real (`page`/`page_size`) en `/api/groups`, `/api/students`, `/api/users`, `/api/tutors` — pero **ninguna pantalla se lo pide**. `getGroups()`/`getStudents()`/etc. se llaman sin parámetros, así que siempre reciben la página 1 de 10 del backend (su default), y el `TablePagination` que ya está en cada tabla solo re-slicea ese mismo lote de 10 que nunca cambia. Resultado: **si hay más de 10 grupos, alumnos, usuarios o tutores activos, el resto es invisible en la app** — no es un problema de UI, es un problema de datos faltantes. `Cohorts.jsx` está a mitad de camino: sí manda `page`/`page_size` al backend, pero hardcodeado (`page: 1, page_size: 20`) y totalmente desconectado del estado real del control de paginación — clickear "página siguiente" no vuelve a pedir nada, solo re-slicea los mismos 20 de siempre.
+* **⚠️ Limitación de backend a tener en cuenta:** ninguno de estos endpoints devuelve el total de registros (ni en el body como `{items, total_items}`, ni en headers) — solo un array plano. Sin eso, no se puede armar un paginador que sepa cuántas páginas hay en total.
+* **Detalle confirmado en `Cohorts.jsx` (líneas 96-102, 353, 396-411, 463):** el `TablePagination` usa `count={cohorts.length}` — como mucho 20 (el `page_size` hardcodeado) — así que le **miente** al usuario diciendo que hay 20 cuando podría haber más, y `onPageChange` solo hace `setPage(newPage)` sin volver a pedirle nada al backend. Si hay más de 20 cohortes que matchean el filtro, es imposible verlas.
+* **Tareas específicas:**
+   * En `Groups.jsx`, `Students.jsx`, `Users.jsx`, `Tutors.jsx`: conectar el estado `page`/`rowsPerPage` del `TablePagination` a la llamada real (`getGroups({ page, page_size: rowsPerPage })`, etc.), sacando el `.slice()` client-side que hoy simula la paginación sobre datos incompletos.
+   * En `Cohorts.jsx`: reemplazar los valores hardcodeados `page: 1, page_size: 20` por el estado real del componente, y que `count` refleje algo honesto (ver el punto siguiente sobre el total).
+   * Mientras el backend no devuelva un total: pedir `page_size + 1` registros para saber si existe una página siguiente (mostrar "Página X" sin total exacto), o negociar con backend que agregue el conteo — documentarlo como bloqueante conocido, no inventar un total falso en el frontend.
+
+---
+
+### [FRONTEND] [BUG-7] `CommentFeed.jsx`: verbo HTTP equivocado y el componente no está montado en ninguna pantalla (#170)
+**Labels:** `mid` `bug`
+
+* **Descripción:** El módulo de comentarios ya existe de verdad en el backend (`GET/PUT /api/deliverables/{id}/comments`, `DELETE /api/comments/{id}`), pero `createDeliverableComment` en `src/api/endpoints/comments.js` todavía llama `POST` a esa ruta — el backend solo define `PUT` ahí, así que hoy tiraría `405 Method Not Allowed` si se llegara a usar. Y de hecho **nunca se usa**: `<CommentFeed />` no está importado en ninguna pantalla (ni `GroupDetail.jsx`, ni ningún otro lado) — es un componente completo y bien hecho que quedó sin montar.
+* **⚠️ Antes de conectar esto, avisarle a backend — encontramos 3 bugs reales en `comment_service.py` que van a afectar a quien use esta pantalla:**
+   1. **Ni `create` ni `update` validan que `tutor_id`/`deliverable_id` existan** antes de guardar — un ID inválido dispara un `IntegrityError` de Postgres sin manejar (el usuario va a ver un 500 genérico en vez de un mensaje claro).
+   2. **El `PUT` de actualizar comentario no verifica dueño ni pertenencia** — no chequea que `comment.tutor_id` sea el mismo que hizo el comentario originalmente, ni que `comment.deliverable_id` coincida con la ruta. Cualquier tutor que sepa el `id` de un comentario ajeno puede editarlo/apropiárselo mandando su propio `tutor_id` en el body. Es un bug de autorización real, no solo de UX.
+   3. `GET` de comentarios sobre un `deliverable_id` inexistente devuelve `200 []` en vez de `404` (inconsistente con Documentos, que sí valida) — no rompe nada pero puede confundir "sin comentarios" con "entregable inexistente".
+* **Tareas específicas:**
+   * Cambiar `createDeliverableComment` para usar `apiClient.put(...)` en vez de `.post(...)`.
+   * Montar `<CommentFeed deliverableId={...} />` dentro de la tarjeta de Entregables de `GroupDetail.jsx` (por ejemplo, al expandir un entregable), aprovechando que esa sección ya lista los entregables reales del grupo.
+   * Coordinar con backend los 3 puntos de arriba antes (o al mismo tiempo) de exponer esto a usuarios reales — el punto 2 en particular no debería salir a producción sin arreglarse.
+
+---
+
+### [FRONTEND] [FEAT-9] Conectar el módulo de Documentos (ya real en backend) y resolver de una vez el placeholder de `group.links` (#171)
+**Labels:** `mid` `feature`
+
+* **Descripción:** Esto resuelve directamente lo que quedó pendiente en `[FEAT-8]`. El backend ahora expone `GET/PUT /api/groups/{id}/documents` y `GET/PUT /api/deliverables/{id}/documents` (subir/listar links a Drive o SharePoint, con `url`, `platform`, `order`) y `DELETE /api/documents/{id}` — pero **el frontend no tiene ni un solo archivo que lo llame**. Hoy `StudentsWorkspace.jsx` sigue mostrando `group.links` (un campo que nunca existió en `Group`), cuando la forma correcta de resolverlo ya está disponible del lado de backend.
+* **Tareas específicas:**
+   * Crear `src/api/endpoints/documents.js` con `getGroupDocuments(groupId)`, `upsertGroupDocument(groupId, payload)`, `getDeliverableDocuments(deliverableId)`, `upsertDeliverableDocument(deliverableId, payload)`, `deleteDocument(id)`.
+   * En `GroupDetail.jsx`: agregar una sección "Documentos" (o integrarla a la tarjeta de datos rápidos) para listar y agregar links (Drive/repo/informe), con `platform` limitado a `Drive`/`SharePoint` (son los únicos valores que acepta el backend hoy).
+   * Reemplazar el uso de `group.links` en `StudentsWorkspace.jsx` por `getGroupDocuments(group.id)`, sacando el placeholder que hoy siempre muestra vacío.
+
+---
+
+### [FRONTEND] [FEAT-10] Decidir el destino de `Templates.jsx` (sigue 100% mock, con un endpoint huérfano roto) (#172)
+**Labels:** `easy` `feature`
+
+* **Descripción:** `Knowledge.jsx` ya se conectó a `/api/materials` (dejó de ser mock), pero `Templates.jsx` sigue usando `mockTemplates` sin tocar. Además, existe `src/api/endpoints/templates.js` con una función `getTemplates()` que llama a `/deliverables/${id}/documents` — **sin el prefijo `/api`** (path roto, no coincide con ninguna ruta real) — y que además no la usa nadie, ni siquiera `Templates.jsx`.
+* **Tareas específicas:**
+   * Decidir si "Templates" es en realidad el mismo concepto que "Materiales" (¿se fusiona con `Knowledge.jsx`/`materials.js`?) o si necesita su propio backend — no hay ningún endpoint de templates real hoy, solo materiales.
+   * Si se decide que es lo mismo: eliminar `mockTemplates` y conectar `Templates.jsx` a `materials.js`, siguiendo el mismo patrón que ya probó `Knowledge.jsx`.
+   * Si se mantiene separado: como mínimo arreglar el path roto de `templates.js` (le falta `/api`) antes de conectarlo a algo.
+
+---
+
+### [FRONTEND] Verificar que las pantallas de Cohortes sigan andando ahora que `/api/cohorts` exige sesión iniciada (#173)
+**Labels:** `easy` `chore`
+
+* **Descripción:** `/api/cohorts` (listado, detalle, grupos por cohorte, etapas por cohorte) ahora requiere `Depends(get_current_user)` — cualquier usuario logueado puede consultar, pero ya no es anónimo. Como `apiClient` ya inyecta el header `Authorization: Bearer` en todas las llamadas, esto debería funcionar transparente — pero vale la pena confirmarlo explícitamente, en particular en `CohortLifecycleConfiguration.jsx` (recién migrada a `apiClient` en `[BUG-5]`) y en el flujo completo de `Cohorts.jsx`/`CohortDetail.jsx` con una sesión real.
+* **Dato interesante para el equipo:** `GET /api/cohorts/{id}/groups` ahora filtra el resultado por rol **del lado del backend** (Coordinator ve todos los grupos, un tutor solo ve los grupos donde es tutor, un estudiante solo ve su propio grupo) — es exactamente el filtro por tutor que habíamos identificado como falta en `Groups.jsx` hace un tiempo, pero implementado solo para este endpoint puntual, no para el listado general `/api/groups`. Vale la pena confirmar si `CohortDetail.jsx` ya se beneficia de este filtro gratis, y si tiene sentido que `Groups.jsx` eventualmente use esta misma fuente en vez del listado sin filtrar.
+* **Tareas específicas:**
+   * Probar el flujo de Cohortes de punta a punta con las 4 sesiones de rol distintas, confirmando que no aparezca ningún 401 inesperado.
+   * Documentar (o confirmar) qué ve cada rol en `CohortDetail.jsx` hoy, dado el nuevo filtro server-side.
+
+---
+
+### [FRONTEND] [BUG-9] En `GroupDetail.jsx`, cambiar el estado de cualquier entregable vuelve a scrollear al entregable resaltado (#174)
+**Labels:** `easy` `bug`
+
+* **Descripción:** El `useEffect` que hace scroll automático al entregable resaltado (`src/pages/sections/GroupDetail.jsx:112-116`) tiene `deliverables` en su array de dependencias. Como `deliverables` es un array nuevo cada vez que se llama `setDeliverables` (por ejemplo dentro de `handleChangeDeliverableStatus`), **cualquier cambio de estado de cualquier entregable del grupo vuelve a disparar el scroll** hacia el entregable resaltado — aunque el usuario ya haya scrolleado a otro lado a propósito. Además `highlightDeliverableId` nunca se limpia, así que esto se repite en cada actualización mientras no se navegue fuera de la página.
+* **Tareas específicas:**
+   * Sacar `deliverables` del array de dependencias del `useEffect` de scroll (solo debería depender de `highlightDeliverableId`, ejecutándose una vez al entrar con ese estado seteado).
+   * Considerar limpiar `highlightDeliverableId` del estado de navegación después del primer scroll, para que no vuelva a intentar scrollear en renders futuros.
+
+---
+
+### [FRONTEND] [BUG-10] Condiciones de carrera al cambiar de filtro/grupo rápido (sin cancelar requests viejos) (#175)
+**Labels:** `mid` `bug`
+
+* **Descripción:** Dos lugares distintos tienen el mismo problema: no hay forma de ignorar la respuesta de un fetch viejo si uno más nuevo ya se disparó.
+   * **`GroupDetail.jsx:105-110`**: si el usuario navega de `/groups/5` a `/groups/7` rápido (React Router no remonta el componente), y la respuesta de `getGroupById(5)` tarda más que la de `getGroupById(7)`, la respuesta vieja puede pisar el estado — mostrando datos del grupo 5 mientras la URL ya dice `/groups/7`.
+   * **`Cohorts.jsx:91-103`**: al tipear en el filtro de año (ej. "2026"), cada carácter dispara un fetch nuevo. Si una respuesta vieja (filtro "202") resuelve después que una más nueva (filtro "2026"), `setCohorts` sobrescribe la tabla con resultados de un filtro que ya no está aplicado — sin ningún indicio de error para el usuario.
+* **Tareas específicas:**
+   * En ambos casos: agregar un flag tipo `let ignore = false` (con cleanup `return () => { ignore = true }` en el `useEffect`) o un `requestId` incremental, y solo aplicar `setState` si la respuesta corresponde al último request disparado.
+   * Alternativa más robusta: usar `AbortController` y cancelar el fetch anterior al disparar uno nuevo.
+
+---
+
+### [FRONTEND] [BUG-11] Diálogos de "Cambiar etapa"/"Asignar tutores" fallan en silencio si no cargan las opciones (#176)
+**Labels:** `easy` `bug`
+
+* **Descripción:** En `GroupDetail.jsx`, si `getCohortStages` o `getTutors` fallan al abrir el diálogo correspondiente, solo se hace `console.error` (líneas ~177-222) — no hay `showToast` ni mensaje visible. El diálogo queda abierto con la lista de opciones vacía, pero `selectedStageId` ya viene seteado a la etapa actual del grupo, así que el `<TextField select>` recibe un `value` sin ningún `MenuItem` que lo represente (warning de MUI, combo se ve raro/vacío) — y el botón "Guardar" queda habilitado igual, porque la validación solo chequea que haya *algún* valor seleccionado, no que la lista haya cargado bien.
+* **Tareas específicas:**
+   * Agregar manejo de error visible (`showToast`) cuando falla la carga de etapas o tutores dentro de los diálogos.
+   * Deshabilitar el botón "Guardar" si la carga de opciones falló, no solo si no hay nada seleccionado.
+
+---
+
+### [FRONTEND] [FEAT-11] Los entregables nunca muestran el nombre real de la etapa (siempre cae al fallback "Etapa #N") (#177)
+**Labels:** `easy` `feature`
+
+* **Descripción:** `GroupDetail.jsx` y `StudentsWorkspace.jsx` ya están preparados para mostrar `deliverable.stageName`, con fallback a `"Etapa #{stageId}"` cuando no viene — pero el `DeliverableRead` real del backend (`app/core/schemas/deliverable.py`) **no tiene ningún campo `stage_name`**, solo `stage_id`. Es decir, hoy el fallback se activa siempre, en el 100% de los casos — nunca se ve el nombre real de la etapa, a pesar de que el frontend ya tiene el código listo para mostrarlo.
+* **Tareas específicas:**
+   * Pedirle a backend que agregue `stage_name` a `DeliverableRead` (mismo patrón que ya se usó una vez para esto — hacer `join` con `Stage` y exponer `stage.name`).
+   * Una vez que el campo exista, no hace falta tocar nada más del lado frontend — el fallback ya está armado para desaparecer solo apenas el dato llegue.
+
+---
+
+### [FRONTEND] [BUG-12] Dos estados de entregable distintos (`Submitted` y `Delivered`) se muestran con la misma etiqueta (#178)
+**Labels:** `easy` `bug`
+
+* **Descripción:** El mapa `DELIVERABLE_STATUS` (`GroupDetail.jsx` y `CohortDetail.jsx`) le pone la misma etiqueta "Entregado" tanto a `Submitted` como a `Delivered` — son dos estados reales y distintos en el backend, pero en la UI son indistinguibles. No es un crash, pero es pérdida de información real: no hay forma de saber desde la pantalla si un entregable fue solo "enviado" o ya "confirmado como recibido".
+* **Tareas específicas:**
+   * Darle a `Submitted` su propia etiqueta (ej. "Enviado") distinta de `Delivered` ("Entregado"), en los dos archivos que tienen este mapa.
+
+---
+
+### [FRONTEND] Endurecer dos detalles menores de `client.js` y `AuthContext.jsx` (#179)
+**Labels:** `easy` `chore`
+
+* **Descripción:** Dos cositas chicas, ninguna rompe nada hoy, pero conviene dejarlas bien:
+   * `cachedGet` arma la cache key con `JSON.stringify(config.params)` sin ordenar las claves primero (`src/api/client.js`) — hoy no se manifiesta porque los objetos de filtros se arman siempre igual en el código, pero si en algún momento se arman dinámicamente (spread condicional, etc.), dos llamadas con los mismos filtros podrían generar cache keys distintas y perder el cacheo sin que nadie lo note.
+   * `logout()` en `AuthContext.jsx` hace `localStorage.clear()` completo — borra token y cache (lo esperado) pero también cualquier otra preferencia guardada ahí (por ejemplo el tema oscuro/claro), no solo lo de la sesión.
+* **Tareas específicas:**
+   * Ordenar las claves del objeto de `params` antes de `JSON.stringify` en `cachedGet` (por ejemplo con `Object.keys(params).sort()`).
+   * En `logout()`, borrar puntualmente el token y limpiar la cache (`clearCache()`) en vez de `localStorage.clear()` a ciegas.
+
+---
+
 ## 🔄 Auditoría 2026-07-25 — Nuevas tareas (solo frontend)
 
 Se verificó el estado real del backend corriendo el router de FastAPI directamente (no contra `api-spec-en.md`, que documenta endpoints "tentativos" no todos implementados) y se comparó contra el código actual del frontend. La mayoría de las tarjetas originales del backlog (`SETUP-1`, `SETUP-2`, `UI-1` a `UI-9`, `AUTH-1/2/3`, `BLOCK-1`, `MOCK-1`, `MOCK-6`, entorno de testing) ya están resueltas en el código actual y no se repiten acá. Las tarjetas de abajo son gaps reales detectados hoy, **accionables 100% desde frontend** (no requieren tocar el repo de backend) — donde algo sí depende de un endpoint que backend todavía no expone, la tarea es mockear/aislar siguiendo el mismo criterio que ya usó el equipo en `DASH-1`/`MOCK-6`, no bloquearse.
@@ -42,11 +170,14 @@ Se verificó el estado real del backend corriendo el router de FastAPI directame
 ### [FRONTEND] [BUG-4] No simular acciones que el backend no soporta (Eliminar tutor, Eliminar etapa)
 **Labels:** `mid` `bug`
 
-* **Descripción:** Dos controles de la UI le mienten al usuario sobre lo que realmente pasó en el servidor. El botón "Eliminar" de `Tutors.jsx` (línea ~417-423) no tiene `onClick`: es un botón muerto, sin feedback de que no hace nada. Peor aún, `deleteStage` en `CohortLifecycleConfiguration.jsx:166-188` envía un `PUT /api/stages` con body vacío `{}` (que la API va a rechazar por campos faltantes, o en el peor caso, corromper datos si algún día se relajan las validaciones) y luego **igual borra la etapa del estado local**, mostrando éxito aunque el backend no haya eliminado nada. Como no existe `DELETE /api/tutors/{id}` ni `DELETE /api/stages/{id}` en el backend actual, la única opción resolvible desde frontend hoy es dejar de fingir que la acción funciona.
+* **Descripción:** Dos controles de la UI le mienten al usuario sobre lo que realmente pasó en el servidor. El botón "Eliminar" de `Tutors.jsx` (línea ~417-423) no tiene `onClick`: es un botón muerto, sin feedback de que no hace nada. Peor aún, `deleteStage` en `CohortLifecycleConfiguration.jsx:166-188` envía un `PUT /api/stages` con body vacío `{}` (que la API va a rechazar por campos faltantes, o en el peor caso, corromper datos si algún día se relajan las validaciones) y luego **igual borra la etapa del estado local**, mostrando éxito aunque el backend no haya eliminado nada.
+* **🔄 Corrección (2026-07-28):** el proyecto usa **PUT como convención de borrado** (no `DELETE` para todo), así que "no existe `DELETE /api/tutors/{id}`" no significa que esté bloqueado — depende de si la entidad tiene un campo de estado para soft-delete. Revisando los modelos:
+   * **`Tutor` sí tiene `status` (`"Active"`/`"Inactive"`)**, ya actualizable hoy mismo con el `PUT /api/tutors` que existe — "eliminar" un tutor es simplemente hacer `upsertTutor({ id, ...tutor, status: "Inactive" })`. **No está bloqueado por backend, es accionable ya.**
+   * **`Stage` no tiene ningún campo de estado** (`app/core/models/stage.py`: solo `id, cohort_id, name, order, key_dates`) — para esta entidad sí sigue sin haber forma real de "borrar" vía PUT, porque no hay ningún campo que represente "inactivo/borrado". Acá sí falta algo del lado de backend (agregar un campo, o confirmar si Ithaka realmente necesita borrar etapas o alcanza con reordenarlas).
 * **Tareas específicas:**
-   * En `Tutors.jsx`: deshabilitar el botón "Eliminar" (ambas vistas, tabla y galería) con un `Tooltip` tipo "Baja de tutores no disponible todavía" en vez de dejarlo clickeable sin efecto.
-   * En `CohortLifecycleConfiguration.jsx`: quitar la llamada `fetch` con body vacío de `deleteStage`; reemplazar por el mismo patrón de deshabilitar + tooltip, sin tocar el estado local `stages` (para no mostrar una eliminación que no ocurrió).
-   * Dejar un comentario corto (o ticket) apuntando a que ambos quedan pendientes de un endpoint `DELETE` real del lado de backend.
+   * En `Tutors.jsx`: conectar el botón "Eliminar" (tabla y galería) para que haga `upsertTutor` con `status: "Inactive"` en vez de dejarlo sin `onClick`. Confirmar con el equipo si "Inactivo" debería ocultar al tutor de los selectores de asignación en `GroupDetail.jsx`.
+   * En `CohortLifecycleConfiguration.jsx`: como `Stage` no tiene campo de estado, acá sí corresponde deshabilitar el botón con un `Tooltip` ("Baja de etapas no disponible todavía") en vez de simular un borrado con `upsertStage({})` — no tocar el estado local `stages` para no mostrar una eliminación que no ocurrió.
+   * Preguntarle a backend si tiene sentido agregar un campo de estado a `Stage` (siguiendo la misma convención que `Tutor`/`Group`), o si borrar etapas no es un caso de uso real para Ithaka.
 
 ---
 

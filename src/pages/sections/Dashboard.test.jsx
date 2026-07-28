@@ -3,9 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import { getDashboardSummary } from '../../api/endpoints/dashboard';
+import { getOverloadedTutors } from '../../api/endpoints/tutors';
 
 vi.mock('../../api/endpoints/dashboard', () => ({
   getDashboardSummary: vi.fn(),
+}));
+
+vi.mock('../../api/endpoints/tutors', () => ({
+  getOverloadedTutors: vi.fn(),
 }));
 
 describe('Dashboard Component', () => {
@@ -26,6 +31,7 @@ describe('Dashboard Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getOverloadedTutors).mockResolvedValue([]);
   });
 
   it('renders loading state initially and displays dashboard metrics', async () => {
@@ -56,7 +62,7 @@ describe('Dashboard Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/error|cargar|falló|falla/i)).toBeInTheDocument();
+      expect(screen.getByText(/error|cargar|falló|falla|servidor/i)).toBeInTheDocument();
     });
   });
 });

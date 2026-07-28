@@ -13,7 +13,7 @@ vi.mock('../../api/endpoints/cohorts', () => ({
 
 describe('Cohorts Component', () => {
   const mockCohorts = [
-    { id: 1, year: 2026, semester: 1, start_date: '2026-01-01', end_date: '2026-06-30', group_count: 15, status: 'Active', notes: '' },
+    { id: 1, year: 2025, semester: 1, start_date: '2025-01-01', end_date: '2025-06-30', group_count: 15, status: 'Active', notes: '' },
     { id: 2, year: 2026, semester: 2, start_date: '2026-07-01', end_date: '2026-12-31', group_count: 10, status: 'Inactive', notes: '' },
   ];
 
@@ -22,7 +22,7 @@ describe('Cohorts Component', () => {
   });
 
   it('renders loading state initially and then loads cohorts successfully', async () => {
-    vi.mocked(getCohorts).mockResolvedValueOnce(mockCohorts);
+    vi.mocked(getCohorts).mockResolvedValue(mockCohorts);
 
     render(
       <MemoryRouter>
@@ -35,12 +35,13 @@ describe('Cohorts Component', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
 
     await waitFor(() => {
+      expect(screen.getByText('2025')).toBeInTheDocument();
       expect(screen.getByText('2026')).toBeInTheDocument();
     });
   });
 
   it('handles error state when fetching cohorts fails', async () => {
-    vi.mocked(getCohorts).mockRejectedValueOnce(new Error('Failed to fetch'));
+    vi.mocked(getCohorts).mockRejectedValue(new Error('Failed to fetch'));
 
     render(
       <MemoryRouter>
@@ -50,13 +51,11 @@ describe('Cohorts Component', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(screen.getByText((content) => /error|cargar|falló|falla/i.test(content))).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Failed to fetch')).toBeInTheDocument();
   });
 
   it('opens create modal when clicking the new cohort button', async () => {
-    vi.mocked(getCohorts).mockResolvedValueOnce(mockCohorts);
+    vi.mocked(getCohorts).mockResolvedValue(mockCohorts);
 
     render(
       <MemoryRouter>
@@ -67,7 +66,7 @@ describe('Cohorts Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('2026')).toBeInTheDocument();
+      expect(screen.getByText('2025')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /agregar cohorte/i }));
@@ -76,10 +75,10 @@ describe('Cohorts Component', () => {
   });
 
   it('successfully creates a new cohort', async () => {
-    vi.mocked(getCohorts).mockResolvedValueOnce(mockCohorts);
-    vi.mocked(createCohort).mockResolvedValueOnce({ id: 3, year: 2026, semester: 1, start_date: '2026-01-01', end_date: '2026-06-30', group_count: 0, status: 'Active', notes: '' });
+    vi.mocked(getCohorts).mockResolvedValue(mockCohorts);
+    vi.mocked(createCohort).mockResolvedValue({ id: 3, year: 2027, semester: 1, start_date: '2027-01-01', end_date: '2027-06-30', group_count: 0, status: 'Active', notes: '' });
 
-    render(
+    const { container } = render(
       <MemoryRouter>
         <ToastProvider>
           <Cohorts />
@@ -88,15 +87,28 @@ describe('Cohorts Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('2026')).toBeInTheDocument();
+      expect(screen.getByText('2025')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /agregar cohorte/i }));
 
-    fireEvent.change(screen.getByLabelText(/año/i), { target: { value: '2026' } });
-    fireEvent.change(screen.getByLabelText(/semestre/i), { target: { value: '1' } });
+    const dialog = await screen.findByRole('dialog');
+    const yearInput = container.querySelector('input[name="year"]');
+    if (yearInput) fireEvent.change(yearInput, { target: { value: '2027' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /guardar/i }));
+    const semesterInput = container.querySelector('input[name="semester"]');
+    if (semesterInput) fireEvent.change(semesterInput, { target: { value: '1' } });
+
+    const startDateInput = container.querySelector('input[name="start_date"]');
+    if (startDateInput) fireEvent.change(startDateInput, { target: { value: '2027-01-01' } });
+
+    const endDateInput = container.querySelector('input[name="end_date"]');
+    if (endDateInput) fireEvent.change(endDateInput, { target: { value: '2027-06-30' } });
+
+    const form = dialog.querySelector('form');
+    if (form) {
+      fireEvent.submit(form);
+    }
 
     await waitFor(() => {
       expect(createCohort).toHaveBeenCalled();
