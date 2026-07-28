@@ -39,6 +39,7 @@ import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import EmptyState from "../../components/common/EmptyState";
 import { useToast } from "../../ToastContext";
+import CommentFeed from "../../components/CommentFeed";
 
 const CARD_SX = {
   borderRadius: 2,
@@ -512,6 +513,7 @@ export default function GroupDetail() {
                             borderRadius: 1,
                             bgcolor: isHighlighted ? "warning.light" : "transparent",
                             transition: "background-color 0.3s",
+                            display: "block",
                           }}
                         >
                           <ListItemText
@@ -520,6 +522,7 @@ export default function GroupDetail() {
                                 <Typography variant="body2" fontWeight={500}>
                                   {deliverable.stageName || `Etapa #${deliverable.stageId}`}
                                 </Typography>
+
                                 <Chip
                                   label={statusMeta.label}
                                   color={statusMeta.color}
@@ -532,14 +535,24 @@ export default function GroupDetail() {
                                     ) : undefined
                                   }
                                 />
+
                                 {overdue && (
-                                  <Chip label="Vencido" color="error" size="small" variant="outlined" />
+                                  <Chip
+                                    label="Vencido"
+                                    color="error"
+                                    size="small"
+                                    variant="outlined"
+                                  />
                                 )}
                               </Box>
                             }
                             secondary={`Fecha esperada: ${deliverable.expectedDate}`}
                             secondaryTypographyProps={{ variant: "caption" }}
                           />
+
+                          <Box sx={{ mt: 2 }}>
+                            <CommentFeed deliverableId={deliverable.id} />
+                          </Box>
                         </ListItem>
                       );
                     })}
