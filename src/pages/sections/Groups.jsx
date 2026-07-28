@@ -35,13 +35,19 @@ import GroupsGrid from "../../components/GroupsGrid";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import GenericCreateModal from "../../components/common/GenericCreateModal";
-import { getGroups, createGroup } from "../../api/endpoints/groups";
+import {getGroups,saveGroup,deleteGroup,} from "../../api/endpoints/groups";
 import { getCohorts } from "../../api/endpoints/cohorts";
+
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ConfirmModal from "../../components/ConfirmModal";
+
 import { getStudents } from "../../api/endpoints/students";
 
 const CREATE_GROUP_INITIAL_VALUES = {
   student_ids: [],
 };
+
 
 function Groups() {
   const [view, setView] = useState("gallery");
@@ -59,6 +65,8 @@ function Groups() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [deletingGroup, setDeletingGroup] = useState(null);
 
   useEffect(() => {
     loadGroups();
@@ -88,11 +96,17 @@ function Groups() {
   const handleCreateGroup = async (formData) => {
     try {
       setCreating(true);
-      await createGroup({
+      await saveGroup({
+        id: 0,
         name: formData.name,
         cohort_id: Number(formData.cohort_id),
-        idea: formData.idea || null,
-        student_ids: formData.student_ids.map(Number),
+        current_stage_id: null,
+        idea: formData.idea || "",
+        major: "",
+        status: "Active",
+        student_ids: [],
+        business_tutor_id: null,
+        technical_tutor_id: null,
       });
       setCreateModalOpen(false);
       await loadGroups();
@@ -100,6 +114,43 @@ function Groups() {
       setError(err?.message || "No se pudo crear el grupo.");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!deletingGroup) return;
+
+    try {
+      await deleteGroup(deletingGroup.id);
+
+      setDeletingGroup(null);
+
+      await loadGroups();
+    } catch (err) {
+      setError(err?.message || "No se pudo eliminar el grupo.");
+    }
+  };
+
+  const handleEditGroup = async (formData) => {
+    try {
+      await saveGroup({
+        id: editingGroup.id,
+        name: formData.name,
+        cohort_id: Number(formData.cohort_id),
+        current_stage_id: editingGroup.currentStage?.id ?? null,
+        idea: formData.idea || "",
+        major: editingGroup.major || "",
+        status: editingGroup.status,
+        student_ids: editingGroup.students.map((s) => s.id),
+        business_tutor_id: editingGroup.businessTutor?.id ?? null,
+        technical_tutor_id: editingGroup.technicalTutor?.id ?? null,
+      });
+
+      setEditingGroup(null);
+
+      await loadGroups();
+    } catch (err) {
+      setError(err?.message || "No se pudo editar el grupo.");
     }
   };
 
@@ -299,7 +350,11 @@ function Groups() {
       ) : error ? (
         <ErrorState message={error} onRetry={loadGroups} />
       ) : view === "gallery" ? (
-        <GroupsGrid groups={filteredGroups} />
+        <GroupsGrid
+            groups={filteredGroups}
+            onEdit={setEditingGroup}
+            onDelete={setDeletingGroup}
+        />
       ) : (
         <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
           <Table>
@@ -349,11 +404,45 @@ function Groups() {
                       <Chip label={group.status} size="small" color="default" />
                     </TableCell>
                     <TableCell align="right">
-                      <Tooltip title="Ver detalle">
-                        <IconButton size="small" color="primary" component={RouterLink} to={`/groups/${group.id}`}>
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          alignItems: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        <Tooltip title="Ver detalle">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            component={RouterLink}
+                            to={`/groups/${group.id}`}
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Editar">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => setEditingGroup(group)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Eliminar">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => setDeletingGroup(group)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))
@@ -385,6 +474,31 @@ function Groups() {
         initialValues={CREATE_GROUP_INITIAL_VALUES}
         onSubmit={handleCreateGroup}
         loading={creating}
+      />
+      <GenericCreateModal
+        open={Boolean(editingGroup)}
+        onClose={() => setEditingGroup(null)}
+        title="Editar grupo"
+        fields={createFields}
+        initialValues={{
+            name: editingGroup?.name,
+            cohort_id: editingGroup?.cohortId,
+            idea: editingGroup?.idea,
+        }}
+        onSubmit={handleEditGroup}
+      />
+      <ConfirmModal
+          open={Boolean(deletingGroup)}
+          title="Eliminar grupo"
+          message={
+              deletingGroup
+                  ? `¿Desea eliminar el grupo "${deletingGroup.name}"?`
+                  : ""
+          }
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+          onConfirm={handleDeleteGroup}
+          onClose={() => setDeletingGroup(null)}
       />
     </Box>
   );
