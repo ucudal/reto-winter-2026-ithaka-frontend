@@ -16,6 +16,7 @@ import GroupDetail from "../pages/sections/GroupDetail.jsx";
 import Templates from "../pages/sections/Templates.jsx";
 import TemplateDetail from "../pages/sections/TemplateDetail.jsx";
 import Tutors from "../pages/sections/Tutors.jsx";
+import Deliverables from "../pages/sections/Deliverables.jsx";
 import Knowledge from "../pages/sections/Knowledge.jsx";
 import Users from "../pages/sections/Users.jsx";
 import Settings from "../pages/sections/Settings.jsx";
@@ -23,6 +24,7 @@ import Meetings from "../pages/sections/Meetings.jsx";
 import NotFoundPage from "../pages/sections/NotFoundPage.jsx";
 import RoleProtectedRoute from "./RoleProtectedRoute.jsx";
 import ForbiddenPage from "../pages/sections/ForbiddenPage.jsx";
+import TutorDetail from "../pages/sections/TutorDetail";
 import CohortLifecycleConfiguration from "../pages/sections/CohortLifecycleConfiguration.jsx";
 
 const appRouter = createBrowserRouter([
@@ -174,6 +176,21 @@ const appRouter = createBrowserRouter([
                     ),
                   },
                   {
+                    path: "/deliverables",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                          "Student",
+                        ]}
+                      >
+                        <Deliverables />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
                     path: "/knowledge",
                     element: (
                       <RoleProtectedRoute
@@ -185,6 +202,20 @@ const appRouter = createBrowserRouter([
                         ]}
                       >
                         <Knowledge />
+                      </RoleProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: "/tutors/:id",
+                    element: (
+                      <RoleProtectedRoute
+                        allowedRoles={[
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
+                        ]}
+                      >
+                        <TutorDetail />
                       </RoleProtectedRoute>
                     ),
                   },

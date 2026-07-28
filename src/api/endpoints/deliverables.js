@@ -13,7 +13,7 @@ function mapDeliverable(raw) {
 }
 
 export async function updateDeliverable(id, payload) {
-  const response = await apiClient.put(`/api/deliverables/${id}`, payload);
+  const response = await apiClient.put("/api/deliverables", { id, ...payload });
   clearCache();
   return mapDeliverable(response.data);
 }
