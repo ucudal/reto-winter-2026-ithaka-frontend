@@ -92,6 +92,7 @@ export default function Cohorts() {
     if (filterYear && filterYear.length < 3) {
       return;
     }
+    let ignore = false;
 
     loadCohorts({
       year: filterYear || undefined,
@@ -99,20 +100,29 @@ export default function Cohorts() {
       status: filterStatus || undefined,
       page: 1,
       page_size: 20,
-    });
+    },
+    () => ignore
+    );
+    return () => {
+      ignore = true;
+    };
   }, [filterYear, filterSemester, filterStatus]);
 
-  async function loadCohorts(filters = {}) {
+  async function loadCohorts(filters = {}, shouldIgnore = () => false) {
     try {
       setLoading(true);
       setError("");
       const data = await getCohorts(filters);
+      if (shouldIgnore()) return;
       const items = Array.isArray(data) ? data : (data?.items ?? []);
       setCohorts(items);
     } catch (err) {
+      if (shouldIgnore()) return;
       setError(err?.message || "No se pudieron cargar los cohortes.");
     } finally {
-      setLoading(false);
+      if (!shouldIgnore()) {
+        setLoading(false);
+      }
     }
   }
 
