@@ -59,7 +59,9 @@ const DELIVERABLE_STATUS = {
 function isDeliverableOverdue(deliverable) {
   if (!deliverable.expectedDate) return false;
   if (["Delivered", "Approved"].includes(deliverable.status)) return false;
-  return new Date(deliverable.expectedDate) < new Date(new Date().toDateString());
+  return (
+    new Date(deliverable.expectedDate) < new Date(new Date().toDateString())
+  );
 }
 
 function getInitials(name) {
@@ -74,8 +76,10 @@ function getInitials(name) {
 export default function GroupDetail() {
   const { id } = useParams();
   const location = useLocation();
-  const highlightDeliverableId = location.state?.highlightDeliverableId ?? null;
-  const highlightedRowRef = useRef(null);
+  const [highlightDeliverableId, setHighlightDeliverableId] = useState(
+    location.state?.highlightDeliverableId ?? null,
+  );
+  const hasScrolledToHighlightRef = useRef(false);
   const { showToast } = useToast();
 
   const [group, setGroup] = useState(null);
@@ -108,12 +112,6 @@ export default function GroupDetail() {
       loadDeliverables(Number(id));
     }
   }, [id]);
-
-  useEffect(() => {
-    if (highlightDeliverableId && highlightedRowRef.current) {
-      highlightedRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [highlightDeliverableId, deliverables]);
 
   const loadGroup = async (groupId) => {
     try {
@@ -162,13 +160,20 @@ export default function GroupDetail() {
     closeStatusMenu();
     try {
       setUpdatingDeliverableId(deliverableId);
-      const updated = await updateDeliverable(deliverableId, { status: newStatus });
+      const updated = await updateDeliverable(deliverableId, {
+        status: newStatus,
+      });
       setDeliverables((prev) =>
-        prev.map((d) => (d.id === deliverableId ? { ...d, status: updated.status } : d)),
+        prev.map((d) =>
+          d.id === deliverableId ? { ...d, status: updated.status } : d,
+        ),
       );
       showToast("Estado del entregable actualizado.", "success");
     } catch (err) {
-      showToast(err?.message || "No se pudo actualizar el estado del entregable.", "error");
+      showToast(
+        err?.message || "No se pudo actualizar el estado del entregable.",
+        "error",
+      );
     } finally {
       setUpdatingDeliverableId(null);
     }
@@ -268,11 +273,26 @@ export default function GroupDetail() {
     <Box sx={{ width: "100%" }}>
       {/* Header */}
       <Box sx={{ mb: 1.5 }}>
-        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 0.5 }}>
-          <Link component={RouterLink} to="/" underline="hover" color="inherit" variant="body2">
+        <Breadcrumbs
+          separator={<NavigateNextIcon fontSize="small" />}
+          sx={{ mb: 0.5 }}
+        >
+          <Link
+            component={RouterLink}
+            to="/"
+            underline="hover"
+            color="inherit"
+            variant="body2"
+          >
             Inicio
           </Link>
-          <Link component={RouterLink} to="/groups" underline="hover" color="inherit" variant="body2">
+          <Link
+            component={RouterLink}
+            to="/groups"
+            underline="hover"
+            color="inherit"
+            variant="body2"
+          >
             Grupos
           </Link>
           <Typography color="text.primary" variant="body2">
@@ -314,11 +334,17 @@ export default function GroupDetail() {
         <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Cohorte
               </Typography>
               <Typography variant="body2" fontWeight={500}>
-                {cohort ? `${cohort.year} - ${cohort.semester}° semestre` : `#${group.cohortId}`}
+                {cohort
+                  ? `${cohort.year} - ${cohort.semester}° semestre`
+                  : `#${group.cohortId}`}
               </Typography>
               {cohort?.start_date && (
                 <Typography variant="caption" color="text.secondary">
@@ -328,7 +354,11 @@ export default function GroupDetail() {
               )}
             </Grid>
             <Grid item xs={12} sm={4}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Carrera
               </Typography>
               <Typography variant="body2" fontWeight={500}>
@@ -336,10 +366,17 @@ export default function GroupDetail() {
               </Typography>
             </Grid>
             <Grid item xs={12} sm={4}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Idea de proyecto
               </Typography>
-              <Tooltip title={group.idea || ""} disableHoverListener={!group.idea}>
+              <Tooltip
+                title={group.idea || ""}
+                disableHoverListener={!group.idea}
+              >
                 <Typography variant="body2" fontWeight={500} noWrap>
                   {group.idea || "Sin idea registrada"}
                 </Typography>
@@ -354,7 +391,14 @@ export default function GroupDetail() {
         <Grid item xs={12} md={6}>
           <Card sx={CARD_SX}>
             <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 1,
+                }}
+              >
                 <Typography variant="body2" fontWeight="bold">
                   Tutores
                 </Typography>
@@ -364,8 +408,22 @@ export default function GroupDetail() {
               </Box>
               <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                    <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: "secondary.light" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 0.5,
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        fontSize: 12,
+                        bgcolor: "secondary.light",
+                      }}
+                    >
                       {getInitials(group.businessTutor?.name)}
                     </Avatar>
                     <Typography variant="caption" color="text.secondary">
@@ -376,14 +434,33 @@ export default function GroupDetail() {
                     {group.businessTutor?.name || "Sin asignar"}
                   </Typography>
                   {group.businessTutor?.specialty && (
-                    <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      noWrap
+                    >
                       {group.businessTutor.specialty}
                     </Typography>
                   )}
                 </Grid>
                 <Grid item xs={6}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                    <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: "info.light" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 0.5,
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        fontSize: 12,
+                        bgcolor: "info.light",
+                      }}
+                    >
                       {getInitials(group.technicalTutor?.name)}
                     </Avatar>
                     <Typography variant="caption" color="text.secondary">
@@ -394,7 +471,12 @@ export default function GroupDetail() {
                     {group.technicalTutor?.name || "Sin asignar"}
                   </Typography>
                   {group.technicalTutor?.specialty && (
-                    <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      noWrap
+                    >
                       {group.technicalTutor.specialty}
                     </Typography>
                   )}
@@ -407,7 +489,14 @@ export default function GroupDetail() {
         <Grid item xs={12} md={6}>
           <Card sx={CARD_SX}>
             <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 1,
+                }}
+              >
                 <Typography variant="body2" fontWeight="bold">
                   Etapa del proyecto
                 </Typography>
@@ -424,7 +513,11 @@ export default function GroupDetail() {
               />
               {nextKeyDate && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary" display="block">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                  >
                     {nextKeyDate.description}
                   </Typography>
                   <Typography variant="body2" fontWeight={500}>
@@ -456,7 +549,13 @@ export default function GroupDetail() {
                     {group.students?.map((student) => (
                       <ListItem key={student.id} divider sx={{ px: 0 }}>
                         <Avatar
-                          sx={{ width: 28, height: 28, fontSize: 12, mr: 1.5, bgcolor: "primary.light" }}
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            fontSize: 12,
+                            mr: 1.5,
+                            bgcolor: "primary.light",
+                          }}
                         >
                           {getInitials(student.name)}
                         </Avatar>
@@ -494,46 +593,92 @@ export default function GroupDetail() {
                 <Box sx={{ maxHeight: 260, overflowY: "auto" }}>
                   <List dense disablePadding>
                     {deliverables.map((deliverable) => {
-                      const statusMeta =
-                        DELIVERABLE_STATUS[deliverable.status] || {
-                          label: deliverable.status,
-                          color: "default",
-                        };
+                      const statusMeta = DELIVERABLE_STATUS[
+                        deliverable.status
+                      ] || {
+                        label: deliverable.status,
+                        color: "default",
+                      };
                       const overdue = isDeliverableOverdue(deliverable);
-                      const isHighlighted = deliverable.id === highlightDeliverableId;
+                      const isHighlighted =
+                        deliverable.id === highlightDeliverableId;
 
                       return (
                         <ListItem
                           key={deliverable.id}
                           divider
-                          ref={isHighlighted ? highlightedRowRef : null}
+                          ref={
+                            isHighlighted
+                              ? (node) => {
+                                  if (
+                                    node &&
+                                    !hasScrolledToHighlightRef.current
+                                  ) {
+                                    hasScrolledToHighlightRef.current = true;
+                                    node.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "center",
+                                    });
+                                    // Limpiar el highlight tras el primer scroll: el fondo
+                                    // amarillo se desvanece con la transition y ya no vuelve
+                                    // a resaltar ni scrollear ante cambios de estado.
+                                    setTimeout(
+                                      () => setHighlightDeliverableId(null),
+                                      1500,
+                                    );
+                                  }
+                                }
+                              : null
+                          }
                           sx={{
                             px: 1,
                             borderRadius: 1,
-                            bgcolor: isHighlighted ? "warning.light" : "transparent",
+                            bgcolor: isHighlighted
+                              ? "warning.light"
+                              : "transparent",
                             transition: "background-color 0.3s",
                           }}
                         >
                           <ListItemText
                             primary={
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                  flexWrap: "wrap",
+                                }}
+                              >
                                 <Typography variant="body2" fontWeight={500}>
-                                  {deliverable.stageName || `Etapa #${deliverable.stageId}`}
+                                  {deliverable.stageName ||
+                                    `Etapa #${deliverable.stageId}`}
                                 </Typography>
                                 <Chip
                                   label={statusMeta.label}
                                   color={statusMeta.color}
                                   size="small"
-                                  onClick={(e) => openStatusMenu(e, deliverable)}
-                                  disabled={updatingDeliverableId === deliverable.id}
+                                  onClick={(e) =>
+                                    openStatusMenu(e, deliverable)
+                                  }
+                                  disabled={
+                                    updatingDeliverableId === deliverable.id
+                                  }
                                   icon={
                                     updatingDeliverableId === deliverable.id ? (
-                                      <CircularProgress size={12} sx={{ color: "inherit" }} />
+                                      <CircularProgress
+                                        size={12}
+                                        sx={{ color: "inherit" }}
+                                      />
                                     ) : undefined
                                   }
                                 />
                                 {overdue && (
-                                  <Chip label="Vencido" color="error" size="small" variant="outlined" />
+                                  <Chip
+                                    label="Vencido"
+                                    color="error"
+                                    size="small"
+                                    variant="outlined"
+                                  />
                                 )}
                               </Box>
                             }
@@ -552,7 +697,11 @@ export default function GroupDetail() {
       </Grid>
 
       {/* Menú: cambiar estado de un entregable */}
-      <Menu anchorEl={statusMenuAnchor} open={Boolean(statusMenuAnchor)} onClose={closeStatusMenu}>
+      <Menu
+        anchorEl={statusMenuAnchor}
+        open={Boolean(statusMenuAnchor)}
+        onClose={closeStatusMenu}
+      >
         {Object.entries(DELIVERABLE_STATUS).map(([statusKey, meta]) => (
           <MenuItem
             key={statusKey}
@@ -565,7 +714,12 @@ export default function GroupDetail() {
       </Menu>
 
       {/* Dialog: cambiar etapa */}
-      <Dialog open={stageDialogOpen} onClose={() => setStageDialogOpen(false)} fullWidth maxWidth="xs">
+      <Dialog
+        open={stageDialogOpen}
+        onClose={() => setStageDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>Cambiar etapa</DialogTitle>
         <DialogContent>
           {loadingStages ? (
@@ -590,19 +744,33 @@ export default function GroupDetail() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setStageDialogOpen(false)} disabled={savingStage}>
+          <Button
+            onClick={() => setStageDialogOpen(false)}
+            disabled={savingStage}
+          >
             Cancelar
           </Button>
-          <Button variant="contained" onClick={handleSaveStage} disabled={savingStage || !selectedStageId || loadingStages}>
+          <Button
+            variant="contained"
+            onClick={handleSaveStage}
+            disabled={savingStage || !selectedStageId || loadingStages}
+          >
             {savingStage ? "Guardando..." : "Guardar"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Dialog: asignar tutores */}
-      <Dialog open={tutorsDialogOpen} onClose={() => setTutorsDialogOpen(false)} fullWidth maxWidth="xs">
+      <Dialog
+        open={tutorsDialogOpen}
+        onClose={() => setTutorsDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>Asignar tutores</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+        >
           {loadingTutors ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
               <CircularProgress size={24} />
@@ -642,10 +810,17 @@ export default function GroupDetail() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTutorsDialogOpen(false)} disabled={savingTutors}>
+          <Button
+            onClick={() => setTutorsDialogOpen(false)}
+            disabled={savingTutors}
+          >
             Cancelar
           </Button>
-          <Button variant="contained" onClick={handleSaveTutors} disabled={savingTutors || loadingTutors}>
+          <Button
+            variant="contained"
+            onClick={handleSaveTutors}
+            disabled={savingTutors || loadingTutors}
+          >
             {savingTutors ? "Guardando..." : "Guardar"}
           </Button>
         </DialogActions>
