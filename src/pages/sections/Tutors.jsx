@@ -12,6 +12,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Avatar,
   Chip,
   IconButton,
@@ -110,6 +111,9 @@ export default function Tutors() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTutor, setEditingTutor] = useState(null); // null => crear
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  
   const [saving, setSaving] = useState(false);
 
   const [capacityOpen, setCapacityOpen] = useState(false);
@@ -349,6 +353,7 @@ export default function Tutors() {
         ) : error ? (
           <Alert severity="error">{error}</Alert>
         ) : view === "list" ? (
+          <>
           <TableContainer>
             <Table>
               <TableHead>
@@ -456,25 +461,33 @@ export default function Tutors() {
                               .map((n) => n[0])
                               .join("")}
                           </Avatar>
-                          <Typography variant="body2" fontWeight="medium">
+                          <Typography sx={{ fontWeight: "medium" }}>
                             {tutor.name}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        {tutor.role === "Business" ? "Negocio" : "Técnico"}
-                      </TableCell>
-                      <TableCell>{tutor.specialty}</TableCell>
-                      <TableCell>{tutor.availability}</TableCell>
-                      <TableCell>
                         <Chip
                           label={
-                            tutor.status === "Active" ? "Activo" : "Inactivo"
+                            tutor.role === "Business"
+                              ? "Negocio"
+                              : tutor.role === "Technical"
+                              ? "Técnico"
+                              : tutor.role
                           }
                           size="small"
-                          color={
-                            tutor.status === "Active" ? "success" : "default"
-                          }
+                          color={tutor.role === "Business" ? "primary" : "info"}
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>{tutor.specialty || "-"}</TableCell>
+                      <TableCell>{tutor.availability || "-"}</TableCell>
+                      <TableCell>{tutor.max_capacity ?? 0} hs</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={tutor.status === "Active" ? "Activo" : "Inactivo"}
+                          size="small"
+                          color={tutor.status === "Active" ? "success" : "default"}
                         />
                       </TableCell>
                       <TableCell align="right">
@@ -541,6 +554,21 @@ export default function Tutors() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredTutors.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
+          </>
         ) : (
           <Grid container spacing={3} sx={{ mt: 1 }}>
             {filteredTutors.length === 0 ? (

@@ -19,6 +19,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   TextField,
   Typography,
   Select,
@@ -51,6 +52,9 @@ function Students() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('name')
   const [view, setView] = useState('list')
+
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
 
   useEffect(() => {
     loadStudents()
@@ -215,6 +219,7 @@ function Students() {
             <CircularProgress />
           </Box>
         ) : view === 'list' ? (
+          <>
           <TableContainer>
             <Table>
               <TableHead>
@@ -229,59 +234,87 @@ function Students() {
               </TableHead>
               <TableBody>
                 {filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => {
+                  filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
                     const initials = (student.name || 'U')
                       .split(' ')
                       .filter(Boolean)
-                      .map((part) => part[0])
+                      .map((word) => word[0])
                       .join('')
-                      .toUpperCase();
+                      .toUpperCase()
 
                     return (
                       <TableRow key={student.id} hover>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                            }}
+                          >
                             <Avatar
                               sx={{
-                                bgcolor: 'action.selected',
-                                color: 'text.secondary',
-                                width: 32,
-                                height: 32,
+                                width: 36,
+                                height: 36,
+                                bgcolor: 'primary.light',
+                                color: 'primary.main',
+                                fontWeight: 'bold',
                                 fontSize: '0.875rem',
                               }}
                             >
                               {initials}
                             </Avatar>
-                            <Typography variant="body2" fontWeight="medium">
-                              {student.name || '-'}
-                            </Typography>
+                            <Box>
+                              <Typography variant="body2" fontWeight="medium">
+                                {student.name}
+                              </Typography>
+                              {student.is_graduation_project && (
+                                <Chip
+                                  label="Proyecto Final"
+                                  size="small"
+                                  color="secondary"
+                                  variant="outlined"
+                                  sx={{ height: 18, fontSize: '0.65rem', mt: 0.2 }}
+                                />
+                              )}
+                            </Box>
                           </Box>
                         </TableCell>
                         <TableCell>{student.email || '-'}</TableCell>
+                        <TableCell>{student.major || '-'}</TableCell>
                         <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <SchoolOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                            <Typography variant="body2">{student.major || '-'}</Typography>
-                          </Stack>
+                          <Chip
+                            label="Activo"
+                            color="success"
+                            size="small"
+                            variant="outlined"
+                          />
                         </TableCell>
-                        <TableCell>
-                          <Chip label="Activo" size="small" color="success" />
+                        <TableCell sx={{ color: 'text.secondary' }}>
+                          {student.id}
                         </TableCell>
-                        <TableCell sx={{ color: 'text.secondary' }}>{student.id ?? '-'}</TableCell>
                         <TableCell align="right">
-                          <IconButton size="small" color="primary">
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" color="error">
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                          {student.linkedin_url && (
+                            <Tooltip title="Ver LinkedIn">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                component="a"
+                                href={student.linkedin_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <LinkedInIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </TableCell>
                       </TableRow>
                     )
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                       <EmptyState
                         title="No hay alumnos para mostrar"
                         description="No se encontraron alumnos que coincidan con la búsqueda."
@@ -292,6 +325,21 @@ function Students() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredStudents.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10))
+              setPage(0)
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
+          </>
         ) : (
           <Grid container spacing={3} sx={{ mt: 1 }}>
             {filteredStudents.length === 0 ? (

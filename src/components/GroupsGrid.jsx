@@ -2,7 +2,11 @@ import { Grid } from "@mui/material";
 import EmptyState from "./common/EmptyState";
 import GroupCard from "./GroupCard";
 
-export default function GroupsGrid({ groups }) {
+export default function GroupsGrid({
+    groups,
+    onEdit,
+    onDelete,
+}) {
   if (groups.length === 0) {
     return (
       <EmptyState
@@ -22,7 +26,11 @@ export default function GroupsGrid({ groups }) {
           lg={4}
           key={group.id}
         >
-          <GroupCard group={group} />
+          <GroupCard
+              group={group}
+              onEdit={onEdit}
+              onDelete={onDelete}
+          />
         </Grid>
       ))}
     </Grid>

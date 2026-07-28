@@ -26,7 +26,9 @@ export async function getGroups(filters = {}) {
   return items.map(mapGroup);
 }
 
-export async function createGroup(payload) {
+
+export async function saveGroup(payload) {
+
   if (!Array.isArray(payload.student_ids) || payload.student_ids.length === 0) {
     throw new Error("Selecciona al menos un alumno para crear el grupo.");
   }
@@ -35,8 +37,15 @@ export async function createGroup(payload) {
     id: null,
     ...payload,
   });
+
   clearCache();
   return mapGroup(response.data);
+}
+
+export async function deleteGroup(id) {
+  const response = await apiClient.delete(`/api/groups/${id}`);
+  clearCache();
+  return response.data;
 }
 
 export async function getGroupById(id) {

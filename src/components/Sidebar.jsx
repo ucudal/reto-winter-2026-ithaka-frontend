@@ -96,8 +96,10 @@ export default function Sidebar({
         }
       >
         {user?.role !== "Student" && navItem("/templates", "Templates", AssignmentOutlinedIcon)}
+        {navItem("/deliverables", "Entregables", TaskIcon)}
         {navItem("/knowledge", "Materiales", MenuBookIcon)}
         {navItem("/meetings", "Reuniones", AccessTimeIcon)}
+
       </List>
     </>
   );
