@@ -218,6 +218,7 @@ export default function Users() {
             </Typography>
           </Box>
         ) : (
+          <>
           <TableContainer>
             <Table>
               <TableHead>
@@ -291,6 +292,7 @@ export default function Users() {
             labelRowsPerPage="Filas por página:"
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
           />
+          </>
         )}
       </Paper>
 

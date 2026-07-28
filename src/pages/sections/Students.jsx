@@ -219,6 +219,7 @@ function Students() {
             <CircularProgress />
           </Box>
         ) : view === 'list' ? (
+          <>
           <TableContainer>
             <Table>
               <TableHead>
@@ -338,6 +339,7 @@ function Students() {
             labelRowsPerPage="Filas por página:"
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
           />
+          </>
         ) : (
           <Grid container spacing={3} sx={{ mt: 1 }}>
             {filteredStudents.length === 0 ? (

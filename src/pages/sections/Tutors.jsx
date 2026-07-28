@@ -282,6 +282,7 @@ export default function Tutors() {
         ) : error ? (
           <Alert severity="error">{error}</Alert>
         ) : view === "list" ? (
+          <>
           <TableContainer>
             <Table>
               <TableHead>
@@ -387,8 +388,12 @@ export default function Tutors() {
                             {tutor.name
                               .split(" ")
                               .map((n) => n[0])
-                      <TableCell sx={{ fontWeight: "medium" }}>
-                        {tutor.name}
+                              .join("")}
+                          </Avatar>
+                          <Typography sx={{ fontWeight: "medium" }}>
+                            {tutor.name}
+                          </Typography>
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -467,6 +472,7 @@ export default function Tutors() {
             labelRowsPerPage="Filas por página:"
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
           />
+          </>
         ) : (
           <Grid container spacing={3} sx={{ mt: 1 }}>
             {filteredTutors.length === 0 ? (
