@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.clear();
+    clearCache();
     setAuthToken(null);
     setUser(null);
     setIsAuthenticated(false);

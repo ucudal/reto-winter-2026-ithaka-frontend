@@ -35,8 +35,10 @@ import GroupsGrid from "../../components/GroupsGrid";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import GenericCreateModal from "../../components/common/GenericCreateModal";
-import {getGroups,saveGroup,deleteGroup,} from "../../api/endpoints/groups";
+import {getGroups,saveGroup,deleteGroup,getGroupById,} from "../../api/endpoints/groups";
 import { getCohorts } from "../../api/endpoints/cohorts";
+import { getTutorGroups } from "../../api/endpoints/tutors";
+import { useAuth } from "../../context/AuthContext";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -50,6 +52,7 @@ const CREATE_GROUP_INITIAL_VALUES = {
 
 
 function Groups() {
+  const { user } = useAuth();
   const [view, setView] = useState("gallery");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -72,13 +75,30 @@ function Groups() {
     loadGroups();
   }, []);
 
+  const loadGroupsForCurrentUser = async () => {
+    if (user?.role === "Coordinator") {
+      return getGroups();
+    }
+
+    const tutorId = user?.tutor?.id;
+    if (!tutorId) {
+      return [];
+    }
+
+    const assignedGroups = await getTutorGroups(tutorId);
+    const fullGroups = await Promise.all(
+      assignedGroups.map((group) => getGroupById(group.id)),
+    );
+    return fullGroups;
+  };
+
   const loadGroups = async () => {
     try {
       setLoading(true);
       setError("");
 
       const [groupsData, cohortsData, studentsData] = await Promise.all([
-        getGroups(),
+        loadGroupsForCurrentUser(),
         getCohorts(),
         getStudents(),
       ]);
