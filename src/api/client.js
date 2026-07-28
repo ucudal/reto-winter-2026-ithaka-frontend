@@ -96,11 +96,21 @@ apiClient.interceptors.response.use(
   },
 )
 
+function sortObjectKeys(obj) {
+  return Object.keys(obj)
+    .sort()
+    .reduce((acc, key) => {
+      acc[key] = obj[key]
+      return acc
+    }, {})
+}
+
 export async function cachedGet(url, config = {}, ttlInMinutes = 15) {
-  const params = config?.params
-    ? JSON.stringify(config.params)
-    : "";
-  const cacheKey = `cache_${url}_${params}`;
+  const sortedParams = config?.params
+    ? sortObjectKeys(config.params)
+    : null
+
+  const cacheKey = `cache_${url}_${JSON.stringify(sortedParams)}`
   const cached = getCache(cacheKey)
 
   if (cached.hit) {
@@ -109,5 +119,6 @@ export async function cachedGet(url, config = {}, ttlInMinutes = 15) {
 
   const response = await apiClient.get(url, config)
   setCache(cacheKey, response.data, ttlInMinutes)
+
   return response
 }
