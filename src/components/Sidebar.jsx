@@ -51,26 +51,19 @@ export default function Sidebar({
       <Toolbar />
 
       <List
-        subheader={
-          <ListSubheader component="div">
-            Proyectos
-          </ListSubheader>
-        }
+        subheader={<ListSubheader component="div">Proyectos</ListSubheader>}
       >
-        {navItem("/dashboard", "Resumen", DashboardIcon)}
-        {user?.role === "Student" && navItem("/workspace", "Mi espacio", WorkspacesIcon)}
-        {user?.role === "Coordinator" && navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
+        {user?.role === "Coordinator" &&
+          navItem("/dashboard", "Resumen", DashboardIcon)}
+        {user?.role === "Student" &&
+          navItem("/workspace", "Mi espacio", WorkspacesIcon)}
+        {user?.role === "Coordinator" &&
+          navItem("/cohorts", "Cohortes", CalendarMonthIcon)}
         {user?.role !== "Student" && navItem("/groups", "Grupos", GroupsIcon)}
       </List>
 
       {user?.role === "Coordinator" && (
-        <List
-          subheader={
-            <ListSubheader component="div">
-              Equipo
-            </ListSubheader>
-          }
-        >
+        <List subheader={<ListSubheader component="div">Equipo</ListSubheader>}>
           {navItem("/tutors", "Tutores", PeopleIcon)}
           {navItem("/students", "Alumnos", SchoolIcon)}
         </List>
@@ -79,9 +72,7 @@ export default function Sidebar({
       {user?.role === "Coordinator" && (
         <List
           subheader={
-            <ListSubheader component="div">
-              Administración
-            </ListSubheader>
+            <ListSubheader component="div">Administración</ListSubheader>
           }
         >
           {navItem("/users", "Usuarios", ManageAccountsIcon)}
@@ -89,17 +80,13 @@ export default function Sidebar({
       )}
 
       <List
-        subheader={
-          <ListSubheader component="div">
-            Herramientas
-          </ListSubheader>
-        }
+        subheader={<ListSubheader component="div">Herramientas</ListSubheader>}
       >
-        {user?.role !== "Student" && navItem("/templates", "Templates", AssignmentOutlinedIcon)}
+        {user?.role !== "Student" &&
+          navItem("/templates", "Templates", AssignmentOutlinedIcon)}
         {navItem("/deliverables", "Entregables", TaskIcon)}
         {navItem("/knowledge", "Materiales", MenuBookIcon)}
         {navItem("/meetings", "Reuniones", AccessTimeIcon)}
-
       </List>
     </>
   );
