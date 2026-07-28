@@ -24,6 +24,8 @@ import {
   DialogActions,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { getHomePathForRole } from "../../routes/roleHome";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -58,6 +60,7 @@ const initialDeliverablesData = [
 ];
 
 export default function Deliverables() {
+  const { user } = useAuth();
   const [deliverables, setDeliverables] = useState(initialDeliverablesData);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTab, setCurrentTab] = useState("ALL");
@@ -101,14 +104,20 @@ export default function Deliverables() {
   const handleChangeStatus = (newStatus) => {
     setDeliverables((prev) =>
       prev.map((item) =>
-        item.id === selectedDeliverableId ? { ...item, status: newStatus } : item
-      )
+        item.id === selectedDeliverableId
+          ? { ...item, status: newStatus }
+          : item,
+      ),
     );
     handleCloseStatusMenu();
   };
 
   const handleCreateDeliverable = () => {
-    if (!newDeliverable.stage_name || !newDeliverable.group_name || !newDeliverable.expected_date) {
+    if (
+      !newDeliverable.stage_name ||
+      !newDeliverable.group_name ||
+      !newDeliverable.expected_date
+    ) {
       return;
     }
 
@@ -149,8 +158,16 @@ export default function Deliverables() {
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 1 }}>
-        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 1 }}
+      >
+        <Link
+          component={RouterLink}
+          to={getHomePathForRole(user?.role)}
+          underline="hover"
+          color="inherit"
+        >
           Inicio
         </Link>
         <Typography color="text.primary">Entregables</Typography>
@@ -168,7 +185,7 @@ export default function Deliverables() {
       >
         <Box>
           <Typography variant="h4" fontWeight="bold">
-           Entregables
+            Entregables
           </Typography>
         </Box>
 
@@ -236,7 +253,11 @@ export default function Deliverables() {
                     mb: 1.5,
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" fontWeight="bold">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight="bold"
+                  >
                     ENTREGABLE #{item.id}
                   </Typography>
                   {renderStatusChip(item.status)}
@@ -278,7 +299,9 @@ export default function Deliverables() {
                 </Box>
               </CardContent>
 
-              <CardActions sx={{ justifyContent: "flex-end", px: 2, pb: 2, pt: 0 }}>
+              <CardActions
+                sx={{ justifyContent: "flex-end", px: 2, pb: 2, pt: 0 }}
+              >
                 <Tooltip title="Cambiar estado del entregable">
                   <IconButton
                     size="small"
@@ -328,7 +351,10 @@ export default function Deliverables() {
             placeholder="Ej. Etapa 1: Diagnóstico"
             value={newDeliverable.stage_name}
             onChange={(e) =>
-              setNewDeliverable({ ...newDeliverable, stage_name: e.target.value })
+              setNewDeliverable({
+                ...newDeliverable,
+                stage_name: e.target.value,
+              })
             }
             fullWidth
             sx={{ mt: 1 }}
@@ -338,7 +364,10 @@ export default function Deliverables() {
             placeholder="Ej. Grupo 8 - Proyecto Ithaka"
             value={newDeliverable.group_name}
             onChange={(e) =>
-              setNewDeliverable({ ...newDeliverable, group_name: e.target.value })
+              setNewDeliverable({
+                ...newDeliverable,
+                group_name: e.target.value,
+              })
             }
             fullWidth
           />
