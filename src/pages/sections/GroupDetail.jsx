@@ -110,37 +110,42 @@ export default function GroupDetail() {
   }, [id]);
 
   useEffect(() => {
-    if (highlightDeliverableId && highlightedRowRef.current) {
-      highlightedRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [highlightDeliverableId, deliverables]);
+    let ignore = false;
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const loadGroup = async (groupId) => {
-    try {
-      setLoading(true);
-      setError("");
+        const [groupData, deliverablesData] = await Promise.all([
+          getGroupById(Number(id)),
+          getGroupDeliverables(Number(id)),
+        ]);
 
-      const groupData = await getGroupById(groupId);
-      setGroup(groupData);
-      setCohort(groupData.cohort);
-    } catch (err) {
-      setError(err?.message || "No se pudo cargar el grupo.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (ignore) return;
 
-  const loadDeliverables = async (groupId) => {
-    try {
-      setLoadingDeliverables(true);
-      const data = await getGroupDeliverables(groupId);
-      setDeliverables(data || []);
-    } catch (err) {
-      console.error("Error al cargar entregables:", err);
-    } finally {
-      setLoadingDeliverables(false);
+        setGroup(groupData);
+        setCohort(groupData.cohort);
+        setDeliverables(deliverablesData || []);
+      } catch (err) {
+        if (!ignore) {
+          setError(err?.message || "No se pudo cargar el grupo.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+          setLoadingDeliverables(false);
+        }
+      }
+    };
+
+    if (id) {
+      fetchData();
     }
-  };
+
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
 
   const openStatusMenu = (event, deliverable) => {
     event.stopPropagation();
@@ -244,7 +249,7 @@ export default function GroupDetail() {
   if (error && !group) {
     return (
       <Box sx={{ width: "100%" }}>
-        <ErrorState message={error} onRetry={() => loadGroup(Number(id))} />
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
       </Box>
     );
   }
@@ -305,7 +310,7 @@ export default function GroupDetail() {
 
       {error && (
         <Box sx={{ mb: 1.5 }}>
-          <ErrorState message={error} onRetry={() => loadGroup(Number(id))} />
+          <ErrorState message={error} onRetry={() => window.location.reload()} />
         </Box>
       )}
 
