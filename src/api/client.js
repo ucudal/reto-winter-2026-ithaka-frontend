@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { env } from '../config/env'
-import { getCache, setCache } from '../utils/cache'
+import { getCache, setCache, clearCache } from '../utils/cache'
 
 const AUTH_TOKEN_KEY = 'ithaka_auth_token'
 
@@ -90,6 +90,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       setAuthToken(null)
+      clearCache()
     }
     return Promise.reject(normalizeError(error))
   },
