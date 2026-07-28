@@ -8,25 +8,18 @@ import {
   Grid,
   LinearProgress,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
 } from "@mui/material";
 
 import { getTutors, getTutorCapacity } from "../api/endpoints/tutors";
-import { getGroups } from "../api/endpoints/groups";
 import { getDashboardSummary } from "../api/endpoints/dashboard";
 import LoadingStateComponent from "./LoadingStateComponent";
 import ErrorState from "./common/ErrorState";
 import EmptyState from "./common/EmptyState";
 
 const USAGE_THRESHOLDS = {
-  warning: 70, // >= 70% -> amarillo
-  critical: 100, // >= 100% -> rojo (sobrecargado)
+  warning: 70,
+  critical: 100,
 };
 
 function usageColor(usagePercentage) {
@@ -35,17 +28,8 @@ function usageColor(usagePercentage) {
   return "success";
 }
 
-// Panel inline (no modal) que se muestra/oculta con el botón "Capacidad"
-// en la pantalla de Tutores. Combina dos vistas relacionadas:
-// 1. Barras de horas usadas por tutor (capacidad real).
-// 2. Tabla de grupos con sus tutores asignados (para ver de un vistazo
-//    quién está cubriendo a quién).
 export default function TutorsCapacityPanel() {
   const [tutorsCapacity, setTutorsCapacity] = useState([]);
-  const [groups, setGroups] = useState([]);
-  // Resumen agregado (total de horas del sistema). Best-effort: si
-  // /api/dashboard/summary todavía no existe (hoy no existe), el panel
-  // igual funciona sin ese renglón, no rompe nada.
   const [overallCapacity, setOverallCapacity] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -59,23 +43,20 @@ export default function TutorsCapacityPanel() {
       setLoading(true);
       setError("");
 
-      const [tutors, groupsData] = await Promise.all([getTutors(), getGroups()]);
+      const tutors = await getTutors();
 
-      // Capacidad de cada tutor, en paralelo (no uno por uno).
       const capacities = await Promise.all(
         tutors.map(async (tutor) => {
           try {
             const capacity = await getTutorCapacity(tutor.id);
             return { ...tutor, capacity };
           } catch {
-            // Si falla un tutor puntual no tiramos abajo todo el panel.
             return { ...tutor, capacity: null };
           }
         }),
       );
 
       setTutorsCapacity(capacities);
-      setGroups(groupsData);
 
       getDashboardSummary()
         .then((summary) => setOverallCapacity(summary?.capacity ?? null))
@@ -109,11 +90,10 @@ export default function TutorsCapacityPanel() {
         </>
       )}
 
-      {/* Barras de horas por tutor */}
       {tutorsCapacity.length === 0 ? (
         <EmptyState title="No hay tutores para mostrar" />
       ) : (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid container spacing={2}>
           {tutorsCapacity.map((tutor) => {
             const capacity = tutor.capacity;
             const usagePercentage = capacity?.usage_percentage ?? 0;
@@ -168,61 +148,6 @@ export default function TutorsCapacityPanel() {
             );
           })}
         </Grid>
-      )}
-
-      <Divider sx={{ mb: 2 }} />
-
-      {/* Grupos con sus tutores asignados */}
-      <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-        Grupos y tutores asignados
-      </Typography>
-
-      {groups.length === 0 ? (
-        <EmptyState title="No hay grupos para mostrar" />
-      ) : (
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Grupo</TableCell>
-                <TableCell>Tutor negocio</TableCell>
-                <TableCell>Tutor técnico</TableCell>
-                <TableCell align="center">Integrantes</TableCell>
-                <TableCell>Estado</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {groups.map((group) => (
-                <TableRow key={group.id} hover>
-                  <TableCell>
-                    <Typography fontWeight={600}>{group.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {group.major}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    {group.businessTutor?.name ?? (
-                      <Chip size="small" color="error" label="Sin asignar" />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {group.technicalTutor?.name ?? (
-                      <Chip size="small" color="warning" label="Sin asignar" />
-                    )}
-                  </TableCell>
-                  <TableCell align="center">{group.students?.length ?? 0}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={group.status === "Active" ? "Activo" : group.status}
-                      color={group.status === "Active" ? "success" : "default"}
-                      size="small"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
       )}
     </Paper>
   );

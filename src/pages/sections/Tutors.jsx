@@ -493,18 +493,6 @@ export default function Tutors() {
                       </TableCell>
                       <TableCell>{tutor.specialty || "-"}</TableCell>
                       <TableCell>{tutor.availability || "-"}</TableCell>
-                      <TableCell>{tutor.max_capacity ?? 0} hs</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={translateStatus(tutor.status)}
-                          size="small"
-                          color={tutor.role === "Business" ? "primary" : "info"}
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>{tutor.specialty || "-"}</TableCell>
-                      <TableCell>{tutor.availability || "-"}</TableCell>
-                      <TableCell>{tutor.max_capacity ?? 0} hs</TableCell>
                       <TableCell>
                         <Chip
                           label={tutor.status === "Active" ? "Activo" : "Inactivo"}
@@ -513,27 +501,6 @@ export default function Tutors() {
                         />
                       </TableCell>
                       <TableCell align="right">
-                        <Tooltip title="Ver perfil">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            component={RouterLink}
-                            to={`/tutors/${tutor.id}`}
-                          >
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title="Editar">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            aria-label={`Editar ${tutor.name}`}
-                            onClick={() => handleOpenEdit(tutor)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
                         {tutor.linkedin_url && (
                           <Tooltip title="Ver LinkedIn">
                             <IconButton
@@ -571,15 +538,15 @@ export default function Tutors() {
                         </Tooltip>
 
                         <Tooltip title="Editar">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          aria-label={`Editar ${tutor.name}`}
-                          onClick={() => handleOpenEdit(tutor)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            aria-label={`Editar ${tutor.name}`}
+                            onClick={() => handleOpenEdit(tutor)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
 
                         <Tooltip title="Eliminar">
                           <IconButton
