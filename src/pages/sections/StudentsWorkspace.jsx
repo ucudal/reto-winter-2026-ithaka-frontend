@@ -532,7 +532,7 @@ export default function StudentWorkspace() {
             </CardContent>
           </Card>
         </Grid>
-      </Grid>
+
         <Grid item xs={12}>
           <Card sx={{ borderRadius: 2, boxShadow: 1 }}>
             <CardContent>
@@ -597,6 +597,7 @@ export default function StudentWorkspace() {
             </CardContent>
           </Card>
         </Grid>
+      </Grid>
       {activeCheckpoint && (
         <PendingCheckpointModal
           open={Boolean(activeCheckpoint)}
