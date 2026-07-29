@@ -98,7 +98,7 @@ export default function StudentWorkspace() {
         return;
       }
 
-      const realGroupId = user.student?.group_id;
+      const realGroupId = user.student?.group_id ?? user.student?.group?.id;
       if (realGroupId) {
         try {
           const realGroup = await getGroupById(realGroupId);
@@ -159,13 +159,30 @@ export default function StudentWorkspace() {
         (meeting) =>
           String(meeting.group_id ?? meeting.groupId) === String(group.id),
       )
-      .map((meeting) => ({
-        id: meeting.id,
-        date: meeting.date,
-        title: meeting.summary || "Reunión",
-        summary: meeting.notes || meeting.next_steps || "",
-        url: meeting.links?.[0]?.url || "",
-      }))
+      .map((meeting) => {
+        const cleanNotes = (meeting.notes || meeting.next_steps || "")
+          .replace(/<[^>]*>?/gm, "")
+          .trim();
+        const displayTitle =
+          meeting.summary?.trim() ||
+          (cleanNotes.length > 0
+            ? cleanNotes.length > 60
+              ? `${cleanNotes.substring(0, 60)}...`
+              : cleanNotes
+            : `Reunión del ${formatDate(meeting.date)}`);
+
+        return {
+          id: meeting.id,
+          date: meeting.date,
+          title: displayTitle,
+          notes: meeting.summary && cleanNotes ? cleanNotes : "",
+          url: Array.isArray(meeting.links)
+            ? meeting.links[0]?.url || ""
+            : typeof meeting.links === "string"
+            ? meeting.links
+            : "",
+        };
+      })
       .sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [group, rawMeetings]);
 
@@ -403,14 +420,16 @@ export default function StudentWorkspace() {
                           {formatDate(minute.date)}
                         </Typography>
                       </Stack>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        display="block"
-                        sx={{ mb: 0.5 }}
-                      >
-                        {minute.summary}
-                      </Typography>
+                      {minute.notes && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                          sx={{ mb: 0.5 }}
+                        >
+                          {minute.notes}
+                        </Typography>
+                      )}
                       {minute.url && (
                         <Button
                           component="a"

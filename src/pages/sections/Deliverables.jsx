@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -31,37 +32,13 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import GroupsIcon from "@mui/icons-material/Groups";
 import AddIcon from "@mui/icons-material/Add";
-
-const initialDeliverablesData = [
-  {
-    id: 1,
-    group_id: 8,
-    group_name: "Grupo 8 - Proyecto Ithaka",
-    stage_name: "Etapa 1: Diagnóstico",
-    expected_date: "2026-04-20",
-    status: "Overdue",
-  },
-  {
-    id: 2,
-    group_id: 9,
-    group_name: "Grupo 9 - Innovación Tech",
-    stage_name: "Etapa 1: Diagnóstico",
-    expected_date: "2026-07-31",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    group_id: 10,
-    group_name: "Grupo 10 - EcoStart",
-    stage_name: "Etapa 2: Propuesta",
-    expected_date: "2026-08-10",
-    status: "In review",
-  },
-];
+import { getGroupDeliverables, getGroups } from "../../api/endpoints/groups";
+import { getTutorGroups } from "../../api/endpoints/tutors";
 
 export default function Deliverables() {
   const { user } = useAuth();
-  const [deliverables, setDeliverables] = useState(initialDeliverablesData);
+  const [deliverables, setDeliverables] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTab, setCurrentTab] = useState("ALL");
 
@@ -76,6 +53,69 @@ export default function Deliverables() {
     expected_date: "",
     status: "Pending",
   });
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadScopedDeliverables() {
+      try {
+        setLoading(true);
+        if (!user) return;
+
+        let targetGroups = [];
+
+        if (user.role === "Student") {
+          const studentGroupId = user.student?.group_id ?? user.student?.group?.id;
+          if (studentGroupId) {
+            targetGroups = [{ id: studentGroupId, name: user.student?.group?.name || `Grupo #${studentGroupId}` }];
+          }
+        } else if (user.role === "BusinessTutor" || user.role === "TechnicalTutor") {
+          const tutorId = user.tutor?.id ?? user.tutor_id ?? user.id;
+          if (tutorId) {
+            targetGroups = await getTutorGroups(tutorId);
+          }
+        } else {
+          // Coordinador
+          targetGroups = await getGroups({ page_size: 100 });
+        }
+
+        if (ignore) return;
+
+        const deliverablesPromises = targetGroups.map(async (g) => {
+          try {
+            const items = await getGroupDeliverables(g.id);
+            return (items || []).map((item) => ({
+              id: item.id,
+              group_id: g.id,
+              group_name: g.name || `Grupo #${g.id}`,
+              stage_name: item.stageName || `Etapa #${item.stageId}`,
+              expected_date: item.expectedDate,
+              status: item.status || "Pending",
+            }));
+          } catch {
+            return [];
+          }
+        });
+
+        const results = await Promise.all(deliverablesPromises);
+        if (!ignore) {
+          setDeliverables(results.flat());
+        }
+      } catch (err) {
+        console.error("Error loading deliverables scope:", err);
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadScopedDeliverables();
+
+    return () => {
+      ignore = true;
+    };
+  }, [user]);
 
   const searchedDeliverables = deliverables.filter((item) => {
     const term = searchTerm.toLowerCase();
@@ -227,7 +267,18 @@ export default function Deliverables() {
         />
       </Box>
 
-      <Grid container spacing={2}>
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : filteredDeliverables.length === 0 ? (
+        <Box sx={{ py: 6, textAlign: "center" }}>
+          <Typography color="text.secondary">
+            No se encontraron entregables para tus grupos asignados.
+          </Typography>
+        </Box>
+      ) : (
+        <Grid container spacing={2}>
         {filteredDeliverables.map((item) => (
           <Grid item xs={12} sm={6} md={4} key={item.id}>
             <Card
@@ -316,6 +367,7 @@ export default function Deliverables() {
           </Grid>
         ))}
       </Grid>
+      )}
 
       <Menu
         anchorEl={anchorEl}

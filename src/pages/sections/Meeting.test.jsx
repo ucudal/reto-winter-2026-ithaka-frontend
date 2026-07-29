@@ -58,12 +58,14 @@ describe("Meetings", () => {
   });
 
 
-  it("renders calendar component", () => {
+  it("renders calendar component", async () => {
     renderWithRouter(<Meetings />);
 
-    expect(
-      screen.getByTestId("calendar")
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("calendar")
+      ).toBeInTheDocument();
+    });
   });
 
 
