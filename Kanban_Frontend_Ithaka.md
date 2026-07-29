@@ -301,16 +301,6 @@ export const mockDashboardSummary = {
    * Si se opta por mockear: mover la lógica actual detrás de un flag, conservando la firma de las 3 funciones para no tocar `CommentFeed.jsx`.
    * Si se opta por ocultar: envolver el `<CommentFeed />` donde se use con una condición clara (y un comentario apuntando a por qué), en vez de dejarlo roto en producción.
 
----
-
-### [FRONTEND] [FEAT-7] Definir el destino de la pantalla de Registro (`Register.jsx`)
-**Labels:** `easy` `design`
-
-* **Descripción:** No es un bug de código sino una decisión de producto pendiente. `Register.jsx` simula un alta de usuario y redirige a `/login` sin llamar a ninguna API — pero el contrato real de backend **no tiene un endpoint público de auto-registro**: la única forma de crear usuarios es `POST/PUT /api/users`, restringido al rol `Coordinator`, y ya está resuelto en `Users.jsx`. Es decir, el flujo de "Crear una cuenta" que hoy cuelga del Login no tiene ningún backend al que conectarse, ni lo va a tener con el modelo de permisos actual.
-* **Tareas específicas:**
-   * Confirmar con Ithaka/coordinador del reto si el alta de usuarios siempre va a ser exclusiva del Coordinador (lo más probable, dado el contrato) o si en algún momento se espera auto-registro.
-   * Si se confirma que es exclusiva del Coordinador: quitar el link "¿No tienes cuenta? Regístrate" de `Login.jsx` y la ruta `/register`, dejando la gestión de usuarios solo en `/users`.
-   * Si se decide mantenerla como demo: marcarla visualmente como "Próximamente" y no simular un éxito falso.
 
 ---
 
@@ -353,10 +343,10 @@ export const mockDashboardSummary = {
 ### [UI-3] Setup de enrutamiento
 **Labels:** `mid` `chore`
 
-* **Descripción:** Es una tarea de configuración base del proyecto. Se define explícitamente que esta tarea debe resolverse antes que cualquier pantalla (Sidebar, Topbar, Login, Register), ya que todas dependen de tener rutas definidas para poder navegar entre ellas. Por ser bloqueante para el resto del equipo, se ubica al principio del Backlog.
+* **Descripción:** Es una tarea de configuración base del proyecto. Se define explícitamente que esta tarea debe resolverse antes que cualquier pantalla (Sidebar, Topbar, Login), ya que todas dependen de tener rutas definidas para poder navegar entre ellas. Por ser bloqueante para el resto del equipo, se ubica al principio del Backlog.
 * **Tareas específicas:**
-   * Configurar React Router con las rutas principales del sistema (login, register, dashboard y una por cada sección del sidebar).
-   * Definir qué rutas son públicas (login, register) y cuáles son protegidas (requieren sesión iniciada).
+   * Configurar React Router con las rutas principales del sistema (login, dashboard y una por cada sección del sidebar).
+   * Definir qué rutas son públicas (login) y cuáles son protegidas (requieren sesión iniciada).
    * Dejar un componente de "ruta protegida" reutilizable para las pantallas que se agreguen después.
 
 ---
@@ -392,18 +382,7 @@ export const mockDashboardSummary = {
    * Simular la autenticación contra un usuario hardcodeado, guardando el estado de "logueado" en contexto o estado local.
    * Redirigir al dashboard (o pantalla principal) tras un login simulado exitoso.
 
----
 
-### [AUTH-2] Register con data mock
-**Labels:** `mid` `feature`
-
-* **Descripción:** Es una tarea de funcionalidad de tamaño mediano. Se define explícitamente que esta pantalla NO debe conectarse al backend todavía, por el mismo motivo que AUTH-1. El alta de usuario se simulará localmente. Cuando el backend tenga el endpoint real, se reemplaza únicamente la lógica de submit.
-* **Tareas específicas:**
-   * Armar el formulario de registro con sus validaciones correspondientes.
-   * Simular el alta de usuario sin conectar a la API real (por ejemplo, guardando el dato en estado local o mostrando un mensaje de éxito simulado).
-   * Redirigir al login (o al dashboard, a definir) tras un registro simulado exitoso.
-
----
 
 ---
 
@@ -442,7 +421,7 @@ export const mockDashboardSummary = {
 ### [UI-7] Sistema de notificaciones (toasts)
 **Labels:** `easy` `feature`
 
-* **Descripción:** Es una tarea de feedback visual de tamaño chico. Se define explícitamente que este sistema debe funcionar de forma independiente de si el backend responde de verdad o no, ya que por ahora se va a probar contra las acciones simuladas de Login/Register (AUTH-1, AUTH-2).
+* **Descripción:** Es una tarea de feedback visual de tamaño chico. Se define explícitamente que este sistema debe funcionar de forma independiente de si el backend responde de verdad o no, ya que por ahora se va a probar contra las acciones simuladas de Login (AUTH-1, AUTH-2).
 * **Tareas específicas:**
    * Elegir e integrar una librería de toasts (o armar una propia simple).
    * Probarla con las acciones simuladas de AUTH-1/AUTH-2 (login exitoso, error de credenciales).
@@ -462,7 +441,7 @@ export const mockDashboardSummary = {
 ### [UI-9] Página de perfil de usuario (con data mock)
 **Labels:** `easy` `feature`
 
-* **Descripción:** Es una tarea de funcionalidad de tamaño chico. Se define explícitamente que esta pantalla debe construirse con datos mockeados del usuario logueado, siguiendo el mismo criterio que Login (AUTH-1) y Register (AUTH-2), de forma que quede lista para conectar a la API real apenas el backend exponga el endpoint correspondiente.
+* **Descripción:** Es una tarea de funcionalidad de tamaño chico. Se define explícitamente que esta pantalla debe construirse con datos mockeados del usuario logueado, siguiendo el mismo criterio que Login (AUTH-1), de forma que quede lista para conectar a la API real apenas el backend exponga el endpoint correspondiente.
 * **Tareas específicas:**
    * Maquetar la pantalla con nombre, rol y datos básicos del usuario mockeado.
    * Agregar botón de "editar perfil" (puede quedar deshabilitado o simulado por ahora).
