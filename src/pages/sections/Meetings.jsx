@@ -1,11 +1,13 @@
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
+  Alert,
   Box,
   Breadcrumbs,
   Button,
   Checkbox,
   Chip,
+  CircularProgress,
   Divider,
   FormControl,
   InputLabel,
@@ -30,7 +32,14 @@ import timeGridPlugin from "@fullcalendar/react/timegrid";
 import esLocale from "@fullcalendar/react/locales/es";
 import classicThemePlugin from "@fullcalendar/react/themes/classic";
 import ReactQuill from "react-quill";
-import { getMeetings, createMeeting, updateMeeting, deleteMeeting } from "../../api/endpoints/meetings";
+import {
+  createMeeting,
+  deleteMeeting,
+  getMeetings,
+  updateMeeting,
+} from "../../api/endpoints/meetings";
+import { getGroups } from "../../api/endpoints/groups";
+import { getTutors } from "../../api/endpoints/tutors";
 import "@fullcalendar/react/skeleton.css";
 import "@fullcalendar/react/themes/classic/theme.css";
 import "@fullcalendar/react/themes/classic/palette.css";
@@ -53,17 +62,6 @@ const calendarViews = [
   { value: "dayGridMonth", label: "Mes" },
 ];
 
-const groups = ["Grupo 1", "Grupo 2", "Grupo 3"];
-const tutors = ["Ana Pérez", "Juan Silva", "María Rodríguez", "Carlos Gómez"];
-const participants = [
-  "Sofía Martínez",
-  "Mateo Fernández",
-  "Valentina López",
-  "Santiago García",
-  "Camila Rodríguez",
-  "Joaquín Pereira",
-];
-
 const padNumber = (value) => String(value).padStart(2, "0");
 
 const formatDateInput = (date) =>
@@ -82,13 +80,89 @@ const createMeetingForm = (
     title: "",
     group: "",
     tutors: [],
+    status: "Scheduled",
     date: formatDateInput(startDate),
     startTime: formatTimeInput(startDate),
     endTime: formatTimeInput(endDate),
     participants: [],
     attendance: {},
     link: "",
+    links: [],
     notes: "",
+    nextSteps: "",
+  };
+};
+
+const getEntityId = (value) =>
+  value && typeof value === "object"
+    ? (value.student_id ?? value.id)
+    : value;
+
+const normalizeIds = (values) =>
+  Array.isArray(values)
+    ? values
+        .map(getEntityId)
+        .filter((value) => value !== null && value !== undefined)
+    : [];
+
+const getGroupId = (meeting) =>
+  meeting.group_id ?? meeting.groupId ?? meeting.group?.id ?? null;
+
+const getTutorName = (tutor) =>
+  tutor?.name || tutor?.user?.name || `Tutor #${tutor?.id}`;
+
+const getParticipantName = (participant) =>
+  participant?.name ||
+  participant?.user?.name ||
+  `Estudiante #${participant?.id}`;
+
+const findById = (items, id) =>
+  items.find((item) => String(item.id) === String(id));
+
+const getAttendance = (participants) =>
+  Object.fromEntries(
+    (participants ?? []).map((participant) => [
+      getEntityId(participant),
+      Boolean(participant?.attended),
+    ]),
+  );
+
+const toApiId = (value) => {
+  const numericId = Number(value);
+  return Number.isNaN(numericId) ? value : numericId;
+};
+
+const meetingToCalendarEvent = (meeting, availableGroups) => {
+  if (!meeting?.date) return null;
+  const start = new Date(meeting.date);
+  if (Number.isNaN(start.getTime())) return null;
+
+  const groupId = getGroupId(meeting);
+  const group = findById(availableGroups, groupId) || meeting.group || null;
+  const hoursSpent = Number(meeting.hours_spent ?? meeting.hoursSpent);
+  const durationInHours =
+    Number.isFinite(hoursSpent) && hoursSpent > 0 ? hoursSpent : 1;
+  const end = new Date(start.getTime() + durationInHours * 60 * 60 * 1000);
+  const groupName = group?.name;
+
+  return {
+    id: String(meeting.id),
+    title:
+      meeting.summary ||
+      (groupName ? `Reunión - ${groupName}` : `Reunión #${meeting.id}`),
+    start: meeting.date,
+    end: end.toISOString(),
+    extendedProps: {
+      groupId,
+      tutorIds: normalizeIds(meeting.tutor_ids ?? meeting.tutorIds),
+      participantIds: normalizeIds(meeting.participants),
+      attendance: getAttendance(meeting.participants),
+      summary: meeting.summary ?? "",
+      status: meeting.status ?? "Scheduled",
+      notes: meeting.notes ?? "",
+      nextSteps: meeting.next_steps ?? meeting.nextSteps ?? "",
+      links: Array.isArray(meeting.links) ? meeting.links : [],
+    },
   };
 };
 
@@ -101,18 +175,22 @@ const meetingToForm = (meeting) => {
       : new Date(meeting.end)
     : new Date(startDate.getTime() + 60 * 60 * 1000);
   const details = meeting.extendedProps ?? {};
+  const links = Array.isArray(details.links) ? details.links : [];
 
   return {
-    title: meeting.title,
-    group: details.group ?? "",
-    tutors: details.tutors ?? [],
+    title: details.summary ?? "",
+    group: details.groupId ?? "",
+    tutors: details.tutorIds ?? [],
+    status: details.status ?? "Scheduled",
     date: formatDateInput(startDate),
     startTime: formatTimeInput(startDate),
     endTime: formatTimeInput(endDate),
-    participants: details.participants ?? [],
+    participants: details.participantIds ?? [],
     attendance: details.attendance ?? {},
-    link: details.link ?? "",
+    link: links[0]?.url ?? "",
+    links,
     notes: details.notes ?? "",
+    nextSteps: details.nextSteps ?? "",
   };
 };
 
@@ -124,42 +202,88 @@ function Meetings() {
   const calendarRef = useRef(null);
   const [selectedView, setSelectedView] = useState("timeGridWeek");
   const [meetings, setMeetings] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [tutors, setTutors] = useState([]);
+  const [loadingMeetings, setLoadingMeetings] = useState(true);
+  const [meetingsError, setMeetingsError] = useState("");
+  const [savingMeeting, setSavingMeeting] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [popoverMode, setPopoverMode] = useState("create");
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [meetingForm, setMeetingForm] = useState(createMeetingForm);
 
+  const loadMeetings = useCallback(async () => {
+    try {
+      setLoadingMeetings(true);
+      setMeetingsError("");
+      const data = await getMeetings();
+      setMeetings(data);
+    } catch (err) {
+      setMeetingsError(err?.message || "No se pudieron cargar las reuniones.");
+    } finally {
+      setLoadingMeetings(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const data = await getMeetings();
-        setMeetings(data);
-      } catch (err) {
-        console.error("Error loading meetings", err);
+    loadMeetings();
+  }, [loadMeetings]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadReferenceData = async () => {
+      const [groupsResult, tutorsResult] = await Promise.allSettled([
+        getGroups({ page_size: 100 }),
+        getTutors(),
+      ]);
+
+      if (ignore) return;
+
+      if (groupsResult.status === "fulfilled") {
+        setGroups(groupsResult.value);
+      }
+      if (tutorsResult.status === "fulfilled") {
+        setTutors(tutorsResult.value);
       }
     };
-    fetchMeetings();
+
+    loadReferenceData();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
+
+  const calendarMeetings = useMemo(
+    () =>
+      meetings
+        .map((meeting) => meetingToCalendarEvent(meeting, groups))
+        .filter(Boolean),
+    [groups, meetings],
+  );
 
   const filteredMeetings = useMemo(() => {
     if (!user) return [];
-    if (user.role !== "Student") return meetings;
+    if (user.role !== "Student") return calendarMeetings;
 
-    const studentName = user.student?.name || user.name;
-    const studentGroupName = user.student?.group?.name || "";
+    const studentGroupId =
+      user.student?.group_id ?? user.student?.group?.id ?? null;
 
-    return meetings.filter((meeting) => {
-      const groupName = meeting.extendedProps?.group;
-      const parts = meeting.extendedProps?.participants ?? [];
-      return (
-        (groupName && studentGroupName && groupName.toLowerCase().includes(studentGroupName.toLowerCase())) ||
-        parts.some((p) => p.toLowerCase().includes(studentName.toLowerCase())) ||
-        (studentName === "Ana Fernández" && (groupName === "Grupo 1" || parts.includes("Sofía Martínez"))) ||
-        (studentName === "Luca Rossi" && (groupName === "Grupo 1" || parts.includes("Mateo Fernández")))
-      );
-    });
-  }, [meetings, user]);
+    if (studentGroupId === null) return [];
+
+    return calendarMeetings.filter(
+      (meeting) =>
+        String(meeting.extendedProps?.groupId) === String(studentGroupId),
+    );
+  }, [calendarMeetings, user]);
+
+  const selectedGroup = useMemo(
+    () => findById(groups, meetingForm.group),
+    [groups, meetingForm.group],
+  );
+  const participants = selectedGroup?.students ?? [];
 
   const handleViewChange = (event) => {
     const view = event.target.value;
@@ -243,13 +367,19 @@ function Meetings() {
     if (!selectedMeetingId) return;
 
     try {
+      setSavingMeeting(true);
+      setMeetingsError("");
       await deleteMeeting(selectedMeetingId);
       setMeetings((currentMeetings) =>
-        currentMeetings.filter((meeting) => meeting.id !== selectedMeetingId),
+        currentMeetings.filter(
+          (meeting) => String(meeting.id) !== String(selectedMeetingId),
+        ),
       );
       handleClosePopover();
     } catch (err) {
-      console.error("Error deleting meeting", err);
+      setMeetingsError(err?.message || "No se pudo eliminar la reunión.");
+    } finally {
+      setSavingMeeting(false);
     }
   };
 
@@ -262,84 +392,27 @@ function Meetings() {
     }));
   };
 
-  const handleNotesChange = async (notes) => {
-    setMeetingForm((currentForm) => ({ ...currentForm, notes }));
-
-    if (selectedMeetingId) {
-      try {
-        const currentMeeting = meetings.find(m => m.id === selectedMeetingId);
-        const updatedData = {
-          title: currentMeeting.title,
-          start: currentMeeting.start,
-          end: currentMeeting.end,
-          extendedProps: {
-            ...currentMeeting.extendedProps,
-            notes,
-          },
-        };
-        await updateMeeting(selectedMeetingId, updatedData);
-
-        setMeetings((currentMeetings) =>
-          currentMeetings.map((meeting) =>
-            meeting.id === selectedMeetingId
-              ? {
-                  ...meeting,
-                  extendedProps: {
-                    ...meeting.extendedProps,
-                    notes,
-                  },
-                }
-              : meeting,
-          ),
-        );
-      } catch (err) {
-        console.error("Error updating notes", err);
-      }
-    }
-  };
-
-  const handleAttendanceChange = async (participant) => {
-    const attendance = {
-      ...meetingForm.attendance,
-      [participant]: !meetingForm.attendance[participant],
-    };
-
+  const handleGroupChange = (event) => {
     setMeetingForm((currentForm) => ({
       ...currentForm,
-      attendance,
+      group: event.target.value,
+      participants: [],
+      attendance: {},
     }));
+  };
 
-    if (selectedMeetingId) {
-      try {
-        const currentMeeting = meetings.find(m => m.id === selectedMeetingId);
-        const updatedData = {
-          title: currentMeeting.title,
-          start: currentMeeting.start,
-          end: currentMeeting.end,
-          extendedProps: {
-            ...currentMeeting.extendedProps,
-            attendance,
-          },
-        };
-        await updateMeeting(selectedMeetingId, updatedData);
+  const handleNotesChange = (notes) => {
+    setMeetingForm((currentForm) => ({ ...currentForm, notes }));
+  };
 
-        setMeetings((currentMeetings) =>
-          currentMeetings.map((meeting) =>
-            meeting.id === selectedMeetingId
-              ? {
-                  ...meeting,
-                  extendedProps: {
-                    ...meeting.extendedProps,
-                    attendance,
-                  },
-                }
-              : meeting,
-          ),
-        );
-      } catch (err) {
-        console.error("Error updating attendance", err);
-      }
-    }
+  const handleAttendanceChange = (participantId) => {
+    setMeetingForm((currentForm) => ({
+      ...currentForm,
+      attendance: {
+        ...currentForm.attendance,
+        [participantId]: !currentForm.attendance[participantId],
+      },
+    }));
   };
 
   const hasInvalidTime =
@@ -348,7 +421,6 @@ function Meetings() {
     meetingForm.endTime <= meetingForm.startTime;
 
   const canCreateMeeting =
-    meetingForm.title.trim() &&
     meetingForm.group &&
     meetingForm.tutors.length > 0 &&
     meetingForm.date &&
@@ -364,49 +436,61 @@ function Meetings() {
 
     if (!canCreateMeeting) return;
 
+    const start = new Date(
+      `${meetingForm.date}T${meetingForm.startTime}:00`,
+    );
+    const end = new Date(`${meetingForm.date}T${meetingForm.endTime}:00`);
+    const existingLinks = meetingForm.links ?? [];
+    const link = meetingForm.link.trim();
+    const links = link
+      ? [
+          {
+            type: existingLinks[0]?.type || "Drive",
+            url: link,
+          },
+          ...existingLinks.slice(1),
+        ]
+      : existingLinks.slice(1);
+
     const meetingPayload = {
-      title: meetingForm.title.trim(),
-      start: `${meetingForm.date}T${meetingForm.startTime}:00`,
-      end: `${meetingForm.date}T${meetingForm.endTime}:00`,
-      extendedProps: {
-        group: meetingForm.group,
-        tutors: meetingForm.tutors,
-        participants: meetingForm.participants,
-        attendance: Object.fromEntries(
-          meetingForm.participants.map((participant) => [
-            participant,
-            Boolean(meetingForm.attendance[participant]),
-          ]),
-        ),
-        link: meetingForm.link.trim(),
-        notes: meetingForm.notes,
-      },
+      group_id: toApiId(meetingForm.group),
+      tutor_ids: meetingForm.tutors.map(toApiId),
+      status: meetingForm.status,
+      date: start.toISOString(),
+      participants: meetingForm.participants.map((participantId) => ({
+        student_id: toApiId(participantId),
+        attended: Boolean(meetingForm.attendance[participantId]),
+      })),
+      summary: meetingForm.title.trim() || null,
+      notes: meetingForm.notes || null,
+      next_steps: meetingForm.nextSteps || null,
+      hours_spent: Number(
+        ((end.getTime() - start.getTime()) / (60 * 60 * 1000)).toFixed(2),
+      ),
+      links,
     };
 
     try {
+      setSavingMeeting(true);
+      setMeetingsError("");
       if (isEditingMeeting) {
-        const updated = await updateMeeting(selectedMeetingId, meetingPayload);
-        setMeetings((currentMeetings) =>
-          currentMeetings.map((meeting) =>
-            meeting.id === selectedMeetingId
-              ? { ...meeting, ...updated }
-              : meeting,
-          ),
-        );
+        await updateMeeting(selectedMeetingId, meetingPayload);
       } else {
-        const created = await createMeeting(meetingPayload);
-        setMeetings((currentMeetings) => [...currentMeetings, created]);
+        await createMeeting(meetingPayload);
       }
 
+      await loadMeetings();
       handleClosePopover();
     } catch (err) {
-      console.error("Error saving meeting", err);
+      setMeetingsError(err?.message || "No se pudo guardar la reunión.");
+    } finally {
+      setSavingMeeting(false);
     }
   };
 
   const handleCancelEdit = () => {
-    const selectedMeeting = meetings.find(
-      (meeting) => meeting.id === selectedMeetingId,
+    const selectedMeeting = calendarMeetings.find(
+      (meeting) => String(meeting.id) === String(selectedMeetingId),
     );
 
     if (selectedMeeting) {
@@ -473,6 +557,12 @@ function Meetings() {
         </Box>
       </Box>
 
+      {meetingsError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {meetingsError}
+        </Alert>
+      )}
+
       <Paper
         variant="outlined"
         sx={{
@@ -537,41 +627,54 @@ function Meetings() {
           },
         }}
       >
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[
-            classicThemePlugin,
-            dayGridPlugin,
-            timeGridPlugin,
-            interactionPlugin,
-          ]}
-          themeSystem="classic"
-          initialView={selectedView}
-          locale={esLocale}
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "",
-          }}
-          buttons={{
-            today: {
-              text: "Hoy",
-              display: "text",
-            },
-          }}
-          toolbarTitleClass="meetings-calendar-title"
-          allDayText="Todo el día"
-          events={filteredMeetings}
-          dateClick={handleDateClick}
-          eventClick={handleEventClick}
-          selectable
-          selectMirror
-          selectMinDistance={5}
-          select={handleDateSelection}
-          height="calc(100vh - 240px)"
-          dayMaxEvents
-          nowIndicator
-        />
+        {loadingMeetings ? (
+          <Box
+            sx={{
+              minHeight: "calc(100vh - 240px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[
+              classicThemePlugin,
+              dayGridPlugin,
+              timeGridPlugin,
+              interactionPlugin,
+            ]}
+            themeSystem="classic"
+            initialView={selectedView}
+            locale={esLocale}
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "",
+            }}
+            buttons={{
+              today: {
+                text: "Hoy",
+                display: "text",
+              },
+            }}
+            toolbarTitleClass="meetings-calendar-title"
+            allDayText="Todo el día"
+            events={filteredMeetings}
+            dateClick={handleDateClick}
+            eventClick={handleEventClick}
+            selectable
+            selectMirror
+            selectMinDistance={5}
+            select={handleDateSelection}
+            height="calc(100vh - 240px)"
+            dayMaxEvents
+            nowIndicator
+          />
+        )}
       </Paper>
 
       <Popover
@@ -635,7 +738,6 @@ function Meetings() {
               value={meetingForm.title}
               onChange={handleFormChange}
               size="small"
-              required
               InputProps={{ readOnly: isViewingMeeting }}
               autoFocus={!isViewingMeeting}
               fullWidth
@@ -648,12 +750,12 @@ function Meetings() {
                 name="group"
                 value={meetingForm.group}
                 label="Grupo"
-                onChange={handleFormChange}
+                onChange={handleGroupChange}
                 readOnly={isViewingMeeting}
               >
                 {groups.map((group) => (
-                  <MenuItem key={group} value={group}>
-                    {group}
+                  <MenuItem key={group.id} value={group.id}>
+                    {group.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -671,16 +773,27 @@ function Meetings() {
                 readOnly={isViewingMeeting}
                 renderValue={(selected) => (
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                    {selected.map((tutor) => (
-                      <Chip key={tutor} label={tutor} size="small" />
-                    ))}
+                    {selected.map((tutorId) => {
+                      const tutor = findById(tutors, tutorId);
+                      return (
+                        <Chip
+                          key={tutorId}
+                          label={tutor ? getTutorName(tutor) : `Tutor #${tutorId}`}
+                          size="small"
+                        />
+                      );
+                    })}
                   </Box>
                 )}
               >
                 {tutors.map((tutor) => (
-                  <MenuItem key={tutor} value={tutor}>
-                    <Checkbox checked={meetingForm.tutors.includes(tutor)} />
-                    <ListItemText primary={tutor} />
+                  <MenuItem key={tutor.id} value={tutor.id}>
+                    <Checkbox
+                      checked={meetingForm.tutors.some(
+                        (tutorId) => String(tutorId) === String(tutor.id),
+                      )}
+                    />
+                    <ListItemText primary={getTutorName(tutor)} />
                   </MenuItem>
                 ))}
               </Select>
@@ -749,22 +862,32 @@ function Meetings() {
                 readOnly={isViewingMeeting}
                 renderValue={(selected) => (
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                    {selected.map((participant) => (
-                      <Chip
-                        key={participant}
-                        label={participant}
-                        size="small"
-                      />
-                    ))}
+                    {selected.map((participantId) => {
+                      const participant = findById(participants, participantId);
+                      return (
+                        <Chip
+                          key={participantId}
+                          label={
+                            participant
+                              ? getParticipantName(participant)
+                              : `Estudiante #${participantId}`
+                          }
+                          size="small"
+                        />
+                      );
+                    })}
                   </Box>
                 )}
               >
                 {participants.map((participant) => (
-                  <MenuItem key={participant} value={participant}>
+                  <MenuItem key={participant.id} value={participant.id}>
                     <Checkbox
-                      checked={meetingForm.participants.includes(participant)}
+                      checked={meetingForm.participants.some(
+                        (participantId) =>
+                          String(participantId) === String(participant.id),
+                      )}
                     />
-                    <ListItemText primary={participant} />
+                    <ListItemText primary={getParticipantName(participant)} />
                   </MenuItem>
                 ))}
               </Select>
@@ -805,6 +928,7 @@ function Meetings() {
                     variant="contained"
                     color="error"
                     onClick={handleDeleteMeeting}
+                    disabled={savingMeeting}
                   >
                     Eliminar
                   </Button>
@@ -824,7 +948,7 @@ function Meetings() {
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={!canCreateMeeting}
+                    disabled={!canCreateMeeting || savingMeeting}
                   >
                     Guardar cambios
                   </Button>
@@ -837,7 +961,7 @@ function Meetings() {
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={!canCreateMeeting}
+                    disabled={!canCreateMeeting || savingMeeting}
                   >
                     Crear reunión
                   </Button>
@@ -875,7 +999,7 @@ function Meetings() {
               value={meetingForm.notes}
               onChange={handleNotesChange}
               modules={notesEditorModules}
-              readOnly={user?.role === "Student"}
+              readOnly={isViewingMeeting || user?.role === "Student"}
             />
           </Box>
         )}
@@ -915,15 +1039,25 @@ function Meetings() {
                       borderColor: "divider",
                     }}
                   >
-                    <Typography variant="body2">{participant}</Typography>
+                    <Typography variant="body2">
+                      {getParticipantName(
+                        findById(participants, participant) || {
+                          id: participant,
+                        },
+                      )}
+                    </Typography>
                     <Checkbox
                       checked={Boolean(
                         meetingForm.attendance[participant],
                       )}
                       onChange={() => handleAttendanceChange(participant)}
-                      disabled={user?.role === "Student"}
+                      disabled={isViewingMeeting || user?.role === "Student"}
                       inputProps={{
-                        "aria-label": `Marcar asistencia de ${participant}`,
+                        "aria-label": `Marcar asistencia de ${getParticipantName(
+                          findById(participants, participant) || {
+                            id: participant,
+                          },
+                        )}`,
                       }}
                     />
                   </Box>

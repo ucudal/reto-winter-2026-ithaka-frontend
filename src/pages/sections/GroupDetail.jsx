@@ -32,6 +32,7 @@ import {
   updateGroupTutors,
   getGroupDeliverables,
 } from "../../api/endpoints/groups";
+import { getGroupMeetingTotalHours } from "../../api/endpoints/meetings";
 import { updateDeliverable } from "../../api/endpoints/deliverables";
 import { getCohortStages } from "../../api/endpoints/cohorts";
 import { getTutors } from "../../api/endpoints/tutors";
@@ -90,6 +91,9 @@ export default function GroupDetail() {
   const [loadingTutors, setLoadingTutors] = useState(false);
   const [loadingDeliverables, setLoadingDeliverables] = useState(false);
   const [error, setError] = useState("");
+  const [meetingHours, setMeetingHours] = useState(null);
+  const [loadingMeetingHours, setLoadingMeetingHours] = useState(false);
+  const [meetingHoursError, setMeetingHoursError] = useState("");
 
   const [statusMenuAnchor, setStatusMenuAnchor] = useState(null);
   const [statusMenuDeliverable, setStatusMenuDeliverable] = useState(null);
@@ -137,6 +141,42 @@ export default function GroupDetail() {
 
     if (id) {
       fetchData();
+    }
+
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const fetchMeetingHours = async () => {
+      try {
+        setLoadingMeetingHours(true);
+        setMeetingHours(null);
+        setMeetingHoursError("");
+
+        const data = await getGroupMeetingTotalHours(Number(id));
+
+        if (!ignore) {
+          setMeetingHours(data);
+        }
+      } catch (err) {
+        if (!ignore) {
+          setMeetingHoursError(
+            err?.message || "No se pudieron cargar las horas de reuniones.",
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingMeetingHours(false);
+        }
+      }
+    };
+
+    if (id) {
+      fetchMeetingHours();
     }
 
     return () => {
@@ -327,7 +367,7 @@ export default function GroupDetail() {
       <Card sx={{ ...CARD_SX, mb: 1.5 }}>
         <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <Typography variant="caption" color="text.secondary" display="block">
                 Cohorte
               </Typography>
@@ -341,7 +381,7 @@ export default function GroupDetail() {
                 </Typography>
               )}
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <Typography variant="caption" color="text.secondary" display="block">
                 Carrera
               </Typography>
@@ -349,7 +389,7 @@ export default function GroupDetail() {
                 {group.major || "—"}
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <Typography variant="caption" color="text.secondary" display="block">
                 Idea de proyecto
               </Typography>
@@ -358,6 +398,32 @@ export default function GroupDetail() {
                   {group.idea || "Sin idea registrada"}
                 </Typography>
               </Tooltip>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Horas de reuniones
+              </Typography>
+              {loadingMeetingHours ? (
+                <CircularProgress size={18} aria-label="Cargando horas de reuniones" />
+              ) : meetingHoursError ? (
+                <Typography variant="caption" color="error">
+                  {meetingHoursError}
+                </Typography>
+              ) : meetingHours ? (
+                <>
+                  <Typography variant="body2" fontWeight={500}>
+                    {meetingHours.total_hours ?? "—"} h /{" "}
+                    {meetingHours.max_capacity ?? "—"} h
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {meetingHours.remaining_hours ?? "—"} h restantes
+                  </Typography>
+                </>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Sin datos
+                </Typography>
+              )}
             </Grid>
           </Grid>
         </CardContent>

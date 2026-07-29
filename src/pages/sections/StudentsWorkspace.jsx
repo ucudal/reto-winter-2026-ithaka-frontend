@@ -21,9 +21,9 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import { useAuth } from "../../context/AuthContext";
-import { mockMinutes } from "../../data/mockWorkspace";
 import EmptyState from "../../components/common/EmptyState";
 import { getGroupById, getGroupDeliverables } from "../../api/endpoints/groups";
+import { getMeetings } from "../../api/endpoints/meetings";
 
 const LINK_LABELS = {
   Drive: "Drive",
@@ -41,7 +41,11 @@ function getInitials(name) {
 }
 
 function formatDate(isoDate) {
-  return new Date(`${isoDate}T00:00:00`).toLocaleDateString("es-UY", {
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(isoDate)
+    ? new Date(`${isoDate}T00:00:00`)
+    : new Date(isoDate);
+
+  return date.toLocaleDateString("es-UY", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -84,6 +88,7 @@ export default function StudentWorkspace() {
   const { user } = useAuth();
   const [group, setGroup] = useState(null);
   const [rawDeliverables, setRawDeliverables] = useState([]);
+  const [rawMeetings, setRawMeetings] = useState([]);
   const [loadingWorkspace, setLoadingWorkspace] = useState(true);
 
   useEffect(() => {
@@ -98,12 +103,29 @@ export default function StudentWorkspace() {
         try {
           const realGroup = await getGroupById(realGroupId);
           setGroup(realGroup);
-          try {
-            const deliverablesData = await getGroupDeliverables(realGroupId);
-            setRawDeliverables(deliverablesData || []);
-          } catch (err) {
-            console.error("Error fetching deliverables for student workspace:", err);
+          const [deliverablesResult, meetingsResult] = await Promise.allSettled([
+            getGroupDeliverables(realGroupId),
+            getMeetings(),
+          ]);
+
+          if (deliverablesResult.status === "fulfilled") {
+            setRawDeliverables(deliverablesResult.value || []);
+          } else {
+            console.error(
+              "Error fetching deliverables for student workspace:",
+              deliverablesResult.reason,
+            );
             setRawDeliverables([]);
+          }
+
+          if (meetingsResult.status === "fulfilled") {
+            setRawMeetings(meetingsResult.value || []);
+          } else {
+            console.error(
+              "Error fetching meetings for student workspace:",
+              meetingsResult.reason,
+            );
+            setRawMeetings([]);
           }
           setLoadingWorkspace(false);
           return;
@@ -132,10 +154,20 @@ export default function StudentWorkspace() {
 
   const minutes = useMemo(() => {
     if (!group) return [];
-    return mockMinutes
-      .filter((m) => m.groupId === group.id)
+    return rawMeetings
+      .filter(
+        (meeting) =>
+          String(meeting.group_id ?? meeting.groupId) === String(group.id),
+      )
+      .map((meeting) => ({
+        id: meeting.id,
+        date: meeting.date,
+        title: meeting.summary || "Reunión",
+        summary: meeting.notes || meeting.next_steps || "",
+        url: meeting.links?.[0]?.url || "",
+      }))
       .sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [group]);
+  }, [group, rawMeetings]);
 
   if (loadingWorkspace) {
     return (
@@ -379,17 +411,19 @@ export default function StudentWorkspace() {
                       >
                         {minute.summary}
                       </Typography>
-                      <Button
-                        component="a"
-                        href={minute.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        size="small"
-                        endIcon={<ArrowForwardIcon fontSize="small" />}
-                        sx={{ textTransform: "none", pl: 0 }}
-                      >
-                        Ver minuta
-                      </Button>
+                      {minute.url && (
+                        <Button
+                          component="a"
+                          href={minute.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          size="small"
+                          endIcon={<ArrowForwardIcon fontSize="small" />}
+                          sx={{ textTransform: "none", pl: 0 }}
+                        >
+                          Ver minuta
+                        </Button>
+                      )}
                     </Box>
                   ))}
                 </Stack>
