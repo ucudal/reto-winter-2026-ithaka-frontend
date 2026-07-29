@@ -29,3 +29,9 @@ export async function upsertTutor(payload) {
   const { data } = await apiClient.put("/api/tutors", payload);
   return data;
 }
+
+export async function getTutorCapacity(id) {
+  const { data } = await apiClient.get(`/api/tutors/${id}/capacity`);
+  return data;
+}
+
