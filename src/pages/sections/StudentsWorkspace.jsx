@@ -12,11 +12,13 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 import GroupsIcon from "@mui/icons-material/Groups";
 import SchoolIcon from "@mui/icons-material/School";
 import LinkIcon from "@mui/icons-material/Link";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import EventNoteOutlinedIcon from "@mui/icons-material/EventNoteOutlined";
+import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
@@ -24,6 +26,7 @@ import { useAuth } from "../../context/AuthContext";
 import EmptyState from "../../components/common/EmptyState";
 import { getGroupById, getGroupDeliverables } from "../../api/endpoints/groups";
 import { getMeetings } from "../../api/endpoints/meetings";
+import { getMaterials } from "../../api/endpoints/materials";
 
 import { getPendingCheckpoints, submitCheckpointResponse } from "../../api/endpoints/checkpoints";
 import PendingCheckpointModal from "../../components/PendingCheckpointModal";
@@ -94,6 +97,23 @@ export default function StudentWorkspace() {
   const [rawMeetings, setRawMeetings] = useState([]);
   const [loadingWorkspace, setLoadingWorkspace] = useState(true);
   const [activeCheckpoint, setActiveCheckpoint] = useState(null);
+  const [materials, setMaterials] = useState([]);
+  const [loadingMaterials, setLoadingMaterials] = useState(true);
+
+  useEffect(() => {
+    async function loadMaterials() {
+      try {
+        const materialsData = await getMaterials();
+        setMaterials(materialsData || []);
+      } catch (err) {
+        console.error("Error fetching materials for student workspace:", err);
+        setMaterials([]);
+      } finally {
+        setLoadingMaterials(false);
+      }
+    }
+    loadMaterials();
+  }, []);
 
   useEffect(() => {
     async function loadWorkspaceGroup() {
@@ -158,7 +178,7 @@ export default function StudentWorkspace() {
     return rawDeliverables
       .map((d) => ({
         id: d.id,
-        title: d.stageName || `Etapa #${d.stageId}`,
+        title: d.stageName || "Entrega pendiente",
         dueDate: d.expectedDate,
         status: d.status,
         meta: getDueMeta(d.expectedDate, d.status),
@@ -260,11 +280,13 @@ export default function StudentWorkspace() {
         <Card
           sx={{
             mb: 3,
-            borderRadius: 3,
-            overflow: "hidden",
-            background: (theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-            color: "primary.contrastText",
+            borderRadius: 2,
+            boxShadow: 1,
+            borderLeft: "4px solid",
+            borderColor:
+              nextDeliverable.meta.color === "default"
+                ? "divider"
+                : `${nextDeliverable.meta.color}.main`,
           }}
         >
           <CardContent
@@ -277,7 +299,7 @@ export default function StudentWorkspace() {
             }}
           >
             <Box>
-              <Typography variant="overline" sx={{ opacity: 0.85, letterSpacing: 1 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1 }}>
                 Próxima entrega
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -287,11 +309,10 @@ export default function StudentWorkspace() {
 
             <Chip
               label={nextDeliverable.meta.label}
-              sx={{
-                bgcolor: "rgba(255,255,255,0.16)",
-                color: "inherit",
-                fontWeight: 600,
-              }}
+              color={nextDeliverable.meta.color}
+              size="small"
+              variant={nextDeliverable.meta.color === "default" ? "outlined" : "filled"}
+              sx={{ fontWeight: 600 }}
             />
           </CardContent>
         </Card>
@@ -512,7 +533,70 @@ export default function StudentWorkspace() {
           </Card>
         </Grid>
       </Grid>
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 2, boxShadow: 1 }}>
+            <CardContent>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mb: 2 }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <MenuBookOutlinedIcon color="action" fontSize="small" />
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Base de conocimiento
+                  </Typography>
+                </Stack>
 
+                <Button
+                  component={RouterLink}
+                  to="/knowledge"
+                  size="small"
+                  endIcon={<ArrowForwardIcon fontSize="small" />}
+                  sx={{ textTransform: "none" }}
+                >
+                  Ver todos los materiales
+                </Button>
+              </Stack>
+
+              {loadingMaterials ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <CircularProgress size={20} />
+                </Box>
+              ) : materials.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  Todavía no hay materiales cargados.
+                </Typography>
+              ) : (
+                <Stack divider={<Divider />} spacing={1.5}>
+                  {materials.slice(0, 5).map((material) => (
+                    <Stack
+                      key={material.id}
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      spacing={1}
+                    >
+                      <Typography variant="body2">{material.title}</Typography>
+                      <Button
+                        component="a"
+                        href={material.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="small"
+                        endIcon={<OpenInNewIcon fontSize="small" />}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Abrir
+                      </Button>
+                    </Stack>
+                  ))}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
       {activeCheckpoint && (
         <PendingCheckpointModal
           open={Boolean(activeCheckpoint)}
