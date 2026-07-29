@@ -65,7 +65,16 @@ function SectionHeader({ icon, title, helpText, chipLabel, chipColor = "default"
         </Typography>
       </Box>
       {chipLabel && (
-        <Tooltip title={helpText} arrow placement="top">
+        <Tooltip
+          title={helpText}
+          arrow
+          placement="top"
+          componentsProps={{
+            tooltip: {
+              sx: { fontSize: "0.85rem", maxWidth: 320, lineHeight: 1.4 },
+            },
+          }}
+        >
           <Chip
             label={chipLabel}
             color={chipColor}
@@ -103,7 +112,7 @@ function StatTile({ icon, label, value, severity }) {
           }}
         >
           {icon}
-          <Typography variant="caption" color="text.secondary" fontWeight="medium">
+          <Typography variant="body2" color="text.secondary" fontWeight="medium">
             {label}
           </Typography>
         </Box>
@@ -211,7 +220,7 @@ export default function Dashboard() {
     (item) => item.hours_used > GROUP_HOURS_QUOTA,
   ).length;
 
-  const chartTickStyle = { fontSize: 10 };
+  const chartTickStyle = { fontSize: 12 };
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -313,7 +322,7 @@ export default function Dashboard() {
                   }}
                 />
               </Box>
-              <Typography variant="caption" color="text.secondary" align="center" display="block">
+              <Typography variant="body2" color="text.secondary" align="center" display="block">
                 {capacity.total_used_hours} / {capacity.total_available_hours} hs
               </Typography>
             </CardContent>
@@ -331,7 +340,7 @@ export default function Dashboard() {
                 helpText="Cantidad de grupos activos según la etapa del proceso (Ideación, Anteproyecto, Proyecto Final) en la que se encuentran."
               />
               {groups_by_stage.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   Sin etapas activas.
                 </Typography>
               ) : (
@@ -367,7 +376,7 @@ export default function Dashboard() {
                 helpText="Cantidad de grupos activos agrupados por cohorte (año y semestre en el que ingresaron)."
               />
               {groups_by_cohort.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   Sin cohortes activas.
                 </Typography>
               ) : (
@@ -401,7 +410,7 @@ export default function Dashboard() {
                 helpText={`Horas de tutoría registradas por grupo, comparadas contra el cupo de referencia de ${GROUP_HOURS_QUOTA}hs definido en la propuesta. La línea punteada marca ese límite.`}
               />
               {topHoursByGroup.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   Sin horas registradas.
                 </Typography>
               ) : (
