@@ -18,6 +18,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   TextField,
   Typography,
   Breadcrumbs,
@@ -32,19 +33,20 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getUsers, createUser, updateUser, deleteUser } from "../../api/endpoints/users";
+import { translateUserRole } from "../../utils/translate";
 
 const ROLE_OPTIONS = [
-  { value: "Student", label: "Student" },
-  { value: "TechnicalTutor", label: "Technical Tutor" },
-  { value: "BusinessTutor", label: "Business Tutor" },
-  { value: "Coordinator", label: "Coordinator" },
+  { value: "Student", label: translateUserRole("Student") },
+  { value: "TechnicalTutor", label: translateUserRole("TechnicalTutor") },
+  { value: "BusinessTutor", label: translateUserRole("BusinessTutor") },
+  { value: "Coordinator", label: translateUserRole("Coordinator") },
 ];
 
 const ROLE_STYLES = {
-  Coordinator: { label: "Coordinator", color: "warning" },
-  BusinessTutor: { label: "Business Tutor", color: "info" },
-  TechnicalTutor: { label: "Technical Tutor", color: "success" },
-  Student: { label: "Student", color: "default" },
+  Coordinator: { label: translateUserRole("Coordinator"), color: "warning" },
+  BusinessTutor: { label: translateUserRole("BusinessTutor"), color: "info" },
+  TechnicalTutor: { label: translateUserRole("TechnicalTutor"), color: "success" },
+  Student: { label: translateUserRole("Student"), color: "default" },
 };
 
 function normalizeUsersResponse(data) {
@@ -68,6 +70,9 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Dialog & Form states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -214,6 +219,7 @@ export default function Users() {
             </Typography>
           </Box>
         ) : (
+          <>
           <TableContainer>
             <Table>
               <TableHead>
@@ -228,7 +234,7 @@ export default function Users() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.map((user, index) => {
+                {users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => {
                   const roleStyle = ROLE_STYLES[user.role] ?? ROLE_STYLES.Student;
 
                   return (
@@ -273,6 +279,21 @@ export default function Users() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={users.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
+          </>
         )}
       </Paper>
 

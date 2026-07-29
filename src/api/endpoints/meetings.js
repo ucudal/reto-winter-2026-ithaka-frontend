@@ -1,90 +1,43 @@
 import { apiClient } from "../client";
 
-const STORAGE_KEY = 'mock_meetings';
+function getItems(data) {
+  return Array.isArray(data) ? data : (data?.items ?? []);
+}
 
-const initialMeetings = [
-  {
-    id: '1',
-    title: 'Daily Standup',
-    start: '2026-07-27T09:00:00',
-    end: '2026-07-27T09:30:00',
-    extendedProps: {
-      group: '',
-      tutors: [],
-      participants: [],
-      attendance: {},
-      link: '',
-      notes: 'Frontend team daily synchronization.'
-    }
-  },
-  {
-    id: '2',
-    title: 'Code Review - FEAT-4',
-    start: '2026-07-28T14:30:00',
-    end: '2026-07-28T15:30:00',
-    extendedProps: {
-      group: '',
-      tutors: [],
-      participants: [],
-      attendance: {},
-      link: '',
-      notes: 'Reviewing the mocked meetings API layer.'
-    }
-  }
-];
+export async function getMeetings() {
+  const { data } = await apiClient.get("/api/meetings");
+  return getItems(data);
+}
 
-const getStoredMeetings = () => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialMeetings));
-    return initialMeetings;
-  }
-  try {
-    return JSON.parse(stored);
-  } catch (e) {
-    return initialMeetings;
-  }
-};
+export async function getGroupMeetingTotalHours(groupId) {
+  const { data } = await apiClient.get(
+    `/api/groups/${groupId}/meetings/total-hours`,
+  );
+  return data;
+}
 
-const saveStoredMeetings = (meetings) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(meetings));
-};
+export async function getMeetingById(id) {
+  const { data } = await apiClient.get(`/api/meetings/${id}`);
+  return data;
+}
 
-export const getMeetings = async () => {
-  return Promise.resolve(getStoredMeetings());
-};
-
-export const createMeeting = async (meetingData) => {
-  const meetings = getStoredMeetings();
-  const newMeeting = {
-    id: String(Date.now()),
-    ...meetingData,
-  };
-  meetings.push(newMeeting);
-  saveStoredMeetings(meetings);
-  return Promise.resolve(newMeeting);
-};
-
-export const updateMeeting = async (id, meetingData) => {
-  const meetings = getStoredMeetings();
-  const index = meetings.findIndex(m => String(m.id) === String(id));
-  if (index === -1) {
-    throw new Error(`Meeting with id ${id} not found`);
-  }
-  meetings[index] = { ...meetings[index], ...meetingData, id };
-  saveStoredMeetings(meetings);
-  return Promise.resolve(meetings[index]);
-};
-
-export const deleteMeeting = async (id) => {
-  // Desacoplamos la llamada de red para que no bloquee la eliminación local
-  apiClient.delete(`/meetings/${id}`).catch((error) => {
-    console.error("Error al eliminar en el backend", error);
+export async function createMeeting(payload) {
+  const { data } = await apiClient.put("/api/meetings", {
+    id: null,
+    ...payload,
   });
+  return data;
+}
 
-  const meetings = getStoredMeetings();
-  const filteredMeetings = meetings.filter(meeting => String(meeting.id) !== String(id));
+export async function updateMeeting(id, payload) {
+  const { data } = await apiClient.put("/api/meetings", {
+    id: Number(id),
+    ...payload,
+  });
+  return data;
+}
 
-  saveStoredMeetings(filteredMeetings);
-  return Promise.resolve({ success: true, id });
-};
+export async function deleteMeeting(id) {
+  const { data } = await apiClient.delete(`/api/meetings/${id}`);
+  return data;
+}

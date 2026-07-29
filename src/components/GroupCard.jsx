@@ -12,8 +12,16 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 
-export default function GroupCard({ group }) {
+export default function GroupCard({
+    group,
+    onEdit,
+    onDelete,
+}) {
   const getInitials = (name) => {
     if (!name) return "?";
     return name
@@ -227,7 +235,41 @@ export default function GroupCard({ group }) {
               variant="outlined"
             />
           </Box>
+        <Box
+            sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                mt: "auto",
+            }}
+        >
+            <Tooltip title="Editar">
+                <IconButton
+                    color="primary"
+                    size="small"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEdit(group);
+                    }}
+                >
+                    <EditIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
 
+            <Tooltip title="Eliminar">
+                <IconButton
+                    color="error"
+                    size="small"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDelete(group);
+                    }}
+                >
+                    <DeleteIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+        </Box>
         </CardContent>
       </CardActionArea>
     </Card>

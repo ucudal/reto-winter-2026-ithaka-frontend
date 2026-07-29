@@ -12,6 +12,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Avatar,
   Chip,
   IconButton,
@@ -28,6 +29,16 @@ import {
   Tooltip,
   CircularProgress,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  LinearProgress,
+  Divider,
+  Stack,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
@@ -37,8 +48,19 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SearchIcon from "@mui/icons-material/Search";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 
-import { getTutors, upsertTutor } from "../../api/endpoints/tutors";
+import TutorsCapacityPanel from "../../components/TutorsCapacityPanel.jsx";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+
+import {
+  getTutors,
+  upsertTutor,
+  getTutorCapacity,
+  getTutorGroups,
+} from "../../api/endpoints/tutors";
+import { translateStatus, translateTutorRole } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -69,6 +91,7 @@ const TUTOR_FIELDS = [
   },
   { name: "specialty", label: "Especialidad", type: "text", grid: 12 },
   { name: "availability", label: "Disponibilidad", type: "text", grid: 12 },
+  { name: "linkedin_url", label: "LinkedIn (URL)", type: "text", grid: 12 },
   {
     name: "max_capacity",
     label: "Capacidad máxima (horas)",
@@ -89,9 +112,20 @@ export default function Tutors() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProperty, setFilterProperty] = useState("name");
   const [view, setView] = useState("list");
+  const [showCapacity, setShowCapacity] = useState(false);
 
-  const [editingTutor, setEditingTutor] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingTutor, setEditingTutor] = useState(null); // null => crear
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  
   const [saving, setSaving] = useState(false);
+
+  const [capacityOpen, setCapacityOpen] = useState(false);
+  const [capacityLoading, setCapacityLoading] = useState(false);
+  const [capacityData, setCapacityData] = useState(null);
+  const [capacityGroups, setCapacityGroups] = useState([]);
+  const [capacityTutor, setCapacityTutor] = useState(null);
 
   const loadTutors = async () => {
     try {
@@ -110,33 +144,78 @@ export default function Tutors() {
     loadTutors();
   }, []);
 
-  const handleOpenEdit = (tutor) => setEditingTutor(tutor);
-  const handleCloseEdit = () => setEditingTutor(null);
+  const handleOpenCreate = () => {
+    setEditingTutor(null);
+    setModalOpen(true);
+  };
+  const handleOpenEdit = (tutor) => {
+    setEditingTutor(tutor);
+    setModalOpen(true);
+  };
+  const handleCloseModal = () => setModalOpen(false);
 
   const handleSaveTutor = async (data) => {
     const { id, ...values } = data;
+    const isEdit = Boolean(id);
     const payload = {
-      id,
+      id: id ?? null,
       name: values.name,
       role: values.role,
       specialty: values.specialty || null,
       availability: values.availability || null,
       status: values.status,
       max_capacity: Number(values.max_capacity),
+      linkedin_url: values.linkedin_url ?? null,
     };
 
     try {
       setSaving(true);
       await upsertTutor(payload);
-      showToast("Tutor actualizado correctamente.", "success");
-      handleCloseEdit();
+      showToast(
+        isEdit
+          ? "Tutor actualizado correctamente."
+          : "Tutor creado correctamente.",
+        "success",
+      );
+      handleCloseModal();
       await loadTutors();
     } catch (err) {
-      showToast(err?.message || "No se pudo actualizar el tutor.", "error");
+      showToast(
+        err?.message ||
+          (isEdit
+            ? "No se pudo actualizar el tutor."
+            : "No se pudo crear el tutor."),
+        "error",
+      );
     } finally {
       setSaving(false);
     }
   };
+
+  const handleOpenCapacity = async (tutor) => {
+    setCapacityTutor(tutor);
+    setCapacityOpen(true);
+    setCapacityLoading(true);
+    setCapacityData(null);
+    setCapacityGroups([]);
+    try {
+      const [capacity, groups] = await Promise.all([
+        getTutorCapacity(tutor.id),
+        getTutorGroups(tutor.id),
+      ]);
+      setCapacityData(capacity);
+      setCapacityGroups(groups || []);
+    } catch (err) {
+      showToast(
+        err?.message || "No se pudo cargar la capacidad del tutor.",
+        "error",
+      );
+      setCapacityOpen(false);
+    } finally {
+      setCapacityLoading(false);
+    }
+  };
+  const handleCloseCapacity = () => setCapacityOpen(false);
 
   const filteredTutors = tutors.filter((tutor) => {
     const valueToSearch = tutor[filterProperty]?.toString().toLowerCase() || "";
@@ -198,15 +277,28 @@ export default function Tutors() {
           </FormControl>
 
           <Button
+            variant="outlined"
+            startIcon={<MonitorHeartIcon />}
+            sx={{ height: 40 }}
+            onClick={() => setShowCapacity((prev) => !prev)}
+          >
+            {showCapacity ? "Tutores" : "Capacidad"}
+          </Button>
+
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ height: 40 }}
+            onClick={handleOpenCreate}
           >
             Agregar tutor
           </Button>
         </Box>
       </Box>
 
+      {showCapacity ? (
+        <TutorsCapacityPanel />
+      ) : (
       <Paper sx={{ p: 2, borderRadius: 2 }}>
         <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
           <TextField
@@ -278,6 +370,7 @@ export default function Tutors() {
         ) : error ? (
           <Alert severity="error">{error}</Alert>
         ) : view === "list" ? (
+          <>
           <TableContainer>
             <Table>
               <TableHead>
@@ -385,66 +478,107 @@ export default function Tutors() {
                               .map((n) => n[0])
                               .join("")}
                           </Avatar>
-                          <Typography variant="body2" fontWeight="medium">
+                          <Typography sx={{ fontWeight: "medium" }}>
                             {tutor.name}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        {tutor.role === "Business" ? "Negocio" : "Técnico"}
+                        <Chip
+                          label={translateTutorRole(tutor.role)}
+                          size="small"
+                          color={tutor.role === "Business" ? "primary" : "info"}
+                          variant="outlined"
+                        />
                       </TableCell>
-                      <TableCell>{tutor.specialty}</TableCell>
-                      <TableCell>{tutor.availability}</TableCell>
+                      <TableCell>{tutor.specialty || "-"}</TableCell>
+                      <TableCell>{tutor.availability || "-"}</TableCell>
                       <TableCell>
                         <Chip
-                          label={
-                            tutor.status === "Active" ? "Activo" : "Inactivo"
-                          }
+                          label={tutor.status === "Active" ? "Activo" : "Inactivo"}
                           size="small"
-                          color={
-                            tutor.status === "Active" ? "success" : "default"
-                          }
+                          color={tutor.status === "Active" ? "success" : "default"}
                         />
                       </TableCell>
                       <TableCell align="right">
-                      <Tooltip title="Ver perfil">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          component={RouterLink}
-                          to={`/tutors/${tutor.id}`}
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                        {tutor.linkedin_url && (
+                          <Tooltip title="Ver LinkedIn">
+                            <IconButton
+                              size="small"
+                              component="a"
+                              href={tutor.linkedin_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Abrir LinkedIn de ${tutor.name}`}
+                            >
+                              <LinkedInIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
 
-                      <Tooltip title="Editar">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          aria-label={`Editar ${tutor.name}`}
-                          onClick={() => handleOpenEdit(tutor)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                        <Tooltip title="Ver perfil">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            component={RouterLink}
+                            to={`/tutors/${tutor.id}`}
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
 
-                      <Tooltip title="Eliminar">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          aria-label={`Eliminar ${tutor.name}`}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+                        <Tooltip title="Ver capacidad">
+                          <IconButton
+                            size="small"
+                            aria-label={`Ver capacidad de ${tutor.name}`}
+                            onClick={() => handleOpenCapacity(tutor)}
+                          >
+                            <AssessmentIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Editar">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            aria-label={`Editar ${tutor.name}`}
+                            onClick={() => handleOpenEdit(tutor)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Eliminar">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            aria-label={`Eliminar ${tutor.name}`}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredTutors.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
+          </>
         ) : (
           <Grid container spacing={3} sx={{ mt: 1 }}>
             {filteredTutors.length === 0 ? (
@@ -529,25 +663,47 @@ export default function Tutors() {
                       }}
                     >
                       <Chip
-                        label={
-                          tutor.status === "Active" ? "Activo" : "Inactivo"
-                        }
+                        label={translateStatus(tutor.status)}
                         size="small"
                         color={
                           tutor.status === "Active" ? "success" : "default"
                         }
                       />
                       <Box>
+                        {tutor.linkedin_url && (
+                          <Tooltip title="Ver LinkedIn">
+                            <IconButton
+                              size="small"
+                              component="a"
+                              href={tutor.linkedin_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Abrir LinkedIn de ${tutor.name}`}
+                            >
+                              <LinkedInIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         <Tooltip title="Ver perfil">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          component={RouterLink}
-                          to={`/tutors/${tutor.id}`}
-                        >
-                          Ver
-                        </IconButton>
-                      </Tooltip>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            component={RouterLink}
+                            to={`/tutors/${tutor.id}`}
+                          >
+                            Ver
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Ver capacidad">
+                          <IconButton
+                            size="small"
+                            aria-label={`Ver capacidad de ${tutor.name}`}
+                            onClick={() => handleOpenCapacity(tutor)}
+                          >
+                            <AssessmentIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Editar">
                           <IconButton
                             size="small"
@@ -576,16 +732,116 @@ export default function Tutors() {
           </Grid>
         )}
       </Paper>
+      )}
 
       <GenericEditModal
-        open={Boolean(editingTutor)}
-        onClose={handleCloseEdit}
-        title="Editar tutor"
+        open={modalOpen}
+        onClose={handleCloseModal}
+        title={editingTutor ? "Editar tutor" : "Agregar tutor"}
         fields={TUTOR_FIELDS}
         record={editingTutor}
         onSubmit={handleSaveTutor}
         loading={saving}
       />
+
+      <Dialog
+        open={capacityOpen}
+        onClose={handleCloseCapacity}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          Capacidad{capacityTutor ? ` — ${capacityTutor.name}` : ""}
+        </DialogTitle>
+        <DialogContent dividers>
+          {capacityLoading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress size={28} />
+            </Box>
+          ) : capacityData ? (
+            <Stack spacing={2}>
+              <Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 0.5,
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Uso de capacidad
+                  </Typography>
+                  <Typography variant="body2" fontWeight="medium">
+                    {capacityData.usage_percentage}%
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(capacityData.usage_percentage, 100)}
+                  color={capacityData.overloaded ? "error" : "primary"}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+              </Box>
+
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Horas consumidas
+                </Typography>
+                <Typography variant="body2">
+                  {capacityData.assigned_hours}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Capacidad máxima
+                </Typography>
+                <Typography variant="body2">
+                  {capacityData.max_capacity}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Horas disponibles
+                </Typography>
+                <Typography variant="body2">
+                  {capacityData.available_hours}
+                </Typography>
+              </Box>
+
+              {capacityData.overloaded && (
+                <Alert severity="warning">Este tutor está sobrecargado.</Alert>
+              )}
+
+              <Divider />
+
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Grupos asignados ({capacityGroups.length})
+                </Typography>
+                {capacityGroups.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Sin grupos asignados.
+                  </Typography>
+                ) : (
+                  <List dense disablePadding>
+                    {capacityGroups.map((group) => (
+                      <ListItem key={group.id} disableGutters>
+                        <ListItemText
+                          primary={group.name}
+                          secondary={`Estado: ${group.status}`}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+              </Box>
+            </Stack>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCapacity}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

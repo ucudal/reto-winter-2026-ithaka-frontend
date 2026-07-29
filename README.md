@@ -86,7 +86,7 @@ La navegación está definida en [`src/routes/AppRouter.jsx`](src/routes/AppRout
 1. Creá el componente en `src/pages/...` (ej. `src/pages/sections/MiSeccion.jsx`).
 2. Registralo en `src/routes/AppRouter.jsx`. Las rutas privadas van dentro del bloque
    protegido por [`ProtectedRoute`](src/routes/ProtectedRoute.jsx) y el layout
-   [`MainLayout`](src/layouts/MainLayout.jsx); las públicas (login/register) van sueltas.
+   [`MainLayout`](src/layouts/MainLayout.jsx); la pública (login) va suelta.
 
 ```jsx
 // dentro de children de MainLayout, en AppRouter.jsx

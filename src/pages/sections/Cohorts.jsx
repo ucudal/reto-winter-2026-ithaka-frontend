@@ -12,6 +12,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Chip,
   IconButton,
   Breadcrumbs,
@@ -52,6 +53,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 
 import { getCohorts, createCohort, updateCohort } from "../../api/endpoints/cohorts";
+import { translateStatus } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import EmptyState from "../../components/common/EmptyState";
 
@@ -62,6 +64,9 @@ export default function Cohorts() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [view, setView] = useState("list");
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [filterYear, setFilterYear] = useState("");
   const [filterSemester, setFilterSemester] = useState("");
@@ -88,6 +93,7 @@ export default function Cohorts() {
     if (filterYear && filterYear.length < 3) {
       return;
     }
+    let ignore = false;
 
     loadCohorts({
       year: filterYear || undefined,
@@ -95,20 +101,29 @@ export default function Cohorts() {
       status: filterStatus || undefined,
       page: 1,
       page_size: 20,
-    });
+    },
+    () => ignore
+    );
+    return () => {
+      ignore = true;
+    };
   }, [filterYear, filterSemester, filterStatus]);
 
-  async function loadCohorts(filters = {}) {
+  async function loadCohorts(filters = {}, shouldIgnore = () => false) {
     try {
       setLoading(true);
       setError("");
       const data = await getCohorts(filters);
+      if (shouldIgnore()) return;
       const items = Array.isArray(data) ? data : (data?.items ?? []);
       setCohorts(items);
     } catch (err) {
+      if (shouldIgnore()) return;
       setError(err?.message || "No se pudieron cargar los cohortes.");
     } finally {
-      setLoading(false);
+      if (!shouldIgnore()) {
+        setLoading(false);
+      }
     }
   }
 
@@ -202,7 +217,7 @@ export default function Cohorts() {
         notes: cohort.notes,
       });
       showToast(
-        `Cohorte marcado como ${newStatus === "Active" ? "Activo" : "Inactivo"}`,
+        `Cohorte marcado como ${translateStatus(newStatus)}`,
         "success"
       );
       loadCohorts({
@@ -346,7 +361,7 @@ export default function Cohorts() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {cohorts.map((cohort) => (
+                {cohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((cohort) => (
                   <TableRow key={cohort.id} hover>
                     <TableCell sx={{ fontWeight: "medium" }}>{cohort.year}</TableCell>
                     <TableCell>{cohort.semester}° semestre</TableCell>
@@ -355,7 +370,7 @@ export default function Cohorts() {
                     <TableCell>{cohort.group_count ?? 0}</TableCell>
                     <TableCell>
                       <Chip
-                        label={cohort.status === "Active" ? "Activo" : "Inactivo"}
+                        label={translateStatus(cohort.status)}
                         size="small"
                         color={cohort.status === "Active" ? "success" : "default"}
                       />
@@ -386,58 +401,88 @@ export default function Cohorts() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={cohorts.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
         </Paper>
       ) : (
-        <Grid container spacing={3}>
-          {cohorts.map((cohort) => (
-            <Grid item xs={12} sm={6} md={4} key={cohort.id}>
-              <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    Cohorte {cohort.year} - {cohort.semester}° Semestre
-                  </Typography>
-
-                  <Stack spacing={1} sx={{ mt: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <CalendarTodayIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {cohort.start_date} a {cohort.end_date || "Finalización"}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <PeopleOutlineIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-                      <Typography variant="body2" color="text.secondary">
-                        Grupos asignados: {cohort.group_count ?? 0}
-                      </Typography>
-                    </Box>
-                  </Stack>
-
-                  {cohort.notes && (
-                    <Typography variant="body2" sx={{ mt: 2, fontStyle: "italic" }} color="text.secondary">
-                      "{cohort.notes}"
+        <Box>
+          <Grid container spacing={3}>
+            {cohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((cohort) => (
+              <Grid item xs={12} sm={6} md={4} key={cohort.id}>
+                <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                      Cohorte {cohort.year} - {cohort.semester}° Semestre
                     </Typography>
-                  )}
-                </CardContent>
-                <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
-                  <Chip
-                    label={cohort.status === "Active" ? "Activo" : "Inactivo"}
-                    size="small"
-                    color={cohort.status === "Active" ? "success" : "default"}
-                  />
-                  <Tooltip title="Opciones">
-                    <IconButton
+                    <Stack spacing={1} sx={{ mt: 2 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <CalendarTodayIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {cohort.start_date} a {cohort.end_date || "Finalización"}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <PeopleOutlineIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Grupos asignados: {cohort.group_count ?? 0}
+                        </Typography>
+                      </Box>
+                    </Stack>
+
+                    {cohort.notes && (
+                      <Typography variant="body2" sx={{ mt: 2, fontStyle: "italic" }} color="text.secondary">
+                        "{cohort.notes}"
+                      </Typography>
+                    )}
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
+                    <Chip
+                      label={translateStatus(cohort.status)}
                       size="small"
-                      onClick={(e) => handleMenuOpen(e, cohort)}
-                      aria-label="Opciones"
-                    >
-                      <MoreVertIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                      color={cohort.status === "Active" ? "success" : "default"}
+                    />
+                    <Tooltip title="Opciones">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuOpen(e, cohort)}
+                        aria-label="Opciones"
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={cohorts.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            sx={{ mt: 2 }}
+          />
+        </Box>
       )}
 
       {/* Action Options Menu */}

@@ -5,7 +5,6 @@ import ProtectedRoute from "./ProtectedRoute.jsx";
 import RouteErrorBoundary from "./RouteErrorBoundary.jsx";
 
 import Login from "../pages/Auth/Login.jsx";
-import Register from "../pages/Auth/Register.jsx";
 import Dashboard from "../pages/sections/Dashboard.jsx";
 import StudentWorkspace from "../pages/sections/StudentsWorkspace.jsx";
 import Students from "../pages/sections/Students.jsx";
@@ -36,10 +35,6 @@ const appRouter = createBrowserRouter([
         element: <Login />,
       },
       {
-        path: "/register",
-        element: <Register />,
-      },
-      {
         element: <ProtectedRoute />,
         children: [
           {
@@ -51,14 +46,7 @@ const appRouter = createBrowserRouter([
                   {
                     path: "/dashboard",
                     element: (
-                      <RoleProtectedRoute
-                        allowedRoles={[
-                          "Coordinator",
-                          "BusinessTutor",
-                          "TechnicalTutor",
-                          "Student",
-                        ]}
-                      >
+                      <RoleProtectedRoute allowedRoles={["Coordinator"]}>
                         <Dashboard />
                       </RoleProtectedRoute>
                     ),
@@ -154,13 +142,13 @@ const appRouter = createBrowserRouter([
                     ),
                   },
                   {
-                    path: '/templates/:id',
+                    path: "/templates/:id",
                     element: (
                       <RoleProtectedRoute
                         allowedRoles={[
-                          'Coordinator',
-                          'BusinessTutor',
-                          'TechnicalTutor',
+                          "Coordinator",
+                          "BusinessTutor",
+                          "TechnicalTutor",
                         ]}
                       >
                         <TemplateDetail />

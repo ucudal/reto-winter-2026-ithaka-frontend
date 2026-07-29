@@ -4,7 +4,7 @@ import { getAuthToken, setAuthToken } from "../api/client";
 import { getCurrentUser } from "../api/endpoints/auth";
 import { clearCache } from "../utils/cache";
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.clear();
+    clearCache();
     setAuthToken(null);
     setUser(null);
     setIsAuthenticated(false);

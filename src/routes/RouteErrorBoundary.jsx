@@ -3,10 +3,13 @@ import ErrorIcon from "@mui/icons-material/Error";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate, useRouteError } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+import { getHomePathForRole } from "./roleHome";
 
 function RouteErrorBoundary() {
   const error = useRouteError();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <Box
@@ -33,7 +36,7 @@ function RouteErrorBoundary() {
 
       <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 420 }}>
         Ocurrió un problema al procesar esta sección. Podés intentar de nuevo o
-        volver al resumen.
+        volver al inicio.
       </Typography>
 
       <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
@@ -47,9 +50,9 @@ function RouteErrorBoundary() {
         <Button
           variant="contained"
           startIcon={<HomeIcon />}
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate(getHomePathForRole(user?.role))}
         >
-          Ir al resumen
+          Ir al inicio
         </Button>
       </Stack>
     </Box>
