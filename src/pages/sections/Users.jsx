@@ -68,6 +68,7 @@ function formatRole(role) {
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -89,8 +90,9 @@ export default function Users() {
     try {
       setLoading(true);
       setError("");
-      const data = await getUsers();
-      setUsers(normalizeUsersResponse(data));
+      const data = await getUsers({ page: page + 1, page_size: rowsPerPage });
+      setUsers(normalizeUsersResponse(data.items || data));
+      setTotal(data.total || 0);
     } catch (err) {
       setError(err.message || "Error inesperado al cargar usuarios");
     } finally {
@@ -100,7 +102,7 @@ export default function Users() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const handleOpenCreateDialog = () => {
     setEditUserObj(null);
@@ -234,7 +236,7 @@ export default function Users() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => {
+                {users.map((user, index) => {
                   const roleStyle = ROLE_STYLES[user.role] ?? ROLE_STYLES.Student;
 
                   return (
@@ -282,7 +284,7 @@ export default function Users() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={users.length}
+            count={total}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
