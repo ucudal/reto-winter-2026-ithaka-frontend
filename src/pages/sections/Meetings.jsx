@@ -133,9 +133,12 @@ const toApiId = (value) => {
 };
 
 const meetingToCalendarEvent = (meeting, availableGroups) => {
+  if (!meeting?.date) return null;
+  const start = new Date(meeting.date);
+  if (Number.isNaN(start.getTime())) return null;
+
   const groupId = getGroupId(meeting);
   const group = findById(availableGroups, groupId) || meeting.group || null;
-  const start = new Date(meeting.date);
   const hoursSpent = Number(meeting.hours_spent ?? meeting.hoursSpent);
   const durationInHours =
     Number.isFinite(hoursSpent) && hoursSpent > 0 ? hoursSpent : 1;
@@ -254,7 +257,10 @@ function Meetings() {
   }, []);
 
   const calendarMeetings = useMemo(
-    () => meetings.map((meeting) => meetingToCalendarEvent(meeting, groups)),
+    () =>
+      meetings
+        .map((meeting) => meetingToCalendarEvent(meeting, groups))
+        .filter(Boolean),
     [groups, meetings],
   );
 
