@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { vi } from "vitest";
 import GenericEditModal from "./GenericEditModal";
 
-const GenericCreateModalMock = vi.fn();
+const GenericCreateModalMock = vi.hoisted(() => vi.fn());
 
 vi.mock("./GenericCreateModal", () => ({
   default: (props) => {
