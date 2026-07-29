@@ -169,7 +169,7 @@ describe("Templates", () => {
     const selects = screen.getAllByRole("combobox");
 
 
-    // Primer combobox = selector de Vista
+
     fireEvent.mouseDown(selects[0]);
 
 

@@ -19,7 +19,6 @@ beforeEach(() => {
 });
 
 
-// Mock API materials
 vi.mock("../../api/endpoints/materials", () => ({
   getMaterials: vi.fn(() =>
     Promise.resolve([])
@@ -28,7 +27,6 @@ vi.mock("../../api/endpoints/materials", () => ({
 }));
 
 
-// Mock modales
 vi.mock("../../components/CreateMaterialModal", () => ({
   default: () => (
     <div data-testid="create-modal">
@@ -58,10 +56,8 @@ vi.mock("../../components/ConfirmModal", () => ({
 
 describe("Knowledge", () => {
 
-
   it("renders page title", async () => {
     renderWithRouter(<Knowledge />);
-
 
     expect(
       screen.getByRole("heading", {
@@ -69,7 +65,6 @@ describe("Knowledge", () => {
       })
     ).toBeInTheDocument();
   });
-
 
 
   it("loads materials from API", async () => {
@@ -104,7 +99,6 @@ describe("Knowledge", () => {
   });
 
 
-
   it("shows empty state when there are no materials", async () => {
 
     const { getMaterials } = await import(
@@ -127,7 +121,6 @@ describe("Knowledge", () => {
     });
 
   });
-
 
 
   it("filters materials by search", async () => {
@@ -154,7 +147,6 @@ describe("Knowledge", () => {
 
 
     renderWithRouter(<Knowledge />);
-
 
     await waitFor(() => {
       expect(
@@ -185,7 +177,6 @@ describe("Knowledge", () => {
   });
 
 
-
   it("opens create material modal", async () => {
 
     renderWithRouter(<Knowledge />);
@@ -198,16 +189,13 @@ describe("Knowledge", () => {
       }
     );
 
-
     fireEvent.click(button);
-
 
     expect(
       screen.getByTestId("create-modal")
     ).toBeInTheDocument();
 
   });
-
 
 
   it("changes from table view to gallery view", async () => {
@@ -222,17 +210,13 @@ describe("Knowledge", () => {
       }
     );
 
-
     fireEvent.mouseDown(select);
-
 
     const galleryOption = await screen.findByText(
       "Galería"
     );
 
-
     fireEvent.click(galleryOption);
-
 
     expect(
       screen.getByLabelText(
@@ -241,6 +225,5 @@ describe("Knowledge", () => {
     ).toBeInTheDocument();
 
   });
-
 
 });

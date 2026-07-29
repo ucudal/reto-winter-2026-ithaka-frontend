@@ -4,8 +4,6 @@ import { MemoryRouter } from "react-router-dom";
 
 import Meetings from "./Meetings";
 
-
-// Render con Router para componentes que usan react-router-dom
 const renderWithRouter = (component) => {
   return render(
     <MemoryRouter>
@@ -20,7 +18,7 @@ beforeEach(() => {
 });
 
 
-// Mock del endpoint de reuniones
+
 vi.mock("../../api/endpoints/meetings", () => ({
   getMeetings: vi.fn(() => Promise.resolve([])),
   createMeeting: vi.fn(),
@@ -29,7 +27,7 @@ vi.mock("../../api/endpoints/meetings", () => ({
 }));
 
 
-// Mock del contexto de autenticación
+
 vi.mock("../../context/AuthContext", () => ({
   useAuth: () => ({
     user: {
@@ -40,7 +38,6 @@ vi.mock("../../context/AuthContext", () => ({
 }));
 
 
-// Mock de FullCalendar
 vi.mock("@fullcalendar/react", () => ({
   default: () => (
     <div data-testid="calendar">
