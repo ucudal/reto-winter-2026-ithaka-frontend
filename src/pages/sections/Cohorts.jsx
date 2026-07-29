@@ -90,6 +90,7 @@ export default function Cohorts() {
   });
 
   useEffect(() => {
+    if (!user) return;
     if (filterYear && filterYear.length < 3) {
       return;
     }
@@ -107,7 +108,7 @@ export default function Cohorts() {
     return () => {
       ignore = true;
     };
-  }, [filterYear, filterSemester, filterStatus]);
+  }, [user, filterYear, filterSemester, filterStatus]);
 
   async function loadCohorts(filters = {}, shouldIgnore = () => false) {
     try {

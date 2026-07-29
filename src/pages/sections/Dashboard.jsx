@@ -131,6 +131,7 @@ export default function Dashboard() {
   }, [user]);
 
   async function loadDashboardData() {
+    if (!user) return;
     try {
       setLoading(true);
       setError("");
