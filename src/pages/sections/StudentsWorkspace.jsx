@@ -25,6 +25,9 @@ import EmptyState from "../../components/common/EmptyState";
 import { getGroupById, getGroupDeliverables } from "../../api/endpoints/groups";
 import { getMeetings } from "../../api/endpoints/meetings";
 
+import { getPendingCheckpoints, submitCheckpointResponse } from "../../api/endpoints/checkpoints";
+import PendingCheckpointModal from "../../components/PendingCheckpointModal";
+
 const LINK_LABELS = {
   Drive: "Drive",
   GitHub: "Repositorio",
@@ -49,7 +52,7 @@ function formatDate(isoDate) {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  });
+    });
 }
 
 function getDueMeta(dueDate, status) {
@@ -90,12 +93,23 @@ export default function StudentWorkspace() {
   const [rawDeliverables, setRawDeliverables] = useState([]);
   const [rawMeetings, setRawMeetings] = useState([]);
   const [loadingWorkspace, setLoadingWorkspace] = useState(true);
+  const [activeCheckpoint, setActiveCheckpoint] = useState(null);
 
   useEffect(() => {
     async function loadWorkspaceGroup() {
       if (!user) {
         setLoadingWorkspace(false);
         return;
+      }
+
+      // Cargar checkpoints pendientes para el estudiante
+      try {
+        const checkpoints = await getPendingCheckpoints();
+        if (checkpoints && checkpoints.length > 0) {
+          setActiveCheckpoint(checkpoints[0]);
+        }
+      } catch (err) {
+        console.warn("Could not load checkpoints for student:", err);
       }
 
       const realGroupId = user.student?.group_id ?? user.student?.group?.id;
@@ -498,6 +512,18 @@ export default function StudentWorkspace() {
           </Card>
         </Grid>
       </Grid>
+
+      {activeCheckpoint && (
+        <PendingCheckpointModal
+          open={Boolean(activeCheckpoint)}
+          checkpoint={activeCheckpoint}
+          onClose={() => setActiveCheckpoint(null)}
+          onSubmitSuccess={async (id, answers) => {
+            await submitCheckpointResponse(id, answers);
+            setActiveCheckpoint(null);
+          }}
+        />
+      )}
     </Box>
   );
 }
