@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { loginUser } from "../../api/endpoints/auth";
+import { getHomePathForRole } from "../../routes/roleHome";
 import "./Login.css";
 import logo from "../../assets/img/logo.png";
 
@@ -70,7 +71,7 @@ export default function Login() {
       setLoginError("");
       const data = await loginUser(email, password);
       login(data.token, data.user);
-      navigate("/dashboard");
+      navigate(getHomePathForRole(data.user?.role));
     } catch (err) {
       setLoginError(err?.message || "Incorrect email or password");
     } finally {

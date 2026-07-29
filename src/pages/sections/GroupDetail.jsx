@@ -32,13 +32,16 @@ import {
   updateGroupTutors,
   getGroupDeliverables,
 } from "../../api/endpoints/groups";
+import { getGroupMeetingTotalHours } from "../../api/endpoints/meetings";
 import { updateDeliverable } from "../../api/endpoints/deliverables";
 import { getCohortStages } from "../../api/endpoints/cohorts";
 import { getTutors } from "../../api/endpoints/tutors";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import EmptyState from "../../components/common/EmptyState";
+import { translateStatus } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
+import CommentFeed from "../../components/CommentFeed";
 
 const CARD_SX = {
   borderRadius: 2,
@@ -50,7 +53,7 @@ const CARD_SX = {
 
 const DELIVERABLE_STATUS = {
   Pending: { label: "Pendiente", color: "warning" },
-  Submitted: { label: "Entregado", color: "info" },
+  Submitted: { label: "Enviado", color: "info" },
   Delivered: { label: "Entregado", color: "info" },
   Approved: { label: "Aprobado", color: "success" },
   Rejected: { label: "Rechazado", color: "error" },
@@ -92,6 +95,9 @@ export default function GroupDetail() {
   const [loadingTutors, setLoadingTutors] = useState(false);
   const [loadingDeliverables, setLoadingDeliverables] = useState(false);
   const [error, setError] = useState("");
+  const [meetingHours, setMeetingHours] = useState(null);
+  const [loadingMeetingHours, setLoadingMeetingHours] = useState(false);
+  const [meetingHoursError, setMeetingHoursError] = useState("");
 
   const [statusMenuAnchor, setStatusMenuAnchor] = useState(null);
   const [statusMenuDeliverable, setStatusMenuDeliverable] = useState(null);
@@ -100,45 +106,87 @@ export default function GroupDetail() {
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [selectedStageId, setSelectedStageId] = useState("");
   const [savingStage, setSavingStage] = useState(false);
+  const [stagesLoadFailed, setStagesLoadFailed] = useState(false);
 
   const [tutorsDialogOpen, setTutorsDialogOpen] = useState(false);
   const [selectedBusinessTutorId, setSelectedBusinessTutorId] = useState("");
   const [selectedTechnicalTutorId, setSelectedTechnicalTutorId] = useState("");
   const [savingTutors, setSavingTutors] = useState(false);
+  const [tutorsLoadFailed, setTutorsLoadFailed] = useState(false);
 
   useEffect(() => {
+    let ignore = false;
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const [groupData, deliverablesData] = await Promise.all([
+          getGroupById(Number(id)),
+          getGroupDeliverables(Number(id)),
+        ]);
+
+        if (ignore) return;
+
+        setGroup(groupData);
+        setCohort(groupData.cohort);
+        setDeliverables(deliverablesData || []);
+      } catch (err) {
+        if (!ignore) {
+          setError(err?.message || "No se pudo cargar el grupo.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+          setLoadingDeliverables(false);
+        }
+      }
+    };
+
     if (id) {
-      loadGroup(Number(id));
-      loadDeliverables(Number(id));
+      fetchData();
     }
+
+    return () => {
+      ignore = true;
+    };
   }, [id]);
 
-  const loadGroup = async (groupId) => {
-    try {
-      setLoading(true);
-      setError("");
+  useEffect(() => {
+    let ignore = false;
 
-      const groupData = await getGroupById(groupId);
-      setGroup(groupData);
-      setCohort(groupData.cohort);
-    } catch (err) {
-      setError(err?.message || "No se pudo cargar el grupo.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchMeetingHours = async () => {
+      try {
+        setLoadingMeetingHours(true);
+        setMeetingHours(null);
+        setMeetingHoursError("");
 
-  const loadDeliverables = async (groupId) => {
-    try {
-      setLoadingDeliverables(true);
-      const data = await getGroupDeliverables(groupId);
-      setDeliverables(data || []);
-    } catch (err) {
-      console.error("Error al cargar entregables:", err);
-    } finally {
-      setLoadingDeliverables(false);
+        const data = await getGroupMeetingTotalHours(Number(id));
+
+        if (!ignore) {
+          setMeetingHours(data);
+        }
+      } catch (err) {
+        if (!ignore) {
+          setMeetingHoursError(
+            err?.message || "No se pudieron cargar las horas de reuniones.",
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingMeetingHours(false);
+        }
+      }
+    };
+
+    if (id) {
+      fetchMeetingHours();
     }
-  };
+
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
 
   const openStatusMenu = (event, deliverable) => {
     event.stopPropagation();
@@ -182,6 +230,7 @@ export default function GroupDetail() {
   const openStageDialog = async () => {
     setSelectedStageId(group.currentStage?.id ?? "");
     setStageDialogOpen(true);
+    setStagesLoadFailed(false);
     if (stages.length === 0) {
       try {
         setLoadingStages(true);
@@ -189,6 +238,11 @@ export default function GroupDetail() {
         setStages(stagesData || []);
       } catch (err) {
         console.error("Error al cargar etapas:", err);
+        setStagesLoadFailed(true);
+        showToast(
+          err?.message || "No se pudieron cargar las etapas del cohorte.",
+          "error",
+        );
       } finally {
         setLoadingStages(false);
       }
@@ -213,6 +267,7 @@ export default function GroupDetail() {
     setSelectedBusinessTutorId(group.businessTutor?.id ?? "");
     setSelectedTechnicalTutorId(group.technicalTutor?.id ?? "");
     setTutorsDialogOpen(true);
+    setTutorsLoadFailed(false);
     if (tutors.length === 0) {
       try {
         setLoadingTutors(true);
@@ -220,6 +275,11 @@ export default function GroupDetail() {
         setTutors(tutorsData || []);
       } catch (err) {
         console.error("Error al cargar tutores:", err);
+        setTutorsLoadFailed(true);
+        showToast(
+          err?.message || "No se pudo cargar la lista de tutores.",
+          "error",
+        );
       } finally {
         setLoadingTutors(false);
       }
@@ -249,7 +309,7 @@ export default function GroupDetail() {
   if (error && !group) {
     return (
       <Box sx={{ width: "100%" }}>
-        <ErrorState message={error} onRetry={() => loadGroup(Number(id))} />
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
       </Box>
     );
   }
@@ -316,7 +376,7 @@ export default function GroupDetail() {
             {group.name}
           </Typography>
           <Chip
-            label={group.status === "Active" ? "Activo" : group.status}
+            label={translateStatus(group.status)}
             color={group.status === "Active" ? "success" : "default"}
             size="small"
           />
@@ -325,7 +385,10 @@ export default function GroupDetail() {
 
       {error && (
         <Box sx={{ mb: 1.5 }}>
-          <ErrorState message={error} onRetry={() => loadGroup(Number(id))} />
+          <ErrorState
+            message={error}
+            onRetry={() => window.location.reload()}
+          />
         </Box>
       )}
 
@@ -333,7 +396,7 @@ export default function GroupDetail() {
       <Card sx={{ ...CARD_SX, mb: 1.5 }}>
         <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -353,7 +416,7 @@ export default function GroupDetail() {
                 </Typography>
               )}
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -365,7 +428,7 @@ export default function GroupDetail() {
                 {group.major || "—"}
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -381,6 +444,39 @@ export default function GroupDetail() {
                   {group.idea || "Sin idea registrada"}
                 </Typography>
               </Tooltip>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
+                Horas de reuniones
+              </Typography>
+              {loadingMeetingHours ? (
+                <CircularProgress
+                  size={18}
+                  aria-label="Cargando horas de reuniones"
+                />
+              ) : meetingHoursError ? (
+                <Typography variant="caption" color="error">
+                  {meetingHoursError}
+                </Typography>
+              ) : meetingHours ? (
+                <>
+                  <Typography variant="body2" fontWeight={500}>
+                    {meetingHours.total_hours ?? "—"} h /{" "}
+                    {meetingHours.max_capacity ?? "—"} h
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {meetingHours.remaining_hours ?? "—"} h restantes
+                  </Typography>
+                </>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Sin datos
+                </Typography>
+              )}
             </Grid>
           </Grid>
         </CardContent>
@@ -637,6 +733,7 @@ export default function GroupDetail() {
                               ? "warning.light"
                               : "transparent",
                             transition: "background-color 0.3s",
+                            display: "block",
                           }}
                         >
                           <ListItemText
@@ -653,6 +750,7 @@ export default function GroupDetail() {
                                   {deliverable.stageName ||
                                     `Etapa #${deliverable.stageId}`}
                                 </Typography>
+
                                 <Chip
                                   label={statusMeta.label}
                                   color={statusMeta.color}
@@ -672,6 +770,7 @@ export default function GroupDetail() {
                                     ) : undefined
                                   }
                                 />
+
                                 {overdue && (
                                   <Chip
                                     label="Vencido"
@@ -685,6 +784,10 @@ export default function GroupDetail() {
                             secondary={`Fecha esperada: ${deliverable.expectedDate}`}
                             secondaryTypographyProps={{ variant: "caption" }}
                           />
+
+                          <Box sx={{ mt: 2 }}>
+                            <CommentFeed deliverableId={deliverable.id} />
+                          </Box>
                         </ListItem>
                       );
                     })}
@@ -753,7 +856,12 @@ export default function GroupDetail() {
           <Button
             variant="contained"
             onClick={handleSaveStage}
-            disabled={savingStage || !selectedStageId || loadingStages}
+            disabled={
+              savingStage ||
+              !selectedStageId ||
+              loadingStages ||
+              stagesLoadFailed
+            }
           >
             {savingStage ? "Guardando..." : "Guardar"}
           </Button>
@@ -819,7 +927,7 @@ export default function GroupDetail() {
           <Button
             variant="contained"
             onClick={handleSaveTutors}
-            disabled={savingTutors || loadingTutors}
+            disabled={savingTutors || loadingTutors || tutorsLoadFailed}
           >
             {savingTutors ? "Guardando..." : "Guardar"}
           </Button>

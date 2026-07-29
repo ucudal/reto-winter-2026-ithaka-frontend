@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { env } from '../config/env'
-import { getCache, setCache } from '../utils/cache'
+import { getCache, setCache, clearCache } from '../utils/cache'
 
 const AUTH_TOKEN_KEY = 'ithaka_auth_token'
 
@@ -90,16 +90,27 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       setAuthToken(null)
+      clearCache()
     }
     return Promise.reject(normalizeError(error))
   },
 )
 
+function sortObjectKeys(obj) {
+  return Object.keys(obj)
+    .sort()
+    .reduce((acc, key) => {
+      acc[key] = obj[key]
+      return acc
+    }, {})
+}
+
 export async function cachedGet(url, config = {}, ttlInMinutes = 15) {
-  const params = config?.params
-    ? JSON.stringify(config.params)
-    : "";
-  const cacheKey = `cache_${url}_${params}`;
+  const sortedParams = config?.params
+    ? sortObjectKeys(config.params)
+    : null
+
+  const cacheKey = `cache_${url}_${JSON.stringify(sortedParams)}`
   const cached = getCache(cacheKey)
 
   if (cached.hit) {
@@ -108,5 +119,6 @@ export async function cachedGet(url, config = {}, ttlInMinutes = 15) {
 
   const response = await apiClient.get(url, config)
   setCache(cacheKey, response.data, ttlInMinutes)
+
   return response
 }

@@ -53,6 +53,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 
 import { getCohorts, createCohort, updateCohort } from "../../api/endpoints/cohorts";
+import { translateStatus } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import EmptyState from "../../components/common/EmptyState";
 
@@ -92,6 +93,7 @@ export default function Cohorts() {
     if (filterYear && filterYear.length < 3) {
       return;
     }
+    let ignore = false;
 
     loadCohorts({
       year: filterYear || undefined,
@@ -99,20 +101,29 @@ export default function Cohorts() {
       status: filterStatus || undefined,
       page: 1,
       page_size: 20,
-    });
+    },
+    () => ignore
+    );
+    return () => {
+      ignore = true;
+    };
   }, [filterYear, filterSemester, filterStatus]);
 
-  async function loadCohorts(filters = {}) {
+  async function loadCohorts(filters = {}, shouldIgnore = () => false) {
     try {
       setLoading(true);
       setError("");
       const data = await getCohorts(filters);
+      if (shouldIgnore()) return;
       const items = Array.isArray(data) ? data : (data?.items ?? []);
       setCohorts(items);
     } catch (err) {
+      if (shouldIgnore()) return;
       setError(err?.message || "No se pudieron cargar los cohortes.");
     } finally {
-      setLoading(false);
+      if (!shouldIgnore()) {
+        setLoading(false);
+      }
     }
   }
 
@@ -206,7 +217,7 @@ export default function Cohorts() {
         notes: cohort.notes,
       });
       showToast(
-        `Cohorte marcado como ${newStatus === "Active" ? "Activo" : "Inactivo"}`,
+        `Cohorte marcado como ${translateStatus(newStatus)}`,
         "success"
       );
       loadCohorts({
@@ -359,7 +370,7 @@ export default function Cohorts() {
                     <TableCell>{cohort.group_count ?? 0}</TableCell>
                     <TableCell>
                       <Chip
-                        label={cohort.status === "Active" ? "Activo" : "Inactivo"}
+                        label={translateStatus(cohort.status)}
                         size="small"
                         color={cohort.status === "Active" ? "success" : "default"}
                       />
@@ -415,7 +426,6 @@ export default function Cohorts() {
                     <Typography variant="h6" fontWeight="bold" gutterBottom>
                       Cohorte {cohort.year} - {cohort.semester}° Semestre
                     </Typography>
-
                     <Stack spacing={1} sx={{ mt: 2 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <CalendarTodayIcon sx={{ fontSize: 18, color: "text.secondary" }} />
@@ -439,7 +449,7 @@ export default function Cohorts() {
                   </CardContent>
                   <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
                     <Chip
-                      label={cohort.status === "Active" ? "Activo" : "Inactivo"}
+                      label={translateStatus(cohort.status)}
                       size="small"
                       color={cohort.status === "Active" ? "success" : "default"}
                     />
