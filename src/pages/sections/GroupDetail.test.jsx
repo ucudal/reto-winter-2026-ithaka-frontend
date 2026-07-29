@@ -3,10 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import GroupDetail from "./GroupDetail";
-import {
-  getGroupById,
-  getGroupDeliverables,
-} from "../../api/endpoints/groups";
+import { getGroupById, getGroupDeliverables } from "../../api/endpoints/groups";
 import { getGroupMeetingTotalHours } from "../../api/endpoints/meetings";
 
 vi.mock("../../api/endpoints/groups", () => ({
@@ -37,6 +34,11 @@ vi.mock("../../ToastContext", () => ({
 }));
 
 vi.mock("../../components/CommentFeed", () => ({
+  default: () => null,
+}));
+
+// Necesita useAuth y pega al backend; acá solo probamos GroupDetail.
+vi.mock("../../components/GroupDocumentsCard", () => ({
   default: () => null,
 }));
 
