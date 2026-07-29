@@ -6,7 +6,6 @@ import {
   CircularProgress,
   IconButton,
   InputAdornment,
-  Link,
   MenuItem,
   Paper,
   Table,
@@ -27,7 +26,7 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import EditIcon from '@mui/icons-material/Edit'
@@ -196,14 +195,6 @@ function Templates() {
         separator={<NavigateNextIcon fontSize='small' />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to='/'
-          underline='hover'
-          color='inherit'
-        >
-          Inicio
-        </Link>
         <Typography color='text.primary'>
           Templates
         </Typography>
