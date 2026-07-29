@@ -83,6 +83,7 @@ export default function GroupDetail() {
     location.state?.highlightDeliverableId ?? null,
   );
   const hasScrolledToHighlightRef = useRef(false);
+  const highlightTimeoutRef = useRef(null);
   const { showToast } = useToast();
 
   const [group, setGroup] = useState(null);
@@ -187,6 +188,22 @@ export default function GroupDetail() {
       ignore = true;
     };
   }, [id]);
+
+  // Reinicia el resaltado en cada navegación. location.key cambia con cada
+  // navegación (aunque sea al mismo grupo), así que una alerta nueva vuelve a
+  // resaltar/scrollear aunque el componente ya esté montado. Sin esto, el
+  // useState inicial y el ref solo corren al montar y el 2° highlight no dispara.
+  useEffect(() => {
+    hasScrolledToHighlightRef.current = false;
+    setHighlightDeliverableId(location.state?.highlightDeliverableId ?? null);
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+        highlightTimeoutRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
 
   const openStatusMenu = (event, deliverable) => {
     event.stopPropagation();
@@ -715,10 +732,13 @@ export default function GroupDetail() {
                                       behavior: "smooth",
                                       block: "center",
                                     });
-                                    // Limpiar el highlight tras el primer scroll: el fondo
-                                    // amarillo se desvanece con la transition y ya no vuelve
-                                    // a resaltar ni scrollear ante cambios de estado.
-                                    setTimeout(
+                                    // Limpiar el highlight tras el primer scroll (fade-out
+                                    // vía transition). Guardamos el timeout en un ref y
+                                    // limpiamos el anterior para no pisar un highlight nuevo.
+                                    if (highlightTimeoutRef.current) {
+                                      clearTimeout(highlightTimeoutRef.current);
+                                    }
+                                    highlightTimeoutRef.current = setTimeout(
                                       () => setHighlightDeliverableId(null),
                                       1500,
                                     );
