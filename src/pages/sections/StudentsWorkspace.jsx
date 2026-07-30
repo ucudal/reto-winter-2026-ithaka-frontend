@@ -26,16 +26,12 @@ import { useAuth } from "../../context/AuthContext";
 import EmptyState from "../../components/common/EmptyState";
 import { getGroupById, getGroupDeliverables } from "../../api/endpoints/groups";
 import { getMeetings } from "../../api/endpoints/meetings";
+import { getGroupDocuments } from "../../api/endpoints/documents";
+import { getDocumentHref, getDocumentLabel } from "../../utils/documentLinks";
 import { getMaterials } from "../../api/endpoints/materials";
 
 import { getPendingCheckpoints, submitCheckpointResponse } from "../../api/endpoints/checkpoints";
 import PendingCheckpointModal from "../../components/PendingCheckpointModal";
-
-const LINK_LABELS = {
-  Drive: "Drive",
-  GitHub: "Repositorio",
-  "One Pager": "One Pager",
-};
 
 function getInitials(name) {
   if (!name) return "?";
@@ -95,6 +91,7 @@ export default function StudentWorkspace() {
   const [group, setGroup] = useState(null);
   const [rawDeliverables, setRawDeliverables] = useState([]);
   const [rawMeetings, setRawMeetings] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loadingWorkspace, setLoadingWorkspace] = useState(true);
   const [activeCheckpoint, setActiveCheckpoint] = useState(null);
   const [materials, setMaterials] = useState([]);
@@ -137,10 +134,12 @@ export default function StudentWorkspace() {
         try {
           const realGroup = await getGroupById(realGroupId);
           setGroup(realGroup);
-          const [deliverablesResult, meetingsResult] = await Promise.allSettled([
-            getGroupDeliverables(realGroupId),
-            getMeetings(),
-          ]);
+          const [deliverablesResult, meetingsResult, documentsResult] =
+            await Promise.allSettled([
+              getGroupDeliverables(realGroupId),
+              getMeetings(),
+              getGroupDocuments(realGroupId),
+            ]);
 
           if (deliverablesResult.status === "fulfilled") {
             setRawDeliverables(deliverablesResult.value || []);
@@ -160,6 +159,16 @@ export default function StudentWorkspace() {
               meetingsResult.reason,
             );
             setRawMeetings([]);
+          }
+
+          if (documentsResult.status === "fulfilled") {
+            setDocuments(documentsResult.value || []);
+          } else {
+            console.error(
+              "Error fetching documents for student workspace:",
+              documentsResult.reason,
+            );
+            setDocuments([]);
           }
           setLoadingWorkspace(false);
           return;
@@ -402,27 +411,35 @@ export default function StudentWorkspace() {
                 </Typography>
               </Stack>
 
-              {(group.links ?? []).length === 0 ? (
+              {documents.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   Todavía no cargaron links para este grupo.
                 </Typography>
               ) : (
                 <Stack spacing={1}>
-                  {(group.links ?? []).map((link, index) => (
-                    <Button
-                      key={`${link.type}-${index}`}
-                      component="a"
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="outlined"
-                      size="small"
-                      endIcon={<OpenInNewIcon fontSize="small" />}
-                      sx={{ justifyContent: "space-between", textTransform: "none" }}
-                    >
-                      {LINK_LABELS[link.type] || link.type}
-                    </Button>
-                  ))}
+                  {documents.map((doc) => {
+                    // Los links los carga un tutor a mano y salen de la DB sin
+                    // validar: si no es http(s) no lo ponemos en un href.
+                    const href = getDocumentHref(doc.url);
+
+                    return (
+                      <Button
+                        key={doc.id}
+                        component={href ? "a" : "button"}
+                        href={href ?? undefined}
+                        target={href ? "_blank" : undefined}
+                        rel={href ? "noopener noreferrer" : undefined}
+                        disabled={!href}
+                        title={doc.url}
+                        variant="outlined"
+                        size="small"
+                        endIcon={<OpenInNewIcon fontSize="small" />}
+                        sx={{ justifyContent: "space-between", textTransform: "none" }}
+                      >
+                        {getDocumentLabel(doc.url)}
+                      </Button>
+                    );
+                  })}
                 </Stack>
               )}
             </CardContent>
