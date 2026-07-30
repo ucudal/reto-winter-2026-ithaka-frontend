@@ -41,16 +41,45 @@ import ViewListIcon from '@mui/icons-material/ViewList'
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
 import LinkedInIcon from '@mui/icons-material/LinkedIn'
 
-import { getStudents } from '../../api/endpoints/students'
+import {
+  createStudent,
+  deleteStudent,
+  getStudents,
+  updateStudent,
+} from '../../api/endpoints/students'
 import EmptyState from '../../components/common/EmptyState'
+import GenericCreateModal from '../../components/common/GenericCreateModal'
+import { useToast } from '../../ToastContext'
+
+const STUDENT_FIELDS = [
+  { name: 'name', label: 'Nombre', type: 'text', required: true, grid: 12 },
+  { name: 'email', label: 'Email', type: 'email', required: true, grid: 12 },
+  { name: 'major', label: 'Carrera', type: 'text', grid: 12 },
+  { name: 'phone', label: 'Teléfono', type: 'text', grid: 12 },
+  { name: 'linkedin_url', label: 'LinkedIn (URL)', type: 'text', grid: 12 },
+  {
+    name: 'is_graduation_project',
+    label: 'Proyecto final',
+    type: 'select',
+    grid: 12,
+    options: [
+      { value: false, label: 'No' },
+      { value: true, label: 'Sí' },
+    ],
+  },
+]
 
 function Students() {
+  const { showToast } = useToast()
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('name')
   const [view, setView] = useState('list')
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingStudent, setEditingStudent] = useState(null)
+  const [savingStudent, setSavingStudent] = useState(false)
 
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
@@ -80,6 +109,68 @@ function Students() {
       return valueToSearch.includes(search.toLowerCase())
     })
   }, [students, search, filter])
+
+  const handleOpenCreateModal = () => {
+    setEditingStudent(null)
+    setModalOpen(true)
+  }
+
+  const handleOpenEditModal = (student) => {
+    setEditingStudent(student)
+    setModalOpen(true)
+  }
+
+  const handleCloseModal = () => setModalOpen(false)
+
+  const handleSubmitStudent = async (formData) => {
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      major: formData.major || null,
+      phone: formData.phone || null,
+      linkedin_url: formData.linkedin_url || null,
+      is_graduation_project: Boolean(formData.is_graduation_project),
+    }
+
+    try {
+      setSavingStudent(true)
+      if (editingStudent?.id) {
+        await updateStudent(editingStudent.id, payload)
+        showToast('Estudiante actualizado correctamente.', 'success')
+      } else {
+        await createStudent(payload)
+        showToast('Estudiante creado correctamente.', 'success')
+      }
+      setModalOpen(false)
+      setEditingStudent(null)
+      await loadStudents()
+    } catch (err) {
+      showToast(
+        err?.message ||
+          (editingStudent?.id
+            ? 'No se pudo actualizar el estudiante.'
+            : 'No se pudo crear el estudiante.'),
+        'error',
+      )
+    } finally {
+      setSavingStudent(false)
+    }
+  }
+
+  const handleDeleteStudent = async (student) => {
+    if (!student?.id) return
+
+    const confirmed = window.confirm(`¿Deseas eliminar a ${student.name}?`)
+    if (!confirmed) return
+
+    try {
+      await deleteStudent(student.id)
+      showToast('Estudiante eliminado correctamente.', 'success')
+      await loadStudents()
+    } catch (err) {
+      showToast(err?.message || 'No se pudo eliminar el estudiante.', 'error')
+    }
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -130,6 +221,7 @@ function Students() {
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ height: 40 }}
+            onClick={handleOpenCreateModal}
           >
             Nuevo alumno
           </Button>
@@ -386,12 +478,20 @@ function Students() {
                         <Chip label="Activo" size="small" color="success" />
                         <Box>
                           <Tooltip title="Editar">
-                            <IconButton size="small" color="primary">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => handleOpenEditModal(student)}
+                            >
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Eliminar">
-                            <IconButton size="small" color="error">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteStudent(student)}
+                            >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -420,6 +520,30 @@ function Students() {
         </>
         )}
       </Paper>
+
+      <GenericCreateModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        title={editingStudent ? 'Editar estudiante' : 'Agregar estudiante'}
+        fields={STUDENT_FIELDS}
+        initialValues={
+          editingStudent
+            ? {
+                ...editingStudent,
+                is_graduation_project: Boolean(editingStudent.is_graduation_project),
+              }
+            : {
+                name: '',
+                email: '',
+                major: '',
+                phone: '',
+                linkedin_url: '',
+                is_graduation_project: false,
+              }
+        }
+        onSubmit={handleSubmitStudent}
+        loading={savingStudent}
+      />
     </Box>
   )
 }
