@@ -26,6 +26,7 @@ import {
   CardActions,
   Chip,
   Tooltip,
+  TablePagination,
 } from '@mui/material'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
