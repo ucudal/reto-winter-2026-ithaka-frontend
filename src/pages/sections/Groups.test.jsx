@@ -47,12 +47,12 @@ describe('Groups Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getStudents).mockResolvedValue(mockStudents);
+    vi.mocked(getStudents).mockResolvedValue({ items: mockStudents, total: mockStudents.length });
     vi.mocked(getTutors).mockResolvedValue([]);
   });
 
   it('renders loading state and displays groups list successfully', async () => {
-    vi.mocked(getGroups).mockResolvedValue(mockGroups);
+    vi.mocked(getGroups).mockResolvedValue({ items: mockGroups, total: mockGroups.length });
     vi.mocked(getCohorts).mockResolvedValue(mockCohorts);
 
     render(
@@ -81,7 +81,7 @@ describe('Groups Component', () => {
   });
 
   it('allows opening create modal for a new group', async () => {
-    vi.mocked(getGroups).mockResolvedValue(mockGroups);
+    vi.mocked(getGroups).mockResolvedValue({ items: mockGroups, total: mockGroups.length });
     vi.mocked(getCohorts).mockResolvedValue(mockCohorts);
 
     render(

@@ -155,9 +155,7 @@ function Knowledge() {
     try {
       await deleteMaterial(materialId);
       showToast("Material eliminado correctamente.", "success");
-      setMaterials((currentMaterials) =>
-        currentMaterials.filter((material) => material.id !== materialId),
-      );
+      loadMaterials();
       setMaterialToDelete(null);
     } catch (err) {
       showToast(err?.message || "No se pudo eliminar el material.", "error");
@@ -384,7 +382,7 @@ function Knowledge() {
                   </TableCell>
                 </TableRow>
               ) : (
-                materials.map((material) => (
+                filteredMaterials.map((material) => (
                   <TableRow key={material.id} hover>
                     <TableCell>{material.id}</TableCell>
                     <TableCell>{material.stage_id}</TableCell>

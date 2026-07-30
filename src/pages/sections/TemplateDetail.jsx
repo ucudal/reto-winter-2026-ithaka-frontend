@@ -93,9 +93,8 @@ function TemplateDetail() {
     } catch {
       // Fallback a texto plano si la API de Clipboard rich text no está disponible
       try {
-        const tempDiv = document.createElement('div')
-        tempDiv.innerHTML = content
-        const plainText = tempDiv.innerText || tempDiv.textContent || ''
+        const doc = new DOMParser().parseFromString(content, 'text/html')
+        const plainText = doc.body.textContent || ''
         await navigator.clipboard.writeText(plainText)
         showToast('Plantilla copiada como texto plano.', 'success')
       } catch {

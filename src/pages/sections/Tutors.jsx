@@ -54,6 +54,7 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import {
   getTutors,
   upsertTutor,
+  deleteTutor,
   getTutorCapacity,
   getTutorGroups,
 } from "../../api/endpoints/tutors";
@@ -165,6 +166,7 @@ export default function Tutors() {
     if (!tutorToDelete) return;
     try {
       setDeleting(true);
+      await deleteTutor(tutorToDelete.id);
       setTutors((prev) => prev.filter((t) => t.id !== tutorToDelete.id));
       showToast("Tutor eliminado correctamente.", "success");
       setTutorToDelete(null);
