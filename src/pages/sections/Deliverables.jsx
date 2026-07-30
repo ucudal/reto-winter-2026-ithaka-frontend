@@ -24,6 +24,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
+import { useSearchParams } from "react-router-dom";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -34,10 +35,11 @@ import { getTutorGroups } from "../../api/endpoints/tutors";
 
 export default function Deliverables() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [deliverables, setDeliverables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentTab, setCurrentTab] = useState("ALL");
+  const [currentTab, setCurrentTab] = useState(searchParams.get("status") || "ALL");
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedDeliverableId, setSelectedDeliverableId] = useState(null);
