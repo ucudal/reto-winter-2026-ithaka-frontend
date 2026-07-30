@@ -359,15 +359,6 @@ export default function GroupDetail() {
         >
           <Link
             component={RouterLink}
-            to="/"
-            underline="hover"
-            color="inherit"
-            variant="body2"
-          >
-            Inicio
-          </Link>
-          <Link
-            component={RouterLink}
             to="/groups"
             underline="hover"
             color="inherit"

@@ -228,9 +228,6 @@ export default function Tutors() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/" underline="hover" color="inherit">
-          Inicio
-        </Link>
         <Typography color="text.primary">Tutores</Typography>
       </Breadcrumbs>
 
@@ -454,7 +451,7 @@ export default function Tutors() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTutors.map((tutor) => (
+                  filteredTutors.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tutor) => (
                     <TableRow key={tutor.id} hover>
                       <TableCell>
                         <Box
