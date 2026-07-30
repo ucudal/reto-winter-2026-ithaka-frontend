@@ -128,7 +128,7 @@ function Groups() {
         idea: formData.idea || "",
         major: "",
         status: "Active",
-        student_ids: [],
+        student_ids: formData.student_ids,
         business_tutor_id: null,
         technical_tutor_id: null,
       });
@@ -165,7 +165,7 @@ function Groups() {
         idea: formData.idea || "",
         major: editingGroup.major || "",
         status: editingGroup.status,
-        student_ids: editingGroup.students.map((s) => s.id),
+        student_ids: formData.student_ids,
         business_tutor_id: editingGroup.businessTutor?.id ?? null,
         technical_tutor_id: editingGroup.technicalTutor?.id ?? null,
       });
@@ -516,6 +516,7 @@ function Groups() {
             name: editingGroup?.name,
             cohort_id: editingGroup?.cohortId,
             idea: editingGroup?.idea,
+            student_ids: editingGroup?.students?.map((s) => s.id) ?? [],
         }}
         onSubmit={handleEditGroup}
       />
