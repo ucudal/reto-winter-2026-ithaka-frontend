@@ -66,28 +66,31 @@ describe("Tutors", () => {
 
 
   it("renders tutors list correctly", async () => {
-    getTutors.mockResolvedValue([
-      {
-        id: 1,
-        name: "Juan Perez",
-        role: "Technical",
-        specialty: "Backend",
-        availability: "20 hs",
-        status: "Active",
-        max_capacity: 40,
-        linkedin_url: null,
-      },
-      {
-        id: 2,
-        name: "Ana Gomez",
-        role: "Business",
-        specialty: "Marketing",
-        availability: "10 hs",
-        status: "Inactive",
-        max_capacity: 30,
-        linkedin_url: null,
-      },
-    ]);
+    getTutors.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          name: "Juan Perez",
+          role: "Technical",
+          specialty: "Backend",
+          availability: "20 hs",
+          status: "Active",
+          max_capacity: 40,
+          linkedin_url: null,
+        },
+        {
+          id: 2,
+          name: "Ana Gomez",
+          role: "Business",
+          specialty: "Marketing",
+          availability: "10 hs",
+          status: "Inactive",
+          max_capacity: 30,
+          linkedin_url: null,
+        },
+      ],
+      total: 2,
+    });
 
     render(
       <MemoryRouter>
@@ -108,26 +111,29 @@ describe("Tutors", () => {
 
 
   it("filters tutors by name", async () => {
-    getTutors.mockResolvedValue([
-      {
-        id: 1,
-        name: "Juan Perez",
-        role: "Technical",
-        specialty: "Backend",
-        availability: "20 hs",
-        status: "Active",
-        max_capacity: 40,
-      },
-      {
-        id: 2,
-        name: "Maria Lopez",
-        role: "Business",
-        specialty: "Ventas",
-        availability: "15 hs",
-        status: "Active",
-        max_capacity: 30,
-      },
-    ]);
+    getTutors.mockResolvedValueOnce({
+      items: [
+        {
+          id: 1,
+          name: "Juan Perez",
+          role: "Technical",
+          specialty: "Backend",
+          availability: "20 hs",
+          status: "Active",
+          max_capacity: 40,
+        },
+        {
+          id: 2,
+          name: "Maria Lopez",
+          role: "Business",
+          specialty: "Ventas",
+          availability: "15 hs",
+          status: "Active",
+          max_capacity: 30,
+        },
+      ],
+      total: 2,
+    });
 
     render(
       <MemoryRouter>
@@ -139,6 +145,21 @@ describe("Tutors", () => {
       expect(screen.getByText("Juan Perez")).toBeInTheDocument()
     );
 
+    getTutors.mockResolvedValueOnce({
+      items: [
+        {
+          id: 2,
+          name: "Maria Lopez",
+          role: "Business",
+          specialty: "Ventas",
+          availability: "15 hs",
+          status: "Active",
+          max_capacity: 30,
+        },
+      ],
+      total: 1,
+    });
+
     const searchInput = screen.getByLabelText("Buscar");
 
     fireEvent.change(searchInput, {
@@ -147,26 +168,28 @@ describe("Tutors", () => {
       },
     });
 
-    expect(screen.getByText("Maria Lopez")).toBeInTheDocument();
-
-    expect(
-      screen.queryByText("Juan Perez")
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Maria Lopez")).toBeInTheDocument();
+      expect(screen.queryByText("Juan Perez")).not.toBeInTheDocument();
+    });
   });
 
 
   it("opens capacity dialog when clicking capacity button", async () => {
-    getTutors.mockResolvedValue([
-      {
-        id: 1,
-        name: "Carlos Ruiz",
-        role: "Technical",
-        specialty: "Frontend",
-        availability: "20 hs",
-        status: "Active",
-        max_capacity: 40,
-      },
-    ]);
+    getTutors.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          name: "Carlos Ruiz",
+          role: "Technical",
+          specialty: "Frontend",
+          availability: "20 hs",
+          status: "Active",
+          max_capacity: 40,
+        },
+      ],
+      total: 1,
+    });
 
     getTutorCapacity.mockResolvedValue({
       usage_percentage: 50,

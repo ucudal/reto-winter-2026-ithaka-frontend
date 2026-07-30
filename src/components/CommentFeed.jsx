@@ -76,7 +76,8 @@ export default function CommentFeed({ deliverableId }) {
     }
 
     if (tutorsResult.status === "fulfilled") {
-      const tutors = tutorsResult.value ?? [];
+      const res = tutorsResult.value;
+      const tutors = Array.isArray(res) ? res : (res?.items ?? []);
       setTutorsById(Object.fromEntries(tutors.map((t) => [t.id, t.name])));
       // El usuario autenticado (users.id) no es el tutor (tutors.id): buscamos
       // el tutor correspondiente para usar su id al crear comentarios.

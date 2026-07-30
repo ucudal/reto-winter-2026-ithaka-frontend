@@ -34,12 +34,17 @@ import EditIcon from '@mui/icons-material/Edit'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import ViewModuleIcon from '@mui/icons-material/ViewModule'
 import ViewListIcon from '@mui/icons-material/ViewList'
+import DeleteIcon from '@mui/icons-material/Delete'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import CloudQueueIcon from '@mui/icons-material/CloudQueue'
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material'
 import EmptyState from '../../components/common/EmptyState'
 import ErrorState from '../../components/common/ErrorState'
 import GenericCreateModal from "../../components/common/GenericCreateModal";
-import { getMaterials } from "../../api/endpoints/materials";
+import GenericEditModal from "../../components/common/GenericEditModal";
+import { getMaterials, createMaterial, upsertMaterial, deleteMaterial } from "../../api/endpoints/materials";
+import { useToast } from "../../ToastContext";
 
 function getPlatformIcon(platform = "") {
   const lower = platform.toLowerCase();
@@ -51,7 +56,7 @@ function getPlatformIcon(platform = "") {
       </Box>
     );
   }
-  if (lower === "sharepoint" || lower === "sharepoint") {
+  if (lower === "sharepoint") {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <CloudQueueIcon fontSize="small" sx={{ color: "#0078D4" }} />
@@ -59,7 +64,12 @@ function getPlatformIcon(platform = "") {
       </Box>
     );
   }
-  return <span>{platform}</span>;
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <InsertDriveFileIcon fontSize="small" sx={{ color: "action.active" }} />
+      <span>{platform || "Documento"}</span>
+    </Box>
+  );
 }
 
 function getPlatformLabel(url = "") {
@@ -76,7 +86,7 @@ function getPlatformLabel(url = "") {
   if (normalized.includes("youtube.com") || normalized.includes("youtu.be")) {
     return "YouTube";
   }
-  return "Enlace";
+  return "Documento";
 }
 
 function mapMaterialToTemplate(material) {
@@ -91,6 +101,7 @@ function mapMaterialToTemplate(material) {
 }
 
 function Templates() {
+  const { showToast } = useToast();
   const navigate = useNavigate()
   const [templates, setTemplates] = useState([]);
   const [search, setSearch] = useState('')
@@ -147,6 +158,10 @@ function Templates() {
   }, [templates, search, filter])
 
   const [openModal, setOpenModal] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   if (loading) {
     return (
@@ -187,17 +202,57 @@ function Templates() {
       required: true,
     },
   ];
-  const handleCreateTemplate = (data) => {
-    const newTemplate = {
-      id: Date.now(),
-      platform: "Drive",
-      type: "Deliverable",
-      ...data,
-    };
 
-    setTemplates((prev) => [...prev, newTemplate]);
+  const handleCreateTemplate = async (data) => {
+    try {
+      const created = await createMaterial({
+        name: data.name,
+        description: data.description,
+        content: data.content,
+      });
+      showToast("Template creado correctamente.", "success");
+      const mapped = mapMaterialToTemplate(created || { ...data, id: Date.now() });
+      setTemplates((prev) => [mapped, ...prev]);
+      setOpenModal(false);
+    } catch (err) {
+      showToast(err?.message || "No se pudo crear el template.", "error");
+    }
+  };
 
-    setOpenModal(false);
+  const handleUpdateTemplate = async (data) => {
+    try {
+      setSaving(true);
+      const updated = await upsertMaterial({
+        id: Number(data.id),
+        title: data.name,
+        url: data.content || data.description || "",
+      });
+      showToast("Template actualizado correctamente.", "success");
+      const mapped = mapMaterialToTemplate(updated || { ...data });
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === mapped.id ? mapped : t)),
+      );
+      setEditingTemplate(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo actualizar el template.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!templateToDelete) return;
+    try {
+      setDeleting(true);
+      await deleteMaterial(templateToDelete.id);
+      showToast("Template eliminado correctamente.", "success");
+      setTemplates((prev) => prev.filter((t) => t.id !== templateToDelete.id));
+      setTemplateToDelete(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo eliminar el template.", "error");
+    } finally {
+      setDeleting(false);
+    }
   };
   return (
     <Box sx={{ width: '100%' }}>
@@ -344,12 +399,35 @@ function Templates() {
                       <TableCell>{getPlatformIcon(template.platform)}</TableCell>
                       <TableCell>{template.type}</TableCell>
                       <TableCell align='right'>
-                        <IconButton
-                          color='primary'
-                          onClick={() => navigate(`/templates/${template.id}`)}
-                        >
-                          <EditIcon />
-                        </IconButton>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+                          <Tooltip title="Ver / Copiar plantilla (Word)">
+                            <IconButton
+                              color='info'
+                              size="small"
+                              onClick={() => navigate(`/templates/${template.id}`)}
+                            >
+                              <VisibilityIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Editar datos">
+                            <IconButton
+                              color='primary'
+                              size="small"
+                              onClick={() => setEditingTemplate(template)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Eliminar">
+                            <IconButton
+                              color='error'
+                              size="small"
+                              onClick={() => setTemplateToDelete(template)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))
@@ -412,13 +490,31 @@ function Templates() {
                       </Box>
                     </CardContent>
                     <CardActions sx={{ justifyContent: "flex-end", px: 2, pb: 2 }}>
-                      <Tooltip title="Editar">
+                      <Tooltip title="Ver / Copiar plantilla (Word)">
                         <IconButton
-                          color='primary'
+                          color='info'
                           onClick={() => navigate(`/templates/${template.id}`)}
                           size="small"
                         >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Editar datos">
+                        <IconButton
+                          color='primary'
+                          onClick={() => setEditingTemplate(template)}
+                          size="small"
+                        >
                           <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Eliminar">
+                        <IconButton
+                          color='error'
+                          onClick={() => setTemplateToDelete(template)}
+                          size="small"
+                        >
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     </CardActions>
@@ -456,9 +552,44 @@ function Templates() {
         }}
         onSubmit={handleCreateTemplate}
       />
+
+      <GenericEditModal
+        open={Boolean(editingTemplate)}
+        onClose={() => setEditingTemplate(null)}
+        title="Editar Template"
+        fields={templateFields}
+        record={editingTemplate}
+        onSubmit={handleUpdateTemplate}
+        loading={saving}
+      />
+
+      <Dialog
+        open={Boolean(templateToDelete)}
+        onClose={() => setTemplateToDelete(null)}
+      >
+        <DialogTitle>Eliminar plantilla</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Estás seguro de que deseas eliminar la plantilla{" "}
+            <strong>{templateToDelete?.name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTemplateToDelete(null)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteTemplate}
+            disabled={deleting}
+          >
+            {deleting ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
-
 }
 
 export default Templates

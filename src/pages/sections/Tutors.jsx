@@ -48,9 +48,6 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SearchIcon from "@mui/icons-material/Search";
-import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
-
-import TutorsCapacityPanel from "../../components/TutorsCapacityPanel.jsx";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
@@ -120,6 +117,8 @@ export default function Tutors() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   
   const [saving, setSaving] = useState(false);
+  const [tutorToDelete, setTutorToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [capacityOpen, setCapacityOpen] = useState(false);
   const [capacityLoading, setCapacityLoading] = useState(false);
@@ -161,6 +160,20 @@ export default function Tutors() {
     setModalOpen(true);
   };
   const handleCloseModal = () => setModalOpen(false);
+
+  const handleDeleteTutor = async () => {
+    if (!tutorToDelete) return;
+    try {
+      setDeleting(true);
+      setTutors((prev) => prev.filter((t) => t.id !== tutorToDelete.id));
+      showToast("Tutor eliminado correctamente.", "success");
+      setTutorToDelete(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo eliminar el tutor.", "error");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleSaveTutor = async (data) => {
     const { id, ...values } = data;
@@ -282,15 +295,6 @@ export default function Tutors() {
           </FormControl>
 
           <Button
-            variant="outlined"
-            startIcon={<MonitorHeartIcon />}
-            sx={{ height: 40 }}
-            onClick={() => setShowCapacity((prev) => !prev)}
-          >
-            {showCapacity ? "Tutores" : "Capacidad"}
-          </Button>
-
-          <Button
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ height: 40 }}
@@ -301,9 +305,6 @@ export default function Tutors() {
         </Box>
       </Box>
 
-      {showCapacity ? (
-        <TutorsCapacityPanel />
-      ) : (
       <Paper sx={{ p: 2, borderRadius: 2 }}>
         <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
           <TextField
@@ -558,6 +559,7 @@ export default function Tutors() {
                             size="small"
                             color="error"
                             aria-label={`Eliminar ${tutor.name}`}
+                            onClick={() => setTutorToDelete(tutor)}
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
@@ -724,6 +726,7 @@ export default function Tutors() {
                             size="small"
                             color="error"
                             aria-label={`Eliminar ${tutor.name}`}
+                            onClick={() => setTutorToDelete(tutor)}
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
@@ -737,7 +740,6 @@ export default function Tutors() {
           </Grid>
         )}
       </Paper>
-      )}
 
       <GenericEditModal
         open={modalOpen}
@@ -845,6 +847,32 @@ export default function Tutors() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseCapacity}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(tutorToDelete)}
+        onClose={() => setTutorToDelete(null)}
+      >
+        <DialogTitle>Eliminar tutor</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Estás seguro de que deseas eliminar al tutor{" "}
+            <strong>{tutorToDelete?.name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTutorToDelete(null)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteTutor}
+            disabled={deleting}
+          >
+            {deleting ? "Eliminando..." : "Eliminar"}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -12,10 +12,14 @@ import {
   Divider,
   Alert
 } from '@mui/material';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Settings() {
+  const { user } = useAuth();
   const [currentTab, setCurrentTab] = useState(0);
   const [successMessage, setSuccessMessage] = useState('');
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
 
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
@@ -56,8 +60,22 @@ export default function Settings() {
           {currentTab === 0 && (
             <>
               <Typography variant="h6" fontWeight="600">Información Personal</Typography>
-              <TextField label="Nombre Completo" defaultValue="Luca" variant="outlined" fullWidth size="small" />
-              <TextField label="Correo Electrónico" defaultValue="luca@example.com" variant="outlined" fullWidth size="small" />
+              <TextField
+                label="Nombre Completo"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                variant="outlined"
+                fullWidth
+                size="small"
+              />
+              <TextField
+                label="Correo Electrónico"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                variant="outlined"
+                fullWidth
+                size="small"
+              />
               <Button type="submit" variant="contained" sx={{ alignSelf: 'flex-start', textTransform: 'none' }}>
                 Guardar Cambios
               </Button>

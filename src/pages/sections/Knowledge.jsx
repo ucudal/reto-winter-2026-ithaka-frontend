@@ -37,7 +37,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
-import { getMaterials, createMaterial } from "../../api/endpoints/materials";
+import { getMaterials, createMaterial, upsertMaterial, deleteMaterial } from "../../api/endpoints/materials";
 import ConfirmModal from "../../components/ConfirmModal";
 import CreateMaterialModal from "../../components/CreateMaterialModal";
 import EditMaterialModal from "../../components/EditMaterialModal";
@@ -148,41 +148,46 @@ function Knowledge() {
     loadMaterials();
   }, [loadMaterials]);
 
-  const handleDeleteMaterial = () => {
+  const handleDeleteMaterial = async () => {
     if (!materialToDelete) return;
 
     const materialId = materialToDelete.id;
-
-    // Llamada real a la API:
-    // await apiClient.delete(`/materials/${materialId}`)
-
-    // Eliminación mockeada en el estado local:
-    setMaterials((currentMaterials) =>
-      currentMaterials.filter((material) => material.id !== materialId),
-    );
+    try {
+      await deleteMaterial(materialId);
+      showToast("Material eliminado correctamente.", "success");
+      setMaterials((currentMaterials) =>
+        currentMaterials.filter((material) => material.id !== materialId),
+      );
+      setMaterialToDelete(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo eliminar el material.", "error");
+    }
   };
 
-  const handleEditMaterial = (updatedFields) => {
+  const handleEditMaterial = async (updatedFields) => {
     if (!materialToEdit) return;
 
     const materialId = materialToEdit.id;
-
-    // Llamada real a la API:
-    // const { data } = await apiClient.put(`/materials/${materialId}`, updatedFields)
-    // setMaterials((currentMaterials) =>
-    //   currentMaterials.map((material) =>
-    //     material.id === materialId ? data : material,
-    //   ),
-    // )
-
-    // Edición mockeada en el estado local:
-    setMaterials((currentMaterials) =>
-      currentMaterials.map((material) =>
-        material.id === materialId
-          ? { ...material, ...updatedFields }
-          : material,
-      ),
-    );
+    try {
+      const payload = {
+        id: materialId,
+        title: updatedFields.title || materialToEdit.title,
+        url: updatedFields.url || materialToEdit.url,
+        stage_id: updatedFields.stage_id
+          ? Number(updatedFields.stage_id)
+          : materialToEdit.stage_id ?? null,
+      };
+      const updatedData = await upsertMaterial(payload);
+      showToast("Material actualizado correctamente.", "success");
+      setMaterials((currentMaterials) =>
+        currentMaterials.map((material) =>
+          material.id === materialId ? { ...material, ...updatedData } : material,
+        ),
+      );
+      setMaterialToEdit(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo actualizar el material.", "error");
+    }
   };
 
   const handleCreateMaterial = async (newMaterial) => {

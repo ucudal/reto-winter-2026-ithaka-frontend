@@ -207,12 +207,10 @@ function Groups() {
       type: "select",
       multiple: true,
       required: true,
-      options: students
-        .filter((student) => student.group_id == null)
-        .map((student) => ({
-          value: student.id,
-          label: student.name,
-        })),
+      options: students.map((student) => ({
+        value: student.id,
+        label: student.group_id ? `${student.name} (Grupo #${student.group_id})` : student.name,
+      })),
     },
   ];
 
