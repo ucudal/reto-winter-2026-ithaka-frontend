@@ -35,6 +35,10 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(true);
   };
 
+  const updateUser = (partialUser) => {
+    setUser((prev) => ({ ...prev, ...partialUser }));
+  };
+
   const logout = () => {
     clearCache();
     setAuthToken(null);
@@ -65,6 +69,7 @@ export function AuthProvider({ children }) {
         user,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

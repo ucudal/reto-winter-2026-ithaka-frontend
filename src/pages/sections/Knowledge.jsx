@@ -38,6 +38,7 @@ import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
 import { getMaterials, createMaterial, upsertMaterial, deleteMaterial } from "../../api/endpoints/materials";
+import { useToast } from "../../ToastContext";
 import ConfirmModal from "../../components/ConfirmModal";
 import CreateMaterialModal from "../../components/CreateMaterialModal";
 import EditMaterialModal from "../../components/EditMaterialModal";
@@ -91,6 +92,7 @@ function getPlatformDetails(url = "") {
 }
 
 function Knowledge() {
+  const { showToast } = useToast();
   const [materials, setMaterials] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);

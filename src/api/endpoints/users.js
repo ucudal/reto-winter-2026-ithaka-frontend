@@ -19,3 +19,13 @@ export async function deleteUser(userId) {
   const { data } = await apiClient.delete(`/api/users/${userId}`);
   return data;
 }
+
+export async function updateMyProfile(payload) {
+  const { data } = await apiClient.put("/api/users/me", payload);
+  return data;
+}
+
+export async function changeMyPassword(payload) {
+  const { data } = await apiClient.put("/api/users/me/password", payload);
+  return data;
+}

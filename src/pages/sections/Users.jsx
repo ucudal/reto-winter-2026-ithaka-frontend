@@ -24,11 +24,13 @@ import {
   Breadcrumbs,
   CircularProgress,
   IconButton,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import SearchIcon from "@mui/icons-material/Search";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getUsers, createUser, updateUser, deleteUser } from "../../api/endpoints/users";
 import { translateUserRole } from "../../utils/translate";
@@ -75,6 +77,7 @@ export default function Users() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Dialog & Form states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -93,7 +96,11 @@ export default function Users() {
     try {
       setLoading(true);
       setError("");
-      const params = { page: page + 1, page_size: rowsPerPage };
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        name_search: searchTerm || undefined,
+      };
       const data = await getUsers(params);
       setUsers(normalizeUsersResponse(data));
       setTotalCount(data?.total ?? (Array.isArray(data) ? data.length : 0));
@@ -106,7 +113,7 @@ export default function Users() {
 
   useEffect(() => {
     fetchUsers();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, searchTerm]);
 
   const handleOpenCreateDialog = () => {
     setEditUserObj(null);
@@ -201,6 +208,25 @@ export default function Users() {
           {error}
         </Alert>
       )}
+
+      <TextField
+        label="Buscar"
+        placeholder="Buscar por nombre"
+        value={searchTerm}
+        onChange={(event) => {
+          setPage(0);
+          setSearchTerm(event.target.value);
+        }}
+        fullWidth
+        sx={{ mb: 3 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon fontSize="small" />
+            </InputAdornment>
+          ),
+        }}
+      />
 
       <Paper sx={{ overflow: "hidden", borderRadius: 2 }}>
         {loading ? (

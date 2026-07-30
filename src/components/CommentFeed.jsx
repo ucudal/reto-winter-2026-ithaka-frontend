@@ -79,17 +79,16 @@ export default function CommentFeed({ deliverableId }) {
       const res = tutorsResult.value;
       const tutors = Array.isArray(res) ? res : (res?.items ?? []);
       setTutorsById(Object.fromEntries(tutors.map((t) => [t.id, t.name])));
-      // El usuario autenticado (users.id) no es el tutor (tutors.id): buscamos
-      // el tutor correspondiente para usar su id al crear comentarios.
-      const currentTutor = tutors.find((t) => t.name === user?.name);
-      setCurrentTutorId(currentTutor?.id ?? null);
     } else {
       setTutorsById({});
-      setCurrentTutorId(null);
     }
 
+    // El usuario autenticado (users.id) no es el tutor (tutors.id): el vínculo
+    // real ya viene embebido en el login/`/users/me` como user.tutor.id.
+    setCurrentTutorId(user?.tutor?.id ?? null);
+
     setLoading(false);
-  }, [deliverableId, user?.name]);
+  }, [deliverableId, user?.tutor?.id]);
 
   useEffect(() => {
     if (deliverableId) {

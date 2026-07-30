@@ -319,7 +319,9 @@ export default function Cohorts() {
             sx={{ width: 220 }}
           >
             <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="Planned">Planificado</MenuItem>
             <MenuItem value="Active">Activo</MenuItem>
+            <MenuItem value="Finished">Finalizado</MenuItem>
             <MenuItem value="Inactive">Inactivo</MenuItem>
           </TextField>
         </Box>
@@ -612,7 +614,9 @@ export default function Cohorts() {
                 required
                 fullWidth
               >
+                <MenuItem value="Planned">Planificado</MenuItem>
                 <MenuItem value="Active">Activo</MenuItem>
+                <MenuItem value="Finished">Finalizado</MenuItem>
                 <MenuItem value="Inactive">Inactivo</MenuItem>
               </TextField>
               <TextField

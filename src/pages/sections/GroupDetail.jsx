@@ -269,8 +269,8 @@ export default function GroupDetail() {
     if (tutors.length === 0) {
       try {
         setLoadingTutors(true);
-        const tutorsData = await getTutors();
-        setTutors(tutorsData || []);
+        const tutorsData = await getTutors({ page_size: 100, status: "Active" });
+        setTutors(tutorsData?.items || []);
       } catch (err) {
         console.error("Error al cargar tutores:", err);
         setTutorsLoadFailed(true);

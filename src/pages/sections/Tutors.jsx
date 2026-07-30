@@ -58,6 +58,7 @@ import {
   getTutorCapacity,
   getTutorGroups,
 } from "../../api/endpoints/tutors";
+import { createUser } from "../../api/endpoints/users";
 import { translateStatus, translateTutorRole } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
@@ -88,7 +89,17 @@ const TUTOR_FIELDS = [
     ],
   },
   { name: "specialty", label: "Especialidad", type: "text", grid: 12 },
-  { name: "availability", label: "Disponibilidad", type: "text", grid: 12 },
+  {
+    name: "availability",
+    label: "Disponibilidad",
+    type: "text",
+    required: true,
+    grid: 12,
+    validate: (value) =>
+      /^\d+$/.test(String(value).trim())
+        ? "Ingresá días/horarios, no un número suelto"
+        : "",
+  },
   { name: "linkedin_url", label: "LinkedIn (URL)", type: "text", grid: 12 },
   {
     name: "max_capacity",
@@ -101,6 +112,21 @@ const TUTOR_FIELDS = [
   },
 ];
 
+const TUTOR_ACCOUNT_FIELDS = [
+  {
+    name: "email",
+    label: "Email (opcional, crea cuenta de acceso)",
+    type: "text",
+    grid: 12,
+  },
+  {
+    name: "password",
+    label: "Contraseña (si creás cuenta de acceso)",
+    type: "password",
+    grid: 12,
+  },
+];
+
 export default function Tutors() {
   const { showToast } = useToast();
 
@@ -110,7 +136,6 @@ export default function Tutors() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProperty, setFilterProperty] = useState("name");
   const [view, setView] = useState("list");
-  const [showCapacity, setShowCapacity] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTutor, setEditingTutor] = useState(null); // null => crear
@@ -137,6 +162,7 @@ export default function Tutors() {
         page: page + 1,
         page_size: rowsPerPage,
         search: searchTerm || undefined,
+        status: "Active",
       };
       const res = await getTutors(params);
       setTutors(res?.items ?? []);
@@ -180,6 +206,15 @@ export default function Tutors() {
   const handleSaveTutor = async (data) => {
     const { id, ...values } = data;
     const isEdit = Boolean(id);
+
+    if (!isEdit && ((values.email && !values.password) || (!values.email && values.password))) {
+      showToast(
+        "Para crear una cuenta de acceso completá email y contraseña.",
+        "error",
+      );
+      return;
+    }
+
     const payload = {
       id: id ?? null,
       name: values.name,
@@ -193,6 +228,17 @@ export default function Tutors() {
 
     try {
       setSaving(true);
+
+      if (!isEdit && values.email && values.password) {
+        const newUser = await createUser({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          role: values.role === "Business" ? "BusinessTutor" : "TechnicalTutor",
+        });
+        payload.user_id = newUser.id;
+      }
+
       await upsertTutor(payload);
       showToast(
         isEdit
@@ -453,7 +499,7 @@ export default function Tutors() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tutors.length === 0 ? (
+                {filteredTutors.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                       <Typography color="text.secondary">
@@ -462,7 +508,7 @@ export default function Tutors() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  tutors.map((tutor) => (
+                  filteredTutors.map((tutor) => (
                     <TableRow key={tutor.id} hover>
                       <TableCell>
                         <Box
@@ -747,7 +793,7 @@ export default function Tutors() {
         open={modalOpen}
         onClose={handleCloseModal}
         title={editingTutor ? "Editar tutor" : "Agregar tutor"}
-        fields={TUTOR_FIELDS}
+        fields={editingTutor ? TUTOR_FIELDS : [...TUTOR_FIELDS, ...TUTOR_ACCOUNT_FIELDS]}
         record={editingTutor}
         onSubmit={handleSaveTutor}
         loading={saving}

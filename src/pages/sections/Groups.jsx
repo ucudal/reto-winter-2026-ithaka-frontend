@@ -45,6 +45,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ConfirmModal from "../../components/ConfirmModal";
 
 import { getStudents } from "../../api/endpoints/students";
+import { translateStatus } from "../../utils/translate";
 
 const CREATE_GROUP_INITIAL_VALUES = {
   student_ids: [],
@@ -138,7 +139,7 @@ function Groups() {
         idea: formData.idea || "",
         major: "",
         status: "Active",
-        student_ids: [],
+        student_ids: formData.student_ids ?? [],
         business_tutor_id: null,
         technical_tutor_id: null,
       });
@@ -175,7 +176,7 @@ function Groups() {
         idea: formData.idea || "",
         major: editingGroup.major || "",
         status: editingGroup.status,
-        student_ids: editingGroup.students.map((s) => s.id),
+        student_ids: formData.student_ids ?? [],
         business_tutor_id: editingGroup.businessTutor?.id ?? null,
         technical_tutor_id: editingGroup.technicalTutor?.id ?? null,
       });
@@ -363,7 +364,7 @@ function Groups() {
           <MenuItem value="">Todos</MenuItem>
           {statusOptions.map((status) => (
             <MenuItem key={status} value={status}>
-              {status}
+              {translateStatus(status)}
             </MenuItem>
           ))}
         </TextField>
@@ -441,7 +442,7 @@ function Groups() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip label={group.status} size="small" color="default" />
+                      <Chip label={translateStatus(group.status)} size="small" color="default" />
                     </TableCell>
                     <TableCell align="right">
                       <Box
@@ -524,6 +525,7 @@ function Groups() {
             name: editingGroup?.name,
             cohort_id: editingGroup?.cohortId,
             idea: editingGroup?.idea,
+            student_ids: editingGroup?.students?.map((s) => s.id) ?? [],
         }}
         onSubmit={handleEditGroup}
       />

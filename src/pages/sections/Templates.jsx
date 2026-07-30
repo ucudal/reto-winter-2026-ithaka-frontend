@@ -97,6 +97,7 @@ function mapMaterialToTemplate(material) {
     type: material.type || "Material",
     description: material.url || material.description || "",
     content: material.url || material.description || "",
+    stage_id: material.stage_id ?? "",
   };
 }
 
@@ -163,21 +164,6 @@ function Templates() {
   const [templateToDelete, setTemplateToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    )
-  }
-
   if (error) {
     return <ErrorState title='Error cargando templates' message={error} />
   }
@@ -187,6 +173,12 @@ function Templates() {
       name: "name",
       label: "Nombre",
       type: "text",
+      required: true,
+    },
+    {
+      name: "stage_id",
+      label: "Etapa",
+      type: "number",
       required: true,
     },
     {
@@ -209,6 +201,7 @@ function Templates() {
         name: data.name,
         description: data.description,
         content: data.content,
+        stage_id: Number(data.stage_id),
       });
       showToast("Template creado correctamente.", "success");
       const mapped = mapMaterialToTemplate(created || { ...data, id: Date.now() });
@@ -226,6 +219,7 @@ function Templates() {
         id: Number(data.id),
         title: data.name,
         url: data.content || data.description || "",
+        stage_id: Number(data.stage_id),
       });
       showToast("Template actualizado correctamente.", "success");
       const mapped = mapMaterialToTemplate(updated || { ...data });
@@ -392,7 +386,13 @@ function Templates() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredTemplates.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                      <CircularProgress size={32} />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredTemplates.length > 0 ? (
                   filteredTemplates.map((template) => (
                     <TableRow key={template.id} hover>
                       <TableCell sx={{ fontWeight: "medium" }}>{template.name}</TableCell>
@@ -462,7 +462,11 @@ function Templates() {
       ) : (
         <Box>
           <Grid container spacing={3}>
-            {filteredTemplates.length === 0 ? (
+            {loading ? (
+              <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                <CircularProgress size={32} />
+              </Grid>
+            ) : filteredTemplates.length === 0 ? (
               <Grid item xs={12}>
                 <Box sx={{ py: 6, textAlign: "center" }}>
                   <EmptyState

@@ -19,6 +19,12 @@ vi.mock("../../utils/cache", () => ({
   clearCache: vi.fn(),
 }));
 
+vi.mock("../../api/endpoints/users", () => ({
+  updateMyProfile: vi.fn(() =>
+    Promise.resolve({ name: "Luca", email: "luca@example.com" })
+  ),
+}));
+
 const renderWithProviders = (ui) =>
   render(
     <AuthProvider>
@@ -73,7 +79,7 @@ describe("Settings", () => {
     );
 
     expect(
-      screen.getByText("¡Cambios guardados exitosamente!")
+      await screen.findByText("¡Cambios guardados exitosamente!")
     ).toBeInTheDocument();
   });
 });

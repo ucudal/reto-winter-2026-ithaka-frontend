@@ -4,11 +4,12 @@ import { MemoryRouter } from "react-router-dom";
 
 import Knowledge from "./Knowledge";
 import * as materialsApi from "../../api/endpoints/materials";
+import { ToastProvider } from "../../ToastContext";
 
 const renderWithRouter = (component) => {
   return render(
     <MemoryRouter>
-      {component}
+      <ToastProvider>{component}</ToastProvider>
     </MemoryRouter>
   );
 };
