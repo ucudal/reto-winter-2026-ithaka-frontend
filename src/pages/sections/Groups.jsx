@@ -198,7 +198,10 @@ function Groups() {
       multiple: true,
       required: true,
       options: students
-        .filter((student) => student.group_id == null)
+        .filter(
+          (student) =>
+            student.group_id == null || student.group_id == editingGroup?.id,
+        )
         .map((student) => ({
           value: student.id,
           label: student.name,
