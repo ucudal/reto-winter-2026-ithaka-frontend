@@ -13,6 +13,12 @@ vi.mock('../../api/endpoints/tutors', () => ({
   getOverloadedTutors: vi.fn(),
 }));
 
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { role: 'Coordinator', name: 'Admin Ithaka' },
+  }),
+}));
+
 describe('Dashboard Component', () => {
   const mockDashboardData = {
     active_groups: 4,

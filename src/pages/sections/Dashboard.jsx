@@ -30,8 +30,11 @@ import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 
+import { useAuth } from "../../context/AuthContext";
 import { getDashboardSummary } from "../../api/endpoints/dashboard";
 import { getOverloadedTutors } from "../../api/endpoints/tutors";
+import { getPendingCheckpoints, submitCheckpointResponse } from "../../api/endpoints/checkpoints";
+import PendingCheckpointModal from "../../components/PendingCheckpointModal";
 
 // Cupo de referencia por grupo definido en la propuesta (22 hs de acompañamiento).
 const GROUP_HOURS_QUOTA = 22;
@@ -62,7 +65,16 @@ function SectionHeader({ icon, title, helpText, chipLabel, chipColor = "default"
         </Typography>
       </Box>
       {chipLabel && (
-        <Tooltip title={helpText} arrow placement="top">
+        <Tooltip
+          title={helpText}
+          arrow
+          placement="top"
+          componentsProps={{
+            tooltip: {
+              sx: { fontSize: "0.85rem", maxWidth: 320, lineHeight: 1.4 },
+            },
+          }}
+        >
           <Chip
             label={chipLabel}
             color={chipColor}
@@ -100,7 +112,7 @@ function StatTile({ icon, label, value, severity }) {
           }}
         >
           {icon}
-          <Typography variant="caption" color="text.secondary" fontWeight="medium">
+          <Typography variant="body2" color="text.secondary" fontWeight="medium">
             {label}
           </Typography>
         </Box>
@@ -115,25 +127,37 @@ function StatTile({ icon, label, value, severity }) {
 export default function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [summary, setSummary] = useState(null);
   const [overloadedTutors, setOverloadedTutors] = useState([]);
+  const [pendingCheckpoints, setPendingCheckpoints] = useState([]);
+  const [activeCheckpoint, setActiveCheckpoint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [user]);
 
   async function loadDashboardData() {
+    if (!user) return;
     try {
       setLoading(true);
       setError("");
-      const [summaryData, overloadedData] = await Promise.all([
+      
+      const shouldFetchCheckpoints = ["Student", "BusinessTutor", "TechnicalTutor"].includes(user?.role);
+      
+      const [summaryData, overloadedData, checkpointsData] = await Promise.all([
         getDashboardSummary(),
         getOverloadedTutors(),
+        shouldFetchCheckpoints ? getPendingCheckpoints() : Promise.resolve([]),
       ]);
       setSummary(summaryData);
       setOverloadedTutors(overloadedData);
+      setPendingCheckpoints(checkpointsData || []);
+      if (checkpointsData && checkpointsData.length > 0) {
+        setActiveCheckpoint(checkpointsData[0]);
+      }
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los datos del resumen del Dashboard.");
     } finally {
@@ -196,7 +220,7 @@ export default function Dashboard() {
     (item) => item.hours_used > GROUP_HOURS_QUOTA,
   ).length;
 
-  const chartTickStyle = { fontSize: 10 };
+  const chartTickStyle = { fontSize: 12 };
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -298,7 +322,7 @@ export default function Dashboard() {
                   }}
                 />
               </Box>
-              <Typography variant="caption" color="text.secondary" align="center" display="block">
+              <Typography variant="body2" color="text.secondary" align="center" display="block">
                 {capacity.total_used_hours} / {capacity.total_available_hours} hs
               </Typography>
             </CardContent>
@@ -316,7 +340,7 @@ export default function Dashboard() {
                 helpText="Cantidad de grupos activos según la etapa del proceso (Ideación, Anteproyecto, Proyecto Final) en la que se encuentran."
               />
               {groups_by_stage.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   Sin etapas activas.
                 </Typography>
               ) : (
@@ -352,7 +376,7 @@ export default function Dashboard() {
                 helpText="Cantidad de grupos activos agrupados por cohorte (año y semestre en el que ingresaron)."
               />
               {groups_by_cohort.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   Sin cohortes activas.
                 </Typography>
               ) : (
@@ -386,7 +410,7 @@ export default function Dashboard() {
                 helpText={`Horas de tutoría registradas por grupo, comparadas contra el cupo de referencia de ${GROUP_HOURS_QUOTA}hs definido en la propuesta. La línea punteada marca ese límite.`}
               />
               {topHoursByGroup.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   Sin horas registradas.
                 </Typography>
               ) : (
@@ -424,6 +448,17 @@ export default function Dashboard() {
         </Grid>
       </Grid>
 
+      {activeCheckpoint && (
+        <PendingCheckpointModal
+          open={Boolean(activeCheckpoint)}
+          checkpoint={activeCheckpoint}
+          onClose={() => setActiveCheckpoint(null)}
+          onSubmitSuccess={async (id, answers) => {
+            await submitCheckpointResponse(id, answers);
+            setPendingCheckpoints((prev) => prev.filter((c) => c.id !== id));
+          }}
+        />
+      )}
     </Box>
   );
 }

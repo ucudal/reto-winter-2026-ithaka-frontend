@@ -104,7 +104,11 @@ function Groups() {
       ]);
 
       setGroups(groupsData);
-      setCohorts(Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []));
+      const cohortsList = Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []);
+      const uniqueCohorts = Array.from(
+        new Map(cohortsList.map((c) => [c.id, c])).values(),
+      );
+      setCohorts(uniqueCohorts);
       setStudents(Array.isArray(studentsData) ? studentsData : (studentsData?.items ?? []));
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los grupos.");
@@ -226,14 +230,6 @@ function Groups() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
-          Inicio
-        </Link>
         <Typography color="text.primary">Grupos</Typography>
       </Breadcrumbs>
 
@@ -370,11 +366,27 @@ function Groups() {
       ) : error ? (
         <ErrorState message={error} onRetry={loadGroups} />
       ) : view === "gallery" ? (
-        <GroupsGrid
-            groups={filteredGroups}
+        <>
+          <GroupsGrid
+            groups={filteredGroups.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
             onEdit={setEditingGroup}
             onDelete={setDeletingGroup}
-        />
+          />
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredGroups.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
+        </>
       ) : (
         <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
           <Table>
