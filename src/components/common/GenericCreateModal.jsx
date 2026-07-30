@@ -7,6 +7,8 @@ import {
   Button,
   TextField,
   MenuItem,
+  Checkbox,
+  ListItemText,
   Grid,
 } from "@mui/material";
 
@@ -132,7 +134,13 @@ export default function GenericCreateModal({
                   key={option.value}
                   value={option.value}
                 >
-                  {option.label}
+                  {field.multiple && (
+                    <Checkbox
+                      size="small"
+                      checked={(formData[field.name] ?? []).includes(option.value)}
+                    />
+                  )}
+                  <ListItemText primary={option.label} />
                 </MenuItem>
               ))
             }
