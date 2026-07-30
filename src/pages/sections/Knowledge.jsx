@@ -123,20 +123,27 @@ function Knowledge() {
     );
   }, [filterBy, materials, searchTerm]);
 
+  const [totalCount, setTotalCount] = useState(0);
+
   const loadMaterials = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const data = await getMaterials();
-      setMaterials(Array.isArray(data) ? data : [])
-
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        search: searchTerm || undefined,
+      };
+      const res = await getMaterials(params);
+      setMaterials(res?.items ?? []);
+      setTotalCount(res?.total ?? 0);
     } catch (requestError) {
       setError(requestError);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, searchTerm]);
 
   useEffect(() => {
     loadMaterials();
@@ -387,9 +394,7 @@ function Knowledge() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMaterials
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((material) => (
+                materials.map((material) => (
                   <TableRow key={material.id} hover>
                     <TableCell>{material.id}</TableCell>
                     <TableCell>{material.stage_id}</TableCell>
@@ -449,7 +454,7 @@ function Knowledge() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredMaterials.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}

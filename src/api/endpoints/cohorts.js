@@ -5,7 +5,11 @@ export async function getCohorts(filters = {}) {
   const response = await cachedGet("/api/cohorts", {
     params: filters,
   });
-  return response.data;
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return { items: data, total: data.length };
+  }
+  return { items: data?.items ?? [], total: data?.total ?? 0 };
 }
 
 export async function createCohort(cohortData) {

@@ -71,25 +71,34 @@ function Groups() {
   const [editingGroup, setEditingGroup] = useState(null);
   const [deletingGroup, setDeletingGroup] = useState(null);
 
+  const [totalCount, setTotalCount] = useState(0);
+
   useEffect(() => {
     loadGroups();
-  }, []);
+  }, [page, rowsPerPage, searchTerm, statusFilter]);
 
   const loadGroupsForCurrentUser = async () => {
+    const params = {
+      page: page + 1,
+      page_size: rowsPerPage,
+      search: searchTerm || undefined,
+      status: statusFilter || undefined,
+    };
+
     if (user?.role === "Coordinator") {
-      return getGroups();
+      return getGroups(params);
     }
 
     const tutorId = user?.tutor?.id;
     if (!tutorId) {
-      return [];
+      return { items: [], total: 0 };
     }
 
     const assignedGroups = await getTutorGroups(tutorId);
     const fullGroups = await Promise.all(
       assignedGroups.map((group) => getGroupById(group.id)),
     );
-    return fullGroups;
+    return { items: fullGroups, total: fullGroups.length };
   };
 
   const loadGroups = async () => {
@@ -97,15 +106,16 @@ function Groups() {
       setLoading(true);
       setError("");
 
-      const [groupsData, cohortsData, studentsData] = await Promise.all([
+      const [groupsRes, cohortsData, studentsRes] = await Promise.all([
         loadGroupsForCurrentUser(),
         getCohorts(),
-        getStudents(),
+        getStudents({ page: 1, page_size: 100 }),
       ]);
 
-      setGroups(groupsData);
+      setGroups(groupsRes.items ?? []);
+      setTotalCount(groupsRes.total ?? 0);
       setCohorts(Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []));
-      setStudents(Array.isArray(studentsData) ? studentsData : (studentsData?.items ?? []));
+      setStudents(studentsRes?.items ?? (Array.isArray(studentsRes) ? studentsRes : []));
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los grupos.");
     } finally {
@@ -372,14 +382,14 @@ function Groups() {
       ) : view === "gallery" ? (
         <>
           <GroupsGrid
-            groups={filteredGroups.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
+            groups={groups}
             onEdit={setEditingGroup}
             onDelete={setDeletingGroup}
           />
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredGroups.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -406,14 +416,14 @@ function Groups() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredGroups.length === 0 ? (
+              {groups.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                     <Typography color="text.secondary">No se encontraron grupos</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredGroups.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((group) => (
+                groups.map((group) => (
                   <TableRow key={group.id} hover>
                     <TableCell sx={{ fontWeight: "medium" }}>
                       {group.name}
@@ -488,7 +498,7 @@ function Groups() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredGroups.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}

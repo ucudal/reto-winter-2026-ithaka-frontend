@@ -1,7 +1,7 @@
 import { apiClient } from "../client";
 
-export async function getUsers(params = {}) {
-  const { data } = await apiClient.get("/api/users", { params });
+export async function getUsers(filters = {}) {
+  const { data } = await apiClient.get("/api/users", { params: filters });
   return data;
 }
 

@@ -242,10 +242,12 @@ function Meetings() {
       if (ignore) return;
 
       if (groupsResult.status === "fulfilled") {
-        setGroups(groupsResult.value);
+        const val = groupsResult.value;
+        setGroups(Array.isArray(val) ? val : (val?.items ?? []));
       }
       if (tutorsResult.status === "fulfilled") {
-        setTutors(tutorsResult.value);
+        const val = tutorsResult.value;
+        setTutors(Array.isArray(val) ? val : (val?.items ?? []));
       }
     };
 

@@ -127,12 +127,20 @@ export default function Tutors() {
   const [capacityGroups, setCapacityGroups] = useState([]);
   const [capacityTutor, setCapacityTutor] = useState(null);
 
+  const [totalCount, setTotalCount] = useState(0);
+
   const loadTutors = async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await getTutors();
-      setTutors(data || []);
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        search: searchTerm || undefined,
+      };
+      const res = await getTutors(params);
+      setTutors(res?.items ?? []);
+      setTotalCount(res?.total ?? 0);
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los tutores.");
     } finally {
@@ -142,7 +150,7 @@ export default function Tutors() {
 
   useEffect(() => {
     loadTutors();
-  }, []);
+  }, [page, rowsPerPage, searchTerm]);
 
   const handleOpenCreate = () => {
     setEditingTutor(null);
@@ -445,7 +453,7 @@ export default function Tutors() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredTutors.length === 0 ? (
+                {tutors.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                       <Typography color="text.secondary">
@@ -454,7 +462,7 @@ export default function Tutors() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTutors.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tutor) => (
+                  tutors.map((tutor) => (
                     <TableRow key={tutor.id} hover>
                       <TableCell>
                         <Box
@@ -567,7 +575,7 @@ export default function Tutors() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredTutors.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}

@@ -57,31 +57,30 @@ function Students() {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
 
+  const [totalCount, setTotalCount] = useState(0)
+
   useEffect(() => {
     loadStudents()
-  }, [])
+  }, [page, rowsPerPage, search])
 
   async function loadStudents() {
     try {
       setLoading(true)
       setError("")
-      const data = await getStudents()
-      const items = Array.isArray(data) ? data : data?.items ?? []
-      setStudents(items)
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        search: search || undefined,
+      }
+      const data = await getStudents(params)
+      setStudents(data?.items ?? [])
+      setTotalCount(data?.total ?? 0)
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los alumnos.")
     } finally {
       setLoading(false);
     }
   }
-
-  const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
-      const valueToSearch =
-        student[filter]?.toString().toLowerCase() || ''
-      return valueToSearch.includes(search.toLowerCase())
-    })
-  }, [students, search, filter])
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -234,8 +233,8 @@ function Students() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
+                {students.length > 0 ? (
+                  students.map((student) => {
                     const initials = (student.name || 'U')
                       .split(' ')
                       .filter(Boolean)
@@ -329,7 +328,7 @@ function Students() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredStudents.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -344,7 +343,7 @@ function Students() {
         ) : (
           <>
           <Grid container spacing={3} sx={{ mt: 1 }}>
-            {filteredStudents.length === 0 ? (
+            {students.length === 0 ? (
               <Grid item xs={12}>
                 <Box sx={{ py: 6, textAlign: "center" }}>
                   <EmptyState
@@ -354,7 +353,7 @@ function Students() {
                 </Box>
               </Grid>
             ) : (
-              filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
+              students.map((student) => {
                 const initials = (student.name || 'U')
                   .split(' ')
                   .filter(Boolean)
@@ -416,7 +415,7 @@ function Students() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredStudents.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}

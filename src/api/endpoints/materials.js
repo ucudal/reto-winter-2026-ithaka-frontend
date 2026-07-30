@@ -1,15 +1,17 @@
 import { apiClient } from "../client";
 
-export async function getMaterials() {
-  const response = await apiClient.get("/api/materials");
-  return response.data;
+export async function getMaterials(filters = {}) {
+  const response = await apiClient.get("/api/materials", { params: filters });
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return { items: data, total: data.length };
+  }
+  return { items: data?.items ?? [], total: data?.total ?? 0 };
 }
 
 export async function getMaterialById(id) {
-  const materials = await getMaterials();
-  if (!Array.isArray(materials)) {
-    return null;
-  }
+  const res = await getMaterials();
+  const materials = res?.items ?? [];
   return materials.find((material) => String(material.id) === String(id));
 }
 

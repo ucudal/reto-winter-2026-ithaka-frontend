@@ -1,8 +1,11 @@
 import { apiClient } from "../client";
 
-export async function getTutors() {
-  const { data } = await apiClient.get("/api/tutors");
-  return Array.isArray(data) ? data : (data?.items ?? []);
+export async function getTutors(filters = {}) {
+  const { data } = await apiClient.get("/api/tutors", { params: filters });
+  if (Array.isArray(data)) {
+    return { items: data, total: data.length };
+  }
+  return { items: data?.items ?? [], total: data?.total ?? 0 };
 }
 
 export async function getTutor(id) {

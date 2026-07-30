@@ -76,7 +76,8 @@ export default function Deliverables() {
           }
         } else {
           // Coordinador
-          targetGroups = await getGroups({ page_size: 100 });
+          const res = await getGroups({ page_size: 100 });
+          targetGroups = Array.isArray(res) ? res : (res?.items ?? []);
         }
 
         if (ignore) return;

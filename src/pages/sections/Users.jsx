@@ -53,6 +53,9 @@ function normalizeUsersResponse(data) {
   if (Array.isArray(data)) {
     return data;
   }
+  if (Array.isArray(data?.items)) {
+    return data.items;
+  }
   if (Array.isArray(data?.users)) {
     return data.users;
   }
@@ -86,13 +89,16 @@ export default function Users() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [totalCount, setTotalCount] = useState(0);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await getUsers({ page: page + 1, page_size: rowsPerPage });
-      setUsers(normalizeUsersResponse(data.items || data));
-      setTotal(data.total || 0);
+      const params = { page: page + 1, page_size: rowsPerPage };
+      const data = await getUsers(params);
+      setUsers(normalizeUsersResponse(data));
+      setTotalCount(data?.total ?? (Array.isArray(data) ? data.length : 0));
     } catch (err) {
       setError(err.message || "Error inesperado al cargar usuarios");
     } finally {
@@ -284,7 +290,7 @@ export default function Users() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={total}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}

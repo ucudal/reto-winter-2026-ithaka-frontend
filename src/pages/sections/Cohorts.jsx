@@ -89,6 +89,8 @@ export default function Cohorts() {
     notes: "",
   });
 
+  const [totalCount, setTotalCount] = useState(0);
+
   useEffect(() => {
     if (filterYear && filterYear.length < 3) {
       return;
@@ -99,24 +101,24 @@ export default function Cohorts() {
       year: filterYear || undefined,
       semester: filterSemester || undefined,
       status: filterStatus || undefined,
-      page: 1,
-      page_size: 20,
+      page: page + 1,
+      page_size: rowsPerPage,
     },
     () => ignore
     );
     return () => {
       ignore = true;
     };
-  }, [filterYear, filterSemester, filterStatus]);
+  }, [filterYear, filterSemester, filterStatus, page, rowsPerPage]);
 
   async function loadCohorts(filters = {}, shouldIgnore = () => false) {
     try {
       setLoading(true);
       setError("");
-      const data = await getCohorts(filters);
+      const res = await getCohorts(filters);
       if (shouldIgnore()) return;
-      const items = Array.isArray(data) ? data : (data?.items ?? []);
-      setCohorts(items);
+      setCohorts(res?.items ?? (Array.isArray(res) ? res : []));
+      setTotalCount(res?.total ?? (Array.isArray(res) ? res.length : 0));
     } catch (err) {
       if (shouldIgnore()) return;
       setError(err?.message || "No se pudieron cargar los cohortes.");
@@ -361,7 +363,7 @@ export default function Cohorts() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {cohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((cohort) => (
+                {cohorts.map((cohort) => (
                   <TableRow key={cohort.id} hover>
                     <TableCell sx={{ fontWeight: "medium" }}>{cohort.year}</TableCell>
                     <TableCell>{cohort.semester}° semestre</TableCell>
@@ -404,7 +406,7 @@ export default function Cohorts() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={cohorts.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -419,7 +421,7 @@ export default function Cohorts() {
       ) : (
         <Box>
           <Grid container spacing={3}>
-            {cohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((cohort) => (
+            {cohorts.map((cohort) => (
               <Grid item xs={12} sm={6} md={4} key={cohort.id}>
                 <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
                   <CardContent sx={{ flexGrow: 1 }}>
@@ -470,7 +472,7 @@ export default function Cohorts() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={cohorts.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}

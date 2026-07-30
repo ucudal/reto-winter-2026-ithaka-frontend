@@ -107,11 +107,10 @@ function Templates() {
       setError(null)
 
       try {
-        const materials = await getMaterials()
+        const res = await getMaterials()
         if (!isMounted) return
-        const mappedTemplates = Array.isArray(materials)
-          ? materials.map(mapMaterialToTemplate)
-          : []
+        const list = Array.isArray(res) ? res : (res?.items ?? []);
+        const mappedTemplates = list.map(mapMaterialToTemplate)
         setTemplates(mappedTemplates)
       } catch (err) {
         if (!isMounted) return
