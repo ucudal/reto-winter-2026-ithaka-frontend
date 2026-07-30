@@ -104,7 +104,11 @@ function Groups() {
       ]);
 
       setGroups(groupsData);
-      setCohorts(Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []));
+      const cohortsList = Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []);
+      const uniqueCohorts = Array.from(
+        new Map(cohortsList.map((c) => [c.id, c])).values(),
+      );
+      setCohorts(uniqueCohorts);
       setStudents(Array.isArray(studentsData) ? studentsData : (studentsData?.items ?? []));
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los grupos.");
@@ -226,14 +230,6 @@ function Groups() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
-          Inicio
-        </Link>
         <Typography color="text.primary">Grupos</Typography>
       </Breadcrumbs>
 
