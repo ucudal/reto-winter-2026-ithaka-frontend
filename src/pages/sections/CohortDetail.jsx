@@ -168,9 +168,6 @@ export default function CohortDetail() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
-          Inicio
-        </Link>
         <Link
           component={RouterLink}
           to="/cohorts"

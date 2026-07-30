@@ -22,11 +22,9 @@ import {
   TextField,
   Typography,
   Breadcrumbs,
-  Link,
   CircularProgress,
   IconButton,
 } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -169,14 +167,6 @@ export default function Users() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
-          Inicio
-        </Link>
         <Typography color="text.primary">Usuarios</Typography>
       </Breadcrumbs>
 

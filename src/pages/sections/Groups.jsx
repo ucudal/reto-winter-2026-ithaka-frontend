@@ -230,14 +230,6 @@ function Groups() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
-          Inicio
-        </Link>
         <Typography color="text.primary">Grupos</Typography>
       </Breadcrumbs>
 

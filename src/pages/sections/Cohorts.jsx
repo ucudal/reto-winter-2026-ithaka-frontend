@@ -16,7 +16,6 @@ import {
   Chip,
   IconButton,
   Breadcrumbs,
-  Link,
   CircularProgress,
   Alert,
   Dialog,
@@ -37,7 +36,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
@@ -238,9 +237,6 @@ export default function Cohorts() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
-          Inicio
-        </Link>
         <Typography color="text.primary">Cohortes</Typography>
       </Breadcrumbs>
 

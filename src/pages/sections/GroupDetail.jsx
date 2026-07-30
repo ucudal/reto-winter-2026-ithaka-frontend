@@ -323,9 +323,6 @@ export default function GroupDetail() {
       {/* Header */}
       <Box sx={{ mb: 1.5 }}>
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 0.5 }}>
-          <Link component={RouterLink} to="/" underline="hover" color="inherit" variant="body2">
-            Inicio
-          </Link>
           <Link component={RouterLink} to="/groups" underline="hover" color="inherit" variant="body2">
             Grupos
           </Link>

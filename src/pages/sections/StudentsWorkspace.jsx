@@ -229,7 +229,7 @@ export default function StudentWorkspace() {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-        Inicio / Mi Workspace
+        Mi Workspace
       </Typography>
 
       <Stack
