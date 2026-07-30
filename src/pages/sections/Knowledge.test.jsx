@@ -26,6 +26,15 @@ vi.mock("../../api/endpoints/materials", () => ({
   createMaterial: vi.fn(),
 }));
 
+vi.mock("../../api/endpoints/stages", () => ({
+  getStages: vi.fn(() =>
+    Promise.resolve([
+      { id: 1, name: "Ideación" },
+      { id: 2, name: "Validación" },
+    ]),
+  ),
+}));
+
 
 vi.mock("../../components/CreateMaterialModal", () => ({
   default: () => (
@@ -130,7 +139,7 @@ describe("Knowledge", () => {
     );
 
 
-    getMaterials.mockResolvedValue([
+    const materials = [
       {
         id: 1,
         stage_id: 1,
@@ -143,7 +152,17 @@ describe("Knowledge", () => {
         title: "Node avanzado",
         url: "https://nodejs.org",
       },
-    ]);
+    ];
+
+    getMaterials.mockImplementation(({ search } = {}) =>
+      Promise.resolve(
+        search
+          ? materials.filter((material) =>
+              material.title.toLowerCase().includes(search.toLowerCase()),
+            )
+          : materials,
+      ),
+    );
 
 
     renderWithRouter(<Knowledge />);
@@ -165,15 +184,41 @@ describe("Knowledge", () => {
     });
 
 
-    expect(
-      screen.getByText("React Básico")
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getMaterials).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          search: "React",
+          page_size: 100,
+        }),
+      );
+      expect(screen.getByText("React Básico")).toBeInTheDocument();
+      expect(screen.queryByText("Node avanzado")).not.toBeInTheDocument();
+    });
 
+  });
 
-    expect(
-      screen.queryByText("Node avanzado")
-    ).not.toBeInTheDocument();
+  it("sends the selected stage to the backend", async () => {
+    const { getMaterials } = await import(
+      "../../api/endpoints/materials"
+    );
+    getMaterials.mockResolvedValue([]);
 
+    renderWithRouter(<Knowledge />);
+
+    const stageSelect = await screen.findByRole("combobox", {
+      name: "Etapa",
+    });
+    fireEvent.mouseDown(stageSelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Validación" }));
+
+    await waitFor(() => {
+      expect(getMaterials).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          stage_id: 2,
+          page_size: 100,
+        }),
+      );
+    });
   });
 
 
@@ -199,6 +244,17 @@ describe("Knowledge", () => {
 
 
   it("changes from table view to gallery view", async () => {
+    const { getMaterials } = await import(
+      "../../api/endpoints/materials"
+    );
+    getMaterials.mockResolvedValue([
+      {
+        id: 1,
+        stage_id: 1,
+        title: "Material de prueba",
+        url: "https://example.com",
+      },
+    ]);
 
     renderWithRouter(<Knowledge />);
 

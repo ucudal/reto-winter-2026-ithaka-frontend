@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -38,11 +38,13 @@ import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
 import { getMaterials, createMaterial } from "../../api/endpoints/materials";
+import { getStages } from "../../api/endpoints/stages";
 import ConfirmModal from "../../components/ConfirmModal";
 import CreateMaterialModal from "../../components/CreateMaterialModal";
 import EditMaterialModal from "../../components/EditMaterialModal";
 import EmptyState from "../../components/common/EmptyState";
 import ErrorState from "../../components/common/ErrorState";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
 
 const columns = [
   { id: "id", label: "ID", width: "10%" },
@@ -96,7 +98,8 @@ function Knowledge() {
   const [error, setError] = useState(null);
   const [selectedView, setSelectedView] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterBy, setFilterBy] = useState("all");
+  const [stageFilter, setStageFilter] = useState("");
+  const [stages, setStages] = useState([]);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -105,29 +108,19 @@ function Knowledge() {
   const [materialToEdit, setMaterialToEdit] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const filteredMaterials = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLocaleLowerCase("es");
-
-    if (!normalizedSearch) return materials;
-
-    const fieldsToSearch =
-      filterBy === "all" ? columns.map((column) => column.id) : [filterBy];
-
-    return materials.filter((material) =>
-      fieldsToSearch.some((field) =>
-        String(material[field] ?? "")
-          .toLocaleLowerCase("es")
-          .includes(normalizedSearch),
-      ),
-    );
-  }, [filterBy, materials, searchTerm]);
+  const debouncedSearch = useDebouncedValue(searchTerm);
+  const hasActiveFilters = Boolean(debouncedSearch.trim() || stageFilter);
 
   const loadMaterials = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const data = await getMaterials();
+      const data = await getMaterials({
+        search: debouncedSearch.trim() || undefined,
+        stage_id: stageFilter || undefined,
+        page_size: 100,
+      });
       setMaterials(Array.isArray(data) ? data : [])
 
     } catch (requestError) {
@@ -135,11 +128,29 @@ function Knowledge() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [debouncedSearch, stageFilter]);
 
   useEffect(() => {
     loadMaterials();
   }, [loadMaterials]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    getStages()
+      .then((data) => {
+        if (!ignore) {
+          setStages(Array.isArray(data) ? data : (data?.items ?? []));
+        }
+      })
+      .catch(() => {
+        if (!ignore) setStages([]);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleDeleteMaterial = () => {
     if (!materialToDelete) return;
@@ -272,26 +283,32 @@ function Knowledge() {
         <TextField
           id="materials-search"
           label="Buscar"
-          placeholder="Ingrese un dato"
+          placeholder="Buscar por título"
           value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
+          onChange={(event) => {
+            setSearchTerm(event.target.value);
+            setPage(0);
+          }}
           size="small"
           fullWidth
         />
 
         <FormControl size="small" sx={{ minWidth: 210 }}>
-          <InputLabel id="materials-filter-label">Filtrar por</InputLabel>
+          <InputLabel id="materials-filter-label">Etapa</InputLabel>
           <Select
             labelId="materials-filter-label"
             id="materials-filter"
-            value={filterBy}
-            label="Filtrar por"
-            onChange={(event) => setFilterBy(event.target.value)}
+            value={stageFilter}
+            label="Etapa"
+            onChange={(event) => {
+              setStageFilter(event.target.value);
+              setPage(0);
+            }}
           >
-            <MenuItem value="all">Todos</MenuItem>
-            {columns.map((column) => (
-              <MenuItem key={column.id} value={column.id}>
-                {column.label}
+            <MenuItem value="">Todas las etapas</MenuItem>
+            {stages.map((stage) => (
+              <MenuItem key={stage.id} value={stage.id}>
+                {stage.name || `Etapa ${stage.id}`}
               </MenuItem>
             ))}
           </Select>
@@ -359,25 +376,25 @@ function Knowledge() {
                     />
                   </TableCell>
                 </TableRow>
-              ) : filteredMaterials.length === 0 ? (
+              ) : materials.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={tableColumnCount} sx={{ p: 0 }}>
                     <EmptyState
                       title={
-                        materials.length === 0
-                          ? "No hay materiales para mostrar"
-                          : "No se encontraron materiales"
+                        hasActiveFilters
+                          ? "No se encontraron materiales"
+                          : "No hay materiales para mostrar"
                       }
                       description={
-                        materials.length === 0
-                          ? "Los materiales que se agreguen aparecerán en esta tabla."
-                          : "Probá con otro término o criterio de búsqueda."
+                        hasActiveFilters
+                          ? "Probá con otro término o filtro."
+                          : "Los materiales que se agreguen aparecerán en esta tabla."
                       }
                     />
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMaterials
+                materials
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((material) => (
                   <TableRow key={material.id} hover>
@@ -439,7 +456,7 @@ function Knowledge() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredMaterials.length}
+            count={materials.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -455,18 +472,18 @@ function Knowledge() {
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress size={32} aria-label="Cargando materiales" />
         </Box>
-      ) : filteredMaterials.length === 0 ? (
+      ) : materials.length === 0 ? (
         <Paper variant="outlined">
           <EmptyState
             title={
-              materials.length === 0
-                ? "No hay materiales para mostrar"
-                : "No se encontraron materiales"
+              hasActiveFilters
+                ? "No se encontraron materiales"
+                : "No hay materiales para mostrar"
             }
             description={
-              materials.length === 0
-                ? "Los materiales que se agreguen aparecerán en esta galería."
-                : "Probá con otro término o criterio de búsqueda."
+              hasActiveFilters
+                ? "Probá con otro término o filtro."
+                : "Los materiales que se agreguen aparecerán en esta galería."
             }
           />
         </Paper>
@@ -483,7 +500,7 @@ function Knowledge() {
             gap: 2,
           }}
         >
-          {filteredMaterials.map((material) => (
+          {materials.map((material) => (
             <Card
               key={material.id}
               variant="outlined"
