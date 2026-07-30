@@ -1,6 +1,8 @@
 const STATUS_LABELS = {
   Active: "Activo",
   Inactive: "Inactivo",
+  Planned: "Planificado",
+  Finished: "Finalizado",
 };
 
 const TUTOR_ROLE_LABELS = {

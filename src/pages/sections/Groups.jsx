@@ -45,6 +45,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ConfirmModal from "../../components/ConfirmModal";
 
 import { getStudents } from "../../api/endpoints/students";
+import { translateStatus } from "../../utils/translate";
 
 const CREATE_GROUP_INITIAL_VALUES = {
   student_ids: [],
@@ -71,25 +72,34 @@ function Groups() {
   const [editingGroup, setEditingGroup] = useState(null);
   const [deletingGroup, setDeletingGroup] = useState(null);
 
+  const [totalCount, setTotalCount] = useState(0);
+
   useEffect(() => {
     loadGroups();
-  }, []);
+  }, [page, rowsPerPage, searchTerm, statusFilter]);
 
   const loadGroupsForCurrentUser = async () => {
+    const params = {
+      page: page + 1,
+      page_size: rowsPerPage,
+      search: searchTerm || undefined,
+      status: statusFilter || undefined,
+    };
+
     if (user?.role === "Coordinator") {
-      return getGroups();
+      return getGroups(params);
     }
 
     const tutorId = user?.tutor?.id;
     if (!tutorId) {
-      return [];
+      return { items: [], total: 0 };
     }
 
     const assignedGroups = await getTutorGroups(tutorId);
     const fullGroups = await Promise.all(
       assignedGroups.map((group) => getGroupById(group.id)),
     );
-    return fullGroups;
+    return { items: fullGroups, total: fullGroups.length };
   };
 
   const loadGroups = async () => {
@@ -97,19 +107,20 @@ function Groups() {
       setLoading(true);
       setError("");
 
-      const [groupsData, cohortsData, studentsData] = await Promise.all([
+      const [groupsRes, cohortsData, studentsRes] = await Promise.all([
         loadGroupsForCurrentUser(),
         getCohorts(),
-        getStudents(),
+        getStudents({ page: 1, page_size: 100 }),
       ]);
 
-      setGroups(groupsData);
+      setGroups(groupsRes.items ?? []);
+      setTotalCount(groupsRes.total ?? 0);
       const cohortsList = Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []);
       const uniqueCohorts = Array.from(
         new Map(cohortsList.map((c) => [c.id, c])).values(),
       );
       setCohorts(uniqueCohorts);
-      setStudents(Array.isArray(studentsData) ? studentsData : (studentsData?.items ?? []));
+      setStudents(studentsRes?.items ?? (Array.isArray(studentsRes) ? studentsRes : []));
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los grupos.");
     } finally {
@@ -128,7 +139,7 @@ function Groups() {
         idea: formData.idea || "",
         major: "",
         status: "Active",
-        student_ids: [],
+        student_ids: formData.student_ids ?? [],
         business_tutor_id: null,
         technical_tutor_id: null,
       });
@@ -165,7 +176,7 @@ function Groups() {
         idea: formData.idea || "",
         major: editingGroup.major || "",
         status: editingGroup.status,
-        student_ids: editingGroup.students.map((s) => s.id),
+        student_ids: formData.student_ids ?? [],
         business_tutor_id: editingGroup.businessTutor?.id ?? null,
         technical_tutor_id: editingGroup.technicalTutor?.id ?? null,
       });
@@ -197,12 +208,10 @@ function Groups() {
       type: "select",
       multiple: true,
       required: true,
-      options: students
-        .filter((student) => student.group_id == null)
-        .map((student) => ({
-          value: student.id,
-          label: student.name,
-        })),
+      options: students.map((student) => ({
+        value: student.id,
+        label: student.group_id ? `${student.name} (Grupo #${student.group_id})` : student.name,
+      })),
     },
   ];
 
@@ -355,7 +364,7 @@ function Groups() {
           <MenuItem value="">Todos</MenuItem>
           {statusOptions.map((status) => (
             <MenuItem key={status} value={status}>
-              {status}
+              {translateStatus(status)}
             </MenuItem>
           ))}
         </TextField>
@@ -368,14 +377,14 @@ function Groups() {
       ) : view === "gallery" ? (
         <>
           <GroupsGrid
-            groups={filteredGroups.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
+            groups={groups}
             onEdit={setEditingGroup}
             onDelete={setDeletingGroup}
           />
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredGroups.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -402,14 +411,14 @@ function Groups() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredGroups.length === 0 ? (
+              {groups.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                     <Typography color="text.secondary">No se encontraron grupos</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredGroups.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((group) => (
+                groups.map((group) => (
                   <TableRow key={group.id} hover>
                     <TableCell sx={{ fontWeight: "medium" }}>
                       {group.name}
@@ -433,7 +442,7 @@ function Groups() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip label={group.status} size="small" color="default" />
+                      <Chip label={translateStatus(group.status)} size="small" color="default" />
                     </TableCell>
                     <TableCell align="right">
                       <Box
@@ -484,7 +493,7 @@ function Groups() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredGroups.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -516,6 +525,7 @@ function Groups() {
             name: editingGroup?.name,
             cohort_id: editingGroup?.cohortId,
             idea: editingGroup?.idea,
+            student_ids: editingGroup?.students?.map((s) => s.id) ?? [],
         }}
         onSubmit={handleEditGroup}
       />

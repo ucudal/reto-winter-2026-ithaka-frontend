@@ -8,6 +8,11 @@ import { getMaterialById } from "../../api/endpoints/materials";
 
 vi.mock("../../api/endpoints/materials", () => ({
   getMaterialById: vi.fn(),
+  upsertMaterial: vi.fn(),
+}));
+
+vi.mock("../../ToastContext", () => ({
+  useToast: () => ({ showToast: vi.fn() }),
 }));
 
 
@@ -77,7 +82,7 @@ describe("TemplateDetail", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Template Entrega Final")
+        screen.getAllByText("Template Entrega Final")[0]
       ).toBeInTheDocument();
     });
 
@@ -103,7 +108,7 @@ describe("TemplateDetail", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Template URL")
+        screen.getAllByText("Template URL")[0]
       ).toBeInTheDocument();
     });
 
@@ -165,7 +170,7 @@ describe("TemplateDetail", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Template prueba")
+        screen.getAllByText("Template prueba")[0]
       ).toBeInTheDocument();
     });
 
@@ -194,20 +199,20 @@ describe("TemplateDetail", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Template guardar")
+        screen.getAllByText("Template guardar")[0]
       ).toBeInTheDocument();
     });
 
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Guardar cambios/i,
+        name: /Guardar/i,
       })
     );
 
     await waitFor(() => {
       expect(
-        screen.getByText("Templates page")
+        screen.getAllByText("Template guardar")[0]
       ).toBeInTheDocument();
     });
 

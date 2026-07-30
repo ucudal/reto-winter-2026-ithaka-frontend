@@ -22,8 +22,11 @@ function mapGroup(raw) {
 export async function getGroups(filters = {}) {
   const response = await cachedGet("/api/groups", { params: filters });
   const data = response.data;
-  const items = Array.isArray(data) ? data : (data?.items ?? []);
-  return items.map(mapGroup);
+  if (Array.isArray(data)) {
+    return { items: data.map(mapGroup), total: data.length };
+  }
+  const items = (data?.items ?? []).map(mapGroup);
+  return { items, total: data?.total ?? items.length };
 }
 
 

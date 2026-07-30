@@ -24,11 +24,13 @@ import {
   Breadcrumbs,
   CircularProgress,
   IconButton,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import SearchIcon from "@mui/icons-material/Search";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getUsers, createUser, updateUser, deleteUser } from "../../api/endpoints/users";
 import { translateUserRole } from "../../utils/translate";
@@ -51,6 +53,9 @@ function normalizeUsersResponse(data) {
   if (Array.isArray(data)) {
     return data;
   }
+  if (Array.isArray(data?.items)) {
+    return data.items;
+  }
   if (Array.isArray(data?.users)) {
     return data.users;
   }
@@ -66,11 +71,13 @@ function formatRole(role) {
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Dialog & Form states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -83,12 +90,20 @@ export default function Users() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [totalCount, setTotalCount] = useState(0);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await getUsers();
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        name_search: searchTerm || undefined,
+      };
+      const data = await getUsers(params);
       setUsers(normalizeUsersResponse(data));
+      setTotalCount(data?.total ?? (Array.isArray(data) ? data.length : 0));
     } catch (err) {
       setError(err.message || "Error inesperado al cargar usuarios");
     } finally {
@@ -98,7 +113,7 @@ export default function Users() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page, rowsPerPage, searchTerm]);
 
   const handleOpenCreateDialog = () => {
     setEditUserObj(null);
@@ -194,6 +209,25 @@ export default function Users() {
         </Alert>
       )}
 
+      <TextField
+        label="Buscar"
+        placeholder="Buscar por nombre"
+        value={searchTerm}
+        onChange={(event) => {
+          setPage(0);
+          setSearchTerm(event.target.value);
+        }}
+        fullWidth
+        sx={{ mb: 3 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon fontSize="small" />
+            </InputAdornment>
+          ),
+        }}
+      />
+
       <Paper sx={{ overflow: "hidden", borderRadius: 2 }}>
         {loading ? (
           <Box sx={{ py: 8, display: "flex", justifyContent: "center" }}>
@@ -224,7 +258,7 @@ export default function Users() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => {
+                {users.map((user, index) => {
                   const roleStyle = ROLE_STYLES[user.role] ?? ROLE_STYLES.Student;
 
                   return (
@@ -272,7 +306,7 @@ export default function Users() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={users.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
