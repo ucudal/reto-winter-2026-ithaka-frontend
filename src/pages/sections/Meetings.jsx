@@ -11,7 +11,6 @@ import {
   Divider,
   FormControl,
   InputLabel,
-  Link,
   ListItemText,
   MenuItem,
   Paper,
@@ -24,7 +23,6 @@ import {
   useTheme,
 } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { Link as RouterLink } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/react/daygrid";
 import interactionPlugin from "@fullcalendar/react/interaction";
@@ -514,14 +512,6 @@ function Meetings() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
-          Inicio
-        </Link>
         <Typography color="text.primary">Reuniones</Typography>
       </Breadcrumbs>
 

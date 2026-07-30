@@ -6,7 +6,6 @@ import {
   Chip,
   IconButton,
   Breadcrumbs,
-  Link,
   Tabs,
   Tab,
   Grid,
@@ -25,9 +24,7 @@ import {
   CircularProgress,
   TablePagination,
 } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getHomePathForRole } from "../../routes/roleHome";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -206,14 +203,6 @@ export default function Deliverables() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to={getHomePathForRole(user?.role)}
-          underline="hover"
-          color="inherit"
-        >
-          Inicio
-        </Link>
         <Typography color="text.primary">Entregables</Typography>
       </Breadcrumbs>
 
