@@ -342,6 +342,7 @@ function Students() {
           />
           </>
         ) : (
+          <>
           <Grid container spacing={3} sx={{ mt: 1 }}>
             {filteredStudents.length === 0 ? (
               <Grid item xs={12}>
