@@ -25,7 +25,7 @@ export const mockMinutes = [
     date: "2026-07-20",
     title: "Revisión de avance con tutora de negocio",
     summary:
-      "Feedback sobre el pitch y próximos pasos para la validación con usuarios.",
+      "Feedback sobre el pitch y próximos pasos para la ión con usuarios.",
     url: "https://drive.google.com/minuta-2026-07-20",
   },
 ];

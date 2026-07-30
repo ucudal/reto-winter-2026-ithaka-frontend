@@ -108,7 +108,7 @@ describe("Tutors", () => {
 
 
   it("filters tutors by name", async () => {
-    getTutors.mockResolvedValue([
+    const tutors = [
       {
         id: 1,
         name: "Juan Perez",
@@ -127,7 +127,17 @@ describe("Tutors", () => {
         status: "Active",
         max_capacity: 30,
       },
-    ]);
+    ];
+
+    getTutors.mockImplementation(({ search } = {}) =>
+      Promise.resolve(
+        search
+          ? tutors.filter((tutor) =>
+              tutor.name.toLowerCase().includes(search.toLowerCase()),
+            )
+          : tutors,
+      ),
+    );
 
     render(
       <MemoryRouter>
@@ -147,11 +157,44 @@ describe("Tutors", () => {
       },
     });
 
-    expect(screen.getByText("Maria Lopez")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getTutors).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          search: "Maria",
+          page_size: 100,
+        }),
+      );
+      expect(screen.getByText("Maria Lopez")).toBeInTheDocument();
+      expect(screen.queryByText("Juan Perez")).not.toBeInTheDocument();
+    });
+  });
 
-    expect(
-      screen.queryByText("Juan Perez")
-    ).not.toBeInTheDocument();
+  it("combines role and status filters on the backend request", async () => {
+    getTutors.mockResolvedValue([]);
+
+    render(
+      <MemoryRouter>
+        <Tutors />
+      </MemoryRouter>
+    );
+
+    fireEvent.mouseDown(
+      await screen.findByRole("combobox", { name: "Rol" }),
+    );
+    fireEvent.click(await screen.findByRole("option", { name: "Técnico" }));
+
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Estado" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Activo" }));
+
+    await waitFor(() => {
+      expect(getTutors).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          role: "Technical",
+          status: "Active",
+          page_size: 100,
+        }),
+      );
+    });
   });
 
 

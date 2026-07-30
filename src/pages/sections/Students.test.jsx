@@ -4,9 +4,14 @@ import { MemoryRouter } from 'react-router-dom'
 
 import Students from './Students'
 import { getStudents } from '../../api/endpoints/students'
+import { getGroups } from '../../api/endpoints/groups'
 
 vi.mock('../../api/endpoints/students', () => ({
   getStudents: vi.fn(),
+}))
+
+vi.mock('../../api/endpoints/groups', () => ({
+  getGroups: vi.fn(() => Promise.resolve([])),
 }))
 
 
@@ -80,7 +85,7 @@ describe('Students', () => {
 
 
   it('filters students by name', async () => {
-    getStudents.mockResolvedValue([
+    const students = [
       {
         id: 1,
         name: 'Juan Perez',
@@ -91,7 +96,17 @@ describe('Students', () => {
         name: 'Maria Lopez',
         email: 'maria@test.com',
       },
-    ])
+    ]
+
+    getStudents.mockImplementation(({ search } = {}) =>
+      Promise.resolve(
+        search
+          ? students.filter((student) =>
+              student.name.toLowerCase().includes(search.toLowerCase())
+            )
+          : students
+      )
+    )
 
     render(
       <MemoryRouter>
@@ -110,6 +125,12 @@ describe('Students', () => {
 
 
     await waitFor(() => {
+      expect(getStudents).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          search: 'Juan',
+          page_size: 100,
+        })
+      )
       expect(
         screen.getByText('Juan Perez')
       ).toBeInTheDocument()
@@ -117,6 +138,32 @@ describe('Students', () => {
       expect(
         screen.queryByText('Maria Lopez')
       ).not.toBeInTheDocument()
+    })
+  })
+
+  it('sends the selected group to the backend', async () => {
+    getStudents.mockResolvedValue([])
+    getGroups.mockResolvedValue([{ id: 4, name: 'Grupo 4' }])
+
+    render(
+      <MemoryRouter>
+        <Students />
+      </MemoryRouter>
+    )
+
+    const groupSelect = await screen.findByRole('combobox', {
+      name: 'Grupo',
+    })
+    fireEvent.mouseDown(groupSelect)
+    fireEvent.click(await screen.findByRole('option', { name: 'Grupo 4' }))
+
+    await waitFor(() => {
+      expect(getStudents).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          group_id: 4,
+          page_size: 100,
+        })
+      )
     })
   })
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Alert,
   Avatar,
@@ -42,28 +42,33 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
 import LinkedInIcon from '@mui/icons-material/LinkedIn'
 
 import { getStudents } from '../../api/endpoints/students'
+import { getGroups } from '../../api/endpoints/groups'
 import EmptyState from '../../components/common/EmptyState'
+import useDebouncedValue from '../../hooks/useDebouncedValue'
 
 function Students() {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('name')
+  const [groupFilter, setGroupFilter] = useState('')
+  const [groups, setGroups] = useState([])
   const [view, setView] = useState('list')
 
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
 
-  useEffect(() => {
-    loadStudents()
-  }, [])
+  const debouncedSearch = useDebouncedValue(search)
 
-  async function loadStudents() {
+  const loadStudents = useCallback(async () => {
     try {
       setLoading(true)
       setError("")
-      const data = await getStudents()
+      const data = await getStudents({
+        search: debouncedSearch.trim() || undefined,
+        group_id: groupFilter || undefined,
+        page_size: 100,
+      })
       const items = Array.isArray(data) ? data : data?.items ?? []
       setStudents(items)
     } catch (err) {
@@ -71,15 +76,27 @@ function Students() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [debouncedSearch, groupFilter])
 
-  const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
-      const valueToSearch =
-        student[filter]?.toString().toLowerCase() || ''
-      return valueToSearch.includes(search.toLowerCase())
-    })
-  }, [students, search, filter])
+  useEffect(() => {
+    loadStudents()
+  }, [loadStudents])
+
+  useEffect(() => {
+    let ignore = false
+
+    getGroups({ page_size: 100 })
+      .then((data) => {
+        if (!ignore) setGroups(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        if (!ignore) setGroups([])
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -140,9 +157,12 @@ function Students() {
         <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'stretch' }}>
           <TextField
             label="Buscar"
-            placeholder="Ingrese un dato"
+            placeholder="Buscar por nombre"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(0)
+            }}
             fullWidth
             InputProps={{
               startAdornment: (
@@ -160,9 +180,12 @@ function Students() {
 
           <TextField
             select
-            label="Filtrar por"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            label="Grupo"
+            value={groupFilter}
+            onChange={(e) => {
+              setGroupFilter(e.target.value)
+              setPage(0)
+            }}
             variant="filled"
             sx={{
               width: 280,
@@ -193,9 +216,12 @@ function Students() {
               },
             }}
           >
-            <MenuItem value="name">Nombre</MenuItem>
-            <MenuItem value="email">Email</MenuItem>
-            <MenuItem value="major">Carrera</MenuItem>
+            <MenuItem value="">Todos los grupos</MenuItem>
+            {groups.map((group) => (
+              <MenuItem key={group.id} value={group.id}>
+                {group.name}
+              </MenuItem>
+            ))}
           </TextField>
         </Box>
 
@@ -224,8 +250,8 @@ function Students() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
+                {students.length > 0 ? (
+                  students.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
                     const initials = (student.name || 'U')
                       .split(' ')
                       .filter(Boolean)
@@ -319,7 +345,7 @@ function Students() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredStudents.length}
+            count={students.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -334,7 +360,7 @@ function Students() {
         ) : (
           <>
           <Grid container spacing={3} sx={{ mt: 1 }}>
-            {filteredStudents.length === 0 ? (
+            {students.length === 0 ? (
               <Grid item xs={12}>
                 <Box sx={{ py: 6, textAlign: "center" }}>
                   <EmptyState
@@ -344,7 +370,7 @@ function Students() {
                 </Box>
               </Grid>
             ) : (
-              filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
+              students.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
                 const initials = (student.name || 'U')
                   .split(' ')
                   .filter(Boolean)
@@ -406,7 +432,7 @@ function Students() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredStudents.length}
+            count={students.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}

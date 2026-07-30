@@ -1,8 +1,9 @@
 import { apiClient } from "../client";
 
-export async function getMaterials() {
-  const response = await apiClient.get("/api/materials");
-  return response.data;
+export async function getMaterials(filters = {}) {
+  const response = await apiClient.get("/api/materials", { params: filters });
+  const data = response.data;
+  return Array.isArray(data) ? data : (data?.items ?? []);
 }
 
 export async function getMaterialById(id) {

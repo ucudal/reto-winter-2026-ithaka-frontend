@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -64,6 +64,7 @@ import { translateStatus, translateTutorRole } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
 
 const TUTOR_FIELDS = [
   { name: "name", label: "Nombre", type: "text", required: true, grid: 12 },
@@ -110,7 +111,8 @@ export default function Tutors() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterProperty, setFilterProperty] = useState("name");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [view, setView] = useState("list");
   const [showCapacity, setShowCapacity] = useState(false);
 
@@ -127,22 +129,29 @@ export default function Tutors() {
   const [capacityGroups, setCapacityGroups] = useState([]);
   const [capacityTutor, setCapacityTutor] = useState(null);
 
-  const loadTutors = async () => {
+  const debouncedSearch = useDebouncedValue(searchTerm);
+
+  const loadTutors = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await getTutors();
+      const data = await getTutors({
+        search: debouncedSearch.trim() || undefined,
+        role: roleFilter || undefined,
+        status: statusFilter || undefined,
+        page_size: 100,
+      });
       setTutors(data || []);
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los tutores.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, roleFilter, statusFilter]);
 
   useEffect(() => {
     loadTutors();
-  }, []);
+  }, [loadTutors]);
 
   const handleOpenCreate = () => {
     setEditingTutor(null);
@@ -216,11 +225,6 @@ export default function Tutors() {
     }
   };
   const handleCloseCapacity = () => setCapacityOpen(false);
-
-  const filteredTutors = tutors.filter((tutor) => {
-    const valueToSearch = tutor[filterProperty]?.toString().toLowerCase() || "";
-    return valueToSearch.includes(searchTerm.toLowerCase());
-  });
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -297,12 +301,23 @@ export default function Tutors() {
         <TutorsCapacityPanel />
       ) : (
       <Paper sx={{ p: 2, borderRadius: 2 }}>
-        <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            mb: 3,
+            alignItems: "stretch",
+            flexWrap: "wrap",
+          }}
+        >
           <TextField
             label="Buscar"
-            placeholder="Ingrese un dato"
+            placeholder="Buscar por nombre"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(0);
+            }}
             fullWidth
             InputProps={{
               startAdornment: (
@@ -312,6 +327,7 @@ export default function Tutors() {
               ),
             }}
             sx={{
+              flex: "1 1 320px",
               "& .MuiOutlinedInput-root": {
                 height: 60,
               },
@@ -319,44 +335,31 @@ export default function Tutors() {
           />
           <TextField
             select
-            label="Filtrar por"
-            value={filterProperty}
-            onChange={(e) => setFilterProperty(e.target.value)}
-            variant="filled"
-            sx={{
-              width: 280,
-              "& .MuiFilledInput-root": {
-                height: 60,
-                bgcolor: "action.hover",
-                "&:hover": {
-                  bgcolor: "action.hover",
-                },
-                "&.Mui-focused": {
-                  bgcolor: "action.hover",
-                },
-                "&:before": {
-                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                },
-                "&:hover:not(.Mui-disabled):before": {
-                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                },
-                "&:after": {
-                  borderBottom: (theme) =>
-                    `2px solid ${theme.palette.primary.main}`,
-                },
-              },
-              "& .MuiInputLabel-root": {
-                color: "primary.main",
-              },
-              "& .MuiInputLabel-root.Mui-focused": {
-                color: "primary.main",
-              },
+            label="Rol"
+            value={roleFilter}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              setPage(0);
             }}
+            sx={{ minWidth: 190 }}
           >
-            <MenuItem value="name">Nombre</MenuItem>
-            <MenuItem value="role">Rol</MenuItem>
-            <MenuItem value="specialty">Especialidad</MenuItem>
-            <MenuItem value="status">Estado</MenuItem>
+            <MenuItem value="">Todos los roles</MenuItem>
+            <MenuItem value="Business">Negocio</MenuItem>
+            <MenuItem value="Technical">Técnico</MenuItem>
+          </TextField>
+          <TextField
+            select
+            label="Estado"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(0);
+            }}
+            sx={{ minWidth: 190 }}
+          >
+            <MenuItem value="">Todos los estados</MenuItem>
+            <MenuItem value="Active">Activo</MenuItem>
+            <MenuItem value="Inactive">Inactivo</MenuItem>
           </TextField>
         </Box>
 
@@ -442,7 +445,7 @@ export default function Tutors() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredTutors.length === 0 ? (
+                {tutors.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                       <Typography color="text.secondary">
@@ -451,7 +454,7 @@ export default function Tutors() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTutors.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tutor) => (
+                  tutors.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tutor) => (
                     <TableRow key={tutor.id} hover>
                       <TableCell>
                         <Box
@@ -564,7 +567,7 @@ export default function Tutors() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredTutors.length}
+            count={tutors.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -578,7 +581,7 @@ export default function Tutors() {
           </>
         ) : (
           <Grid container spacing={3} sx={{ mt: 1 }}>
-            {filteredTutors.length === 0 ? (
+            {tutors.length === 0 ? (
               <Grid item xs={12}>
                 <Box sx={{ py: 6, textAlign: "center" }}>
                   <Typography color="text.secondary">
@@ -587,7 +590,7 @@ export default function Tutors() {
                 </Box>
               </Grid>
             ) : (
-              filteredTutors.map((tutor) => (
+              tutors.map((tutor) => (
                 <Grid item xs={12} sm={6} md={4} key={tutor.id}>
                   <Card
                     variant="outlined"
