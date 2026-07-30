@@ -353,7 +353,7 @@ function Students() {
                 </Box>
               </Grid>
             ) : (
-              filteredStudents.map((student) => {
+              filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
                 const initials = (student.name || 'U')
                   .split(' ')
                   .filter(Boolean)
@@ -412,6 +412,21 @@ function Students() {
               })
             )}
           </Grid>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredStudents.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10))
+              setPage(0)
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
+        </>
         )}
       </Paper>
     </Box>
