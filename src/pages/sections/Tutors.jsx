@@ -717,7 +717,6 @@ export default function Tutors() {
                                 component={RouterLink}
                                 to={`/tutors/${tutor.id}`}
                               >
-                                Ver
                                 <VisibilityIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
