@@ -7,6 +7,13 @@ import { getStudents } from '../../api/endpoints/students'
 
 vi.mock('../../api/endpoints/students', () => ({
   getStudents: vi.fn(),
+  createStudent: vi.fn(),
+  updateStudent: vi.fn(),
+  deleteStudent: vi.fn(),
+}))
+
+vi.mock('../../ToastContext', () => ({
+  useToast: () => ({ showToast: vi.fn() }),
 }))
 
 
@@ -118,6 +125,20 @@ describe('Students', () => {
         screen.queryByText('Maria Lopez')
       ).not.toBeInTheDocument()
     })
+  })
+
+  it('opens the create student modal from the header action', async () => {
+    getStudents.mockResolvedValue([])
+
+    render(
+      <MemoryRouter>
+        <Students />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /nuevo alumno/i }))
+
+    expect(await screen.findByText('Agregar estudiante')).toBeInTheDocument()
   })
 
 })
