@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -88,9 +88,24 @@ function SectionHeader({ icon, title, helpText, chipLabel, chipColor = "default"
   );
 }
 
-function StatTile({ icon, label, value, severity }) {
+function StatTile({ icon, label, value, severity, onClick }) {
   return (
-    <Card sx={{ ...CARD_SX, position: "relative", overflow: "hidden" }}>
+    <Card
+      sx={{
+        ...CARD_SX,
+        position: "relative",
+        overflow: "hidden",
+        ...(onClick && {
+          cursor: "pointer",
+          transition: "box-shadow 0.15s, transform 0.15s",
+          "&:hover": {
+            boxShadow: "0px 4px 14px rgba(0,0,0,0.14)",
+            transform: "translateY(-1px)",
+          },
+        }),
+      }}
+      onClick={onClick}
+    >
       <Box
         sx={{
           position: "absolute",
@@ -134,6 +149,7 @@ export default function Dashboard() {
   const [activeCheckpoint, setActiveCheckpoint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const alertsSectionRef = useRef(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -243,6 +259,7 @@ export default function Dashboard() {
             label="Grupos Activos"
             value={active_groups}
             severity="primary"
+            onClick={() => navigate("/groups?status=Active")}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -259,6 +276,7 @@ export default function Dashboard() {
             label="Entregables Pendientes"
             value={pending_deliverables}
             severity="warning"
+            onClick={() => navigate("/deliverables?status=Pending")}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -267,12 +285,21 @@ export default function Dashboard() {
             label="Alertas Activas"
             value={alerts.length}
             severity={alerts.length > 0 ? "error" : "success"}
+            onClick={
+              overloadedTutors.length > 0
+                ? () =>
+                    alertsSectionRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    })
+                : undefined
+            }
           />
         </Grid>
       </Grid>
 
       {overloadedTutors.length > 0 && (
-        <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
+        <Alert ref={alertsSectionRef} severity="error" variant="outlined" sx={{ mb: 2 }}>
           <AlertTitle>Tutores con sobrecarga ({overloadedTutors.length})</AlertTitle>
           <List dense disablePadding>
             {overloadedTutors.map((tutor) => (
