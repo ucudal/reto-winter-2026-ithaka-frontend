@@ -85,9 +85,11 @@ describe("GroupDetail", () => {
 
     renderGroupDetail();
 
-    expect(await screen.findByText("EcoRoute")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "EcoRoute" }),
+    ).toBeInTheDocument();
     expect(await screen.findByText("18 h / 22 h")).toBeInTheDocument();
-    expect(screen.getByText("4 h restantes")).toBeInTheDocument();
+    expect(await screen.findByText("4 h restantes")).toBeInTheDocument();
     expect(getGroupMeetingTotalHours).toHaveBeenCalledWith(45);
   });
 
@@ -101,6 +103,8 @@ describe("GroupDetail", () => {
     expect(
       await screen.findByText("No se pudieron cargar las horas."),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("EcoRoute").length).toBeGreaterThan(0);
+    expect(
+      await screen.findByRole("heading", { name: "EcoRoute" }),
+    ).toBeInTheDocument();
   });
 });
