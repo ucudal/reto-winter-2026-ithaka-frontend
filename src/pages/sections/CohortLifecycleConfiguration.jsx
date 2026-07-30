@@ -12,6 +12,7 @@ import {
   Snackbar,
   Breadcrumbs,
   Link,
+  Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -125,19 +126,6 @@ export default function CohortLifecycleConfiguration() {
     }
   };
 
-  const handleDelete = async (stageId) => {
-    setSaving(true);
-    setError(null);
-    try {
-      await upsertStage({});
-      setStages((prev) => prev.filter((s) => s.id !== stageId));
-    } catch (err) {
-      console.error(err);
-      setError("No se pudo eliminar la etapa.");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const keyDateSummary = (stage) => {
     if (!stage.key_dates || stage.key_dates.length === 0) return null;
@@ -240,12 +228,14 @@ export default function CohortLifecycleConfiguration() {
                     <ArrowDownwardIcon />
                   </IconButton>
 
-                  <IconButton
-                    disabled={saving}
-                    onClick={() => handleDelete(stage.id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
+                  {/* TODO: Habilitar la eliminación cuando el backend exponga DELETE /api/stages/{id}. */}
+                  <Tooltip title="Eliminación de etapas no disponible todavía">
+                    <span>
+                      <IconButton disabled>
+                        <DeleteIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 </Box>
               </Paper>
             ))}
