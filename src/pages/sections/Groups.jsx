@@ -370,11 +370,27 @@ function Groups() {
       ) : error ? (
         <ErrorState message={error} onRetry={loadGroups} />
       ) : view === "gallery" ? (
-        <GroupsGrid
-            groups={filteredGroups}
+        <>
+          <GroupsGrid
+            groups={filteredGroups.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
             onEdit={setEditingGroup}
             onDelete={setDeletingGroup}
-        />
+          />
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredGroups.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
+        </>
       ) : (
         <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
           <Table>

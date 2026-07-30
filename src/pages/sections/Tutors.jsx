@@ -454,7 +454,7 @@ export default function Tutors() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTutors.map((tutor) => (
+                  filteredTutors.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tutor) => (
                     <TableRow key={tutor.id} hover>
                       <TableCell>
                         <Box
