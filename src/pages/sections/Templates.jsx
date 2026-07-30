@@ -99,6 +99,10 @@ function Templates() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
   useEffect(() => {
     let isMounted = true
 
@@ -107,11 +111,17 @@ function Templates() {
       setError(null)
 
       try {
-        const res = await getMaterials()
+        const params = {
+          page: page + 1,
+          page_size: rowsPerPage,
+          search: search || undefined,
+        };
+        const res = await getMaterials(params)
         if (!isMounted) return
-        const list = Array.isArray(res) ? res : (res?.items ?? []);
+        const list = res?.items ?? (Array.isArray(res) ? res : []);
         const mappedTemplates = list.map(mapMaterialToTemplate)
         setTemplates(mappedTemplates)
+        setTotalCount(res?.total ?? list.length)
       } catch (err) {
         if (!isMounted) return
         setError(err?.message || 'No se pudieron cargar los templates.')
@@ -126,7 +136,7 @@ function Templates() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [page, rowsPerPage, search])
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
@@ -364,52 +374,83 @@ function Templates() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
         </Paper>
       ) : (
-        <Grid container spacing={3}>
-          {filteredTemplates.length === 0 ? (
-            <Grid item xs={12}>
-              <Box sx={{ py: 6, textAlign: "center" }}>
-                <EmptyState
-                  title='No hay templates'
-                  description='No se encontraron plantillas.'
-                />
-              </Box>
-            </Grid>
-          ) : (
-            filteredTemplates.map((template) => (
-              <Grid item xs={12} sm={6} md={4} key={template.id}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
-                      {template.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {template.description}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
-                      <Chip label={template.type} size="small" color="primary" variant="outlined" />
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        {getPlatformIcon(template.platform)}
-                      </Box>
-                    </Box>
-                  </CardContent>
-                  <CardActions sx={{ justifyContent: "flex-end", px: 2, pb: 2 }}>
-                    <Tooltip title="Editar">
-                      <IconButton
-                        color='primary'
-                        onClick={() => navigate(`/templates/${template.id}`)}
-                        size="small"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </CardActions>
-                </Card>
+        <Box>
+          <Grid container spacing={3}>
+            {filteredTemplates.length === 0 ? (
+              <Grid item xs={12}>
+                <Box sx={{ py: 6, textAlign: "center" }}>
+                  <EmptyState
+                    title='No hay templates'
+                    description='No se encontraron plantillas.'
+                  />
+                </Box>
               </Grid>
-            ))
-          )}
-        </Grid>
+            ) : (
+              filteredTemplates.map((template) => (
+                <Grid item xs={12} sm={6} md={4} key={template.id}>
+                  <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        {template.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {template.description}
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
+                        <Chip label={template.type} size="small" color="primary" variant="outlined" />
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          {getPlatformIcon(template.platform)}
+                        </Box>
+                      </Box>
+                    </CardContent>
+                    <CardActions sx={{ justifyContent: "flex-end", px: 2, pb: 2 }}>
+                      <Tooltip title="Editar">
+                        <IconButton
+                          color='primary'
+                          onClick={() => navigate(`/templates/${template.id}`)}
+                          size="small"
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))
+            )}
+          </Grid>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            sx={{ mt: 2 }}
+          />
+        </Box>
       )}
       <GenericCreateModal
         open={openModal}
