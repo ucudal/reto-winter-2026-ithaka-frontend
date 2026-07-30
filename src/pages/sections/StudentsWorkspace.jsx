@@ -104,7 +104,10 @@ export default function StudentWorkspace() {
     async function loadMaterials() {
       try {
         const materialsData = await getMaterials();
-        setMaterials(materialsData || []);
+        const items = Array.isArray(materialsData)
+          ? materialsData
+          : materialsData?.items ?? [];
+        setMaterials(items);
       } catch (err) {
         console.error("Error fetching materials for student workspace:", err);
         setMaterials([]);
@@ -242,8 +245,8 @@ export default function StudentWorkspace() {
   const nextDeliverable = deliverables.find(
     (d) => !["Delivered", "Approved"].includes(d.status),
   );
-  const teammates = group.students.filter((s) =>
-    s.email ? s.email !== user.email : s.name !== user.name
+  const teammates = (group?.students ?? []).filter((s) =>
+    s.email ? s.email !== user?.email : s.name !== user?.name
   );
 
   return (
@@ -319,6 +322,7 @@ export default function StudentWorkspace() {
       )}
 
       <Grid container spacing={3}>
+        {/* Fila 1: Información del equipo (Compañeros + Tutores lado a lado) */}
         <Grid item xs={12} md={6}>
           <Card sx={{ borderRadius: 2, boxShadow: 1, height: "100%" }}>
             <CardContent>
@@ -359,7 +363,7 @@ export default function StudentWorkspace() {
                 </Typography>
               </Stack>
 
-              <Stack spacing={2}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
                 <Stack direction="row" alignItems="center" spacing={1.5}>
                   <Avatar sx={{ width: 32, height: 32, fontSize: 13 }}>
                     {getInitials(group.technicalTutor?.name)}
@@ -392,36 +396,47 @@ export default function StudentWorkspace() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        {/* Fila 2: Próximas entregas y Minutas recientes lado a lado */}
+        <Grid item xs={12} md={7}>
           <Card sx={{ borderRadius: 2, boxShadow: 1, height: "100%" }}>
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                <LinkIcon color="action" fontSize="small" />
+                <DescriptionOutlinedIcon color="action" fontSize="small" />
                 <Typography variant="subtitle1" fontWeight={600}>
-                  Links de interés
+                  Próximas entregas
                 </Typography>
               </Stack>
 
-              {(group.links ?? []).length === 0 ? (
+              {deliverables.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  Todavía no cargaron links para este grupo.
+                  No hay entregas cargadas para tu grupo todavía.
                 </Typography>
               ) : (
-                <Stack spacing={1}>
-                  {(group.links ?? []).map((link, index) => (
-                    <Button
-                      key={`${link.type}-${index}`}
-                      component="a"
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="outlined"
-                      size="small"
-                      endIcon={<OpenInNewIcon fontSize="small" />}
-                      sx={{ justifyContent: "space-between", textTransform: "none" }}
+                <Stack divider={<Divider />} spacing={1.5}>
+                  {deliverables.map((deliverable) => (
+                    <Stack
+                      key={deliverable.id}
+                      direction={{ xs: "column", sm: "row" }}
+                      justifyContent="space-between"
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      spacing={1}
                     >
-                      {LINK_LABELS[link.type] || link.type}
-                    </Button>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {deliverable.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Fecha esperada: {formatDate(deliverable.dueDate)}
+                        </Typography>
+                      </Box>
+
+                      <Chip
+                        label={deliverable.meta.label}
+                        color={deliverable.meta.color}
+                        size="small"
+                        variant={deliverable.meta.color === "default" ? "outlined" : "filled"}
+                      />
+                    </Stack>
                   ))}
                 </Stack>
               )}
@@ -429,7 +444,7 @@ export default function StudentWorkspace() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={5}>
           <Card sx={{ borderRadius: 2, boxShadow: 1, height: "100%" }}>
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
@@ -486,53 +501,7 @@ export default function StudentWorkspace() {
           </Card>
         </Grid>
 
-        <Grid item xs={12}>
-          <Card sx={{ borderRadius: 2, boxShadow: 1 }}>
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                <DescriptionOutlinedIcon color="action" fontSize="small" />
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Próximas entregas
-                </Typography>
-              </Stack>
-
-              {deliverables.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No hay entregas cargadas para tu grupo todavía.
-                </Typography>
-              ) : (
-                <Stack divider={<Divider />} spacing={1.5}>
-                  {deliverables.map((deliverable) => (
-                    <Stack
-                      key={deliverable.id}
-                      direction={{ xs: "column", sm: "row" }}
-                      justifyContent="space-between"
-                      alignItems={{ xs: "flex-start", sm: "center" }}
-                      spacing={1}
-                    >
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          {deliverable.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Fecha esperada: {formatDate(deliverable.dueDate)}
-                        </Typography>
-                      </Box>
-
-                      <Chip
-                        label={deliverable.meta.label}
-                        color={deliverable.meta.color}
-                        size="small"
-                        variant={deliverable.meta.color === "default" ? "outlined" : "filled"}
-                      />
-                    </Stack>
-                  ))}
-                </Stack>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
+        {/* Fila 3: Base de conocimiento ocupando ancho completo equilibrado */}
         <Grid item xs={12}>
           <Card sx={{ borderRadius: 2, boxShadow: 1 }}>
             <CardContent>
@@ -564,13 +533,13 @@ export default function StudentWorkspace() {
                 <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                   <CircularProgress size={20} />
                 </Box>
-              ) : materials.length === 0 ? (
+              ) : !Array.isArray(materials) || materials.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   Todavía no hay materiales cargados.
                 </Typography>
               ) : (
                 <Stack divider={<Divider />} spacing={1.5}>
-                  {materials.slice(0, 5).map((material) => (
+                  {(Array.isArray(materials) ? materials : []).slice(0, 4).map((material) => (
                     <Stack
                       key={material.id}
                       direction="row"
