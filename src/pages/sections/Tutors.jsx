@@ -545,14 +545,18 @@ export default function Tutors() {
                           </IconButton>
                         </Tooltip>
 
-                        <Tooltip title="Eliminar">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            aria-label={`Eliminar ${tutor.name}`}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                        {/* TODO: Habilitar la baja cuando el backend exponga DELETE /api/tutors/{id}. */}
+                        <Tooltip title="Baja de tutores no disponible todavía">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              aria-label={`Eliminar ${tutor.name}`}
+                              disabled
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       </TableCell>
                     </TableRow>
@@ -711,14 +715,18 @@ export default function Tutors() {
                             <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Eliminar">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            aria-label={`Eliminar ${tutor.name}`}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                        {/* TODO: Habilitar la baja cuando el backend exponga DELETE /api/tutors/{id}. */}
+                        <Tooltip title="Baja de tutores no disponible todavía">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              aria-label={`Eliminar ${tutor.name}`}
+                              disabled
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       </Box>
                     </CardActions>
