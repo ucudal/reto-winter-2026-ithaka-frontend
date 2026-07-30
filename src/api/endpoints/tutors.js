@@ -33,3 +33,17 @@ export async function upsertTutor(payload) {
   return data;
 }
 
+export async function deleteTutor(tutor) {
+  const { data } = await apiClient.put("/api/tutors", {
+    id: tutor.id,
+    name: tutor.name,
+    role: tutor.role,
+    specialty: tutor.specialty ?? null,
+    availability: tutor.availability ?? null,
+    status: "Inactive",
+    max_capacity: tutor.max_capacity,
+    linkedin_url: tutor.linkedin_url ?? null,
+  });
+  return data;
+}
+

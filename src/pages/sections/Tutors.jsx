@@ -166,7 +166,7 @@ export default function Tutors() {
     if (!tutorToDelete) return;
     try {
       setDeleting(true);
-      await deleteTutor(tutorToDelete.id);
+      await deleteTutor(tutorToDelete);
       setTutors((prev) => prev.filter((t) => t.id !== tutorToDelete.id));
       showToast("Tutor eliminado correctamente.", "success");
       setTutorToDelete(null);
