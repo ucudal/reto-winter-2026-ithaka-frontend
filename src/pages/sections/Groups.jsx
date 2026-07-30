@@ -18,7 +18,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   Chip,
   IconButton,
   Tooltip,
@@ -35,7 +34,13 @@ import GroupsGrid from "../../components/GroupsGrid";
 import LoadingStateComponent from "../../components/LoadingStateComponent";
 import ErrorState from "../../components/common/ErrorState";
 import GenericCreateModal from "../../components/common/GenericCreateModal";
-import {getGroups,saveGroup,deleteGroup,getGroupById,} from "../../api/endpoints/groups";
+import PaginationControls from "../../components/common/PaginationControls";
+import {
+  getGroups,
+  saveGroup,
+  deleteGroup,
+  getGroupById,
+} from "../../api/endpoints/groups";
 import { getCohorts } from "../../api/endpoints/cohorts";
 import { getTutorGroups } from "../../api/endpoints/tutors";
 import { useAuth } from "../../context/AuthContext";
@@ -50,6 +55,8 @@ const CREATE_GROUP_INITIAL_VALUES = {
   student_ids: [],
 };
 
+// Los selects del modal necesitan la lista completa, no una pagina de 10.
+const OPTIONS_PAGE = { page: 1, page_size: 100 };
 
 function Groups() {
   const { user } = useAuth();
@@ -59,6 +66,7 @@ function Groups() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   const [groups, setGroups] = useState([]);
   const [cohorts, setCohorts] = useState([]);
@@ -71,13 +79,18 @@ function Groups() {
   const [editingGroup, setEditingGroup] = useState(null);
   const [deletingGroup, setDeletingGroup] = useState(null);
 
+  // El coordinador lista via /api/groups, que si pagina en el server. El tutor
+  // entra por /api/tutors/{id}/groups, que devuelve todo: ese caso se pagina
+  // en memoria y con total conocido.
+  const isServerPaginated = user?.role === "Coordinator";
+
   useEffect(() => {
     loadGroups();
-  }, []);
+  }, [page, rowsPerPage, user?.role, user?.tutor?.id]);
 
   const loadGroupsForCurrentUser = async () => {
     if (user?.role === "Coordinator") {
-      return getGroups();
+      return getGroups({ page: page + 1, page_size: rowsPerPage });
     }
 
     const tutorId = user?.tutor?.id;
@@ -99,13 +112,27 @@ function Groups() {
 
       const [groupsData, cohortsData, studentsData] = await Promise.all([
         loadGroupsForCurrentUser(),
-        getCohorts(),
-        getStudents(),
+        getCohorts(OPTIONS_PAGE),
+        getStudents(OPTIONS_PAGE),
       ]);
 
+      // El backend pagina pero no devuelve el total: si esta pagina vino vacia
+      // y no es la primera, volvemos una atras en vez de mostrar vacio.
+      if (isServerPaginated && groupsData.length === 0 && page > 0) {
+        setPage((prev) => prev - 1);
+        return;
+      }
+
       setGroups(groupsData);
-      setCohorts(Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []));
-      setStudents(Array.isArray(studentsData) ? studentsData : (studentsData?.items ?? []));
+      setHasNextPage(isServerPaginated && groupsData.length === rowsPerPage);
+      setCohorts(
+        Array.isArray(cohortsData) ? cohortsData : (cohortsData?.items ?? []),
+      );
+      setStudents(
+        Array.isArray(studentsData)
+          ? studentsData
+          : (studentsData?.items ?? []),
+      );
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los grupos.");
     } finally {
@@ -209,15 +236,38 @@ function Groups() {
         group.idea?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         group.major?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === "" || group.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "" || group.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
   }, [groups, searchTerm, statusFilter]);
 
+  const visibleGroups = isServerPaginated
+    ? filteredGroups
+    : filteredGroups.slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage,
+      );
+
   const statusOptions = useMemo(
     () => [...new Set(groups.map((g) => g.status).filter(Boolean))],
     [groups],
+  );
+
+  const pagination = (
+    <PaginationControls
+      page={page}
+      rowsPerPage={rowsPerPage}
+      hasNextPage={hasNextPage}
+      loadedRows={groups.length}
+      totalCount={isServerPaginated ? null : filteredGroups.length}
+      onPageChange={setPage}
+      onRowsPerPageChange={(value) => {
+        setRowsPerPage(value);
+        setPage(0);
+      }}
+    />
   );
 
   return (
@@ -226,12 +276,7 @@ function Groups() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">
           Inicio
         </Link>
         <Typography color="text.primary">Grupos</Typography>
@@ -345,7 +390,8 @@ function Groups() {
                 borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
               },
               "&:after": {
-                borderBottom: (theme) => `2px solid ${theme.palette.primary.main}`,
+                borderBottom: (theme) =>
+                  `2px solid ${theme.palette.primary.main}`,
               },
             },
             "& .MuiInputLabel-root": {
@@ -370,54 +416,152 @@ function Groups() {
       ) : error ? (
         <ErrorState message={error} onRetry={loadGroups} />
       ) : view === "gallery" ? (
-        <GroupsGrid
-            groups={filteredGroups}
+        <>
+          <GroupsGrid
+            groups={visibleGroups}
             onEdit={setEditingGroup}
             onDelete={setDeletingGroup}
-        />
+          />
+          {pagination}
+        </>
       ) : (
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+        <TableContainer
+          component={Paper}
+          variant="outlined"
+          sx={{ borderRadius: 2 }}
+        >
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Grupo</TableCell>
-                <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Carrera</TableCell>
-                <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Idea de proyecto</TableCell>
-                <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Etapa actual</TableCell>
-                <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Tutores</TableCell>
-                <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Estado</TableCell>
-                <TableCell align="right" sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Acciones</TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: "bold",
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "background.default"
+                        : "grey.50",
+                  }}
+                >
+                  Grupo
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: "bold",
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "background.default"
+                        : "grey.50",
+                  }}
+                >
+                  Carrera
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: "bold",
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "background.default"
+                        : "grey.50",
+                  }}
+                >
+                  Idea de proyecto
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: "bold",
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "background.default"
+                        : "grey.50",
+                  }}
+                >
+                  Etapa actual
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: "bold",
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "background.default"
+                        : "grey.50",
+                  }}
+                >
+                  Tutores
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: "bold",
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "background.default"
+                        : "grey.50",
+                  }}
+                >
+                  Estado
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{
+                    fontWeight: "bold",
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "background.default"
+                        : "grey.50",
+                  }}
+                >
+                  Acciones
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredGroups.length === 0 ? (
+              {visibleGroups.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                    <Typography color="text.secondary">No se encontraron grupos</Typography>
+                    <Typography color="text.secondary">
+                      No se encontraron grupos
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredGroups.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((group) => (
+                visibleGroups.map((group) => (
                   <TableRow key={group.id} hover>
                     <TableCell sx={{ fontWeight: "medium" }}>
                       {group.name}
-                      <Typography variant="caption" display="block" color="text.secondary">
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        color="text.secondary"
+                      >
                         {group.students?.map((s) => s.name).join(", ")}
                       </Typography>
                     </TableCell>
                     <TableCell>{group.major}</TableCell>
-                    <TableCell sx={{ maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <TableCell
+                      sx={{
+                        maxWidth: 300,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {group.idea}
                     </TableCell>
                     <TableCell>
-                      <Chip label={group.currentStage?.name || "Sin etapa"} size="small" variant="outlined" color="primary" />
+                      <Chip
+                        label={group.currentStage?.name || "Sin etapa"}
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                      />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" display="block">
-                        <strong>Negocio:</strong> {group.businessTutor?.name || "-"}
+                        <strong>Negocio:</strong>{" "}
+                        {group.businessTutor?.name || "-"}
                       </Typography>
                       <Typography variant="body2" display="block">
-                        <strong>Técnico:</strong> {group.technicalTutor?.name || "-"}
+                        <strong>Técnico:</strong>{" "}
+                        {group.technicalTutor?.name || "-"}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -469,20 +613,7 @@ function Groups() {
               )}
             </TableBody>
           </Table>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredGroups.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(e, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
-              setPage(0);
-            }}
-            labelRowsPerPage="Filas por página:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-          />
+          {pagination}
         </TableContainer>
       )}
 
@@ -501,24 +632,24 @@ function Groups() {
         title="Editar grupo"
         fields={createFields}
         initialValues={{
-            name: editingGroup?.name,
-            cohort_id: editingGroup?.cohortId,
-            idea: editingGroup?.idea,
+          name: editingGroup?.name,
+          cohort_id: editingGroup?.cohortId,
+          idea: editingGroup?.idea,
         }}
         onSubmit={handleEditGroup}
       />
       <ConfirmModal
-          open={Boolean(deletingGroup)}
-          title="Eliminar grupo"
-          message={
-              deletingGroup
-                  ? `¿Desea eliminar el grupo "${deletingGroup.name}"?`
-                  : ""
-          }
-          confirmText="Eliminar"
-          cancelText="Cancelar"
-          onConfirm={handleDeleteGroup}
-          onClose={() => setDeletingGroup(null)}
+        open={Boolean(deletingGroup)}
+        title="Eliminar grupo"
+        message={
+          deletingGroup
+            ? `¿Desea eliminar el grupo "${deletingGroup.name}"?`
+            : ""
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={handleDeleteGroup}
+        onClose={() => setDeletingGroup(null)}
       />
     </Box>
   );

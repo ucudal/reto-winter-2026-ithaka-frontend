@@ -12,7 +12,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   Avatar,
   Chip,
   IconButton,
@@ -63,6 +62,7 @@ import {
 import { translateStatus, translateTutorRole } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
+import PaginationControls from "../../components/common/PaginationControls";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
 const TUTOR_FIELDS = [
@@ -118,7 +118,8 @@ export default function Tutors() {
   const [editingTutor, setEditingTutor] = useState(null); // null => crear
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
+  const [hasNextPage, setHasNextPage] = useState(false);
+
   const [saving, setSaving] = useState(false);
 
   const [capacityOpen, setCapacityOpen] = useState(false);
@@ -131,8 +132,18 @@ export default function Tutors() {
     try {
       setLoading(true);
       setError("");
-      const data = await getTutors();
-      setTutors(data || []);
+      const data = await getTutors({ page: page + 1, page_size: rowsPerPage });
+      const items = data || [];
+
+      // El backend pagina pero no devuelve el total: si esta pagina vino vacia
+      // y no es la primera, volvemos una atras en vez de mostrar vacio.
+      if (items.length === 0 && page > 0) {
+        setPage((prev) => prev - 1);
+        return;
+      }
+
+      setTutors(items);
+      setHasNextPage(items.length === rowsPerPage);
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los tutores.");
     } finally {
@@ -142,7 +153,7 @@ export default function Tutors() {
 
   useEffect(() => {
     loadTutors();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const handleOpenCreate = () => {
     setEditingTutor(null);
@@ -222,6 +233,20 @@ export default function Tutors() {
     return valueToSearch.includes(searchTerm.toLowerCase());
   });
 
+  const pagination = (
+    <PaginationControls
+      page={page}
+      rowsPerPage={rowsPerPage}
+      hasNextPage={hasNextPage}
+      loadedRows={tutors.length}
+      onPageChange={setPage}
+      onRowsPerPageChange={(value) => {
+        setRowsPerPage(value);
+        setPage(0);
+      }}
+    />
+  );
+
   return (
     <Box sx={{ width: "100%" }}>
       <Breadcrumbs
@@ -299,439 +324,442 @@ export default function Tutors() {
       {showCapacity ? (
         <TutorsCapacityPanel />
       ) : (
-      <Paper sx={{ p: 2, borderRadius: 2 }}>
-        <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
-          <TextField
-            label="Buscar"
-            placeholder="Ingrese un dato"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                height: 60,
-              },
-            }}
-          />
-          <TextField
-            select
-            label="Filtrar por"
-            value={filterProperty}
-            onChange={(e) => setFilterProperty(e.target.value)}
-            variant="filled"
-            sx={{
-              width: 280,
-              "& .MuiFilledInput-root": {
-                height: 60,
-                bgcolor: "action.hover",
-                "&:hover": {
+        <Paper sx={{ p: 2, borderRadius: 2 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
+            <TextField
+              label="Buscar"
+              placeholder="Ingrese un dato"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: 60,
+                },
+              }}
+            />
+            <TextField
+              select
+              label="Filtrar por"
+              value={filterProperty}
+              onChange={(e) => setFilterProperty(e.target.value)}
+              variant="filled"
+              sx={{
+                width: 280,
+                "& .MuiFilledInput-root": {
+                  height: 60,
                   bgcolor: "action.hover",
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
+                  "&.Mui-focused": {
+                    bgcolor: "action.hover",
+                  },
+                  "&:before": {
+                    borderBottom: (theme) =>
+                      `1px solid ${theme.palette.divider}`,
+                  },
+                  "&:hover:not(.Mui-disabled):before": {
+                    borderBottom: (theme) =>
+                      `1px solid ${theme.palette.divider}`,
+                  },
+                  "&:after": {
+                    borderBottom: (theme) =>
+                      `2px solid ${theme.palette.primary.main}`,
+                  },
                 },
-                "&.Mui-focused": {
-                  bgcolor: "action.hover",
+                "& .MuiInputLabel-root": {
+                  color: "primary.main",
                 },
-                "&:before": {
-                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                "& .MuiInputLabel-root.Mui-focused": {
+                  color: "primary.main",
                 },
-                "&:hover:not(.Mui-disabled):before": {
-                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                },
-                "&:after": {
-                  borderBottom: (theme) =>
-                    `2px solid ${theme.palette.primary.main}`,
-                },
-              },
-              "& .MuiInputLabel-root": {
-                color: "primary.main",
-              },
-              "& .MuiInputLabel-root.Mui-focused": {
-                color: "primary.main",
-              },
-            }}
-          >
-            <MenuItem value="name">Nombre</MenuItem>
-            <MenuItem value="role">Rol</MenuItem>
-            <MenuItem value="specialty">Especialidad</MenuItem>
-            <MenuItem value="status">Estado</MenuItem>
-          </TextField>
-        </Box>
-
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-            <CircularProgress size={28} />
+              }}
+            >
+              <MenuItem value="name">Nombre</MenuItem>
+              <MenuItem value="role">Rol</MenuItem>
+              <MenuItem value="specialty">Especialidad</MenuItem>
+              <MenuItem value="status">Estado</MenuItem>
+            </TextField>
           </Box>
-        ) : error ? (
-          <Alert severity="error">{error}</Alert>
-        ) : view === "list" ? (
-          <>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      bgcolor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "background.default"
-                          : "grey.50",
-                    }}
-                  >
-                    Usuario
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      bgcolor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "background.default"
-                          : "grey.50",
-                    }}
-                  >
-                    Rol
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      bgcolor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "background.default"
-                          : "grey.50",
-                    }}
-                  >
-                    Especialidad
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      bgcolor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "background.default"
-                          : "grey.50",
-                    }}
-                  >
-                    Disponibilidad
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      bgcolor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "background.default"
-                          : "grey.50",
-                    }}
-                  >
-                    Estado
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sx={{
-                      fontWeight: "bold",
-                      bgcolor: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "background.default"
-                          : "grey.50",
-                    }}
-                  >
-                    Acciones
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+
+          {loading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+              <CircularProgress size={28} />
+            </Box>
+          ) : error ? (
+            <Alert severity="error">{error}</Alert>
+          ) : view === "list" ? (
+            <>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          bgcolor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "background.default"
+                              : "grey.50",
+                        }}
+                      >
+                        Usuario
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          bgcolor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "background.default"
+                              : "grey.50",
+                        }}
+                      >
+                        Rol
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          bgcolor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "background.default"
+                              : "grey.50",
+                        }}
+                      >
+                        Especialidad
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          bgcolor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "background.default"
+                              : "grey.50",
+                        }}
+                      >
+                        Disponibilidad
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          bgcolor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "background.default"
+                              : "grey.50",
+                        }}
+                      >
+                        Estado
+                      </TableCell>
+                      <TableCell
+                        align="right"
+                        sx={{
+                          fontWeight: "bold",
+                          bgcolor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "background.default"
+                              : "grey.50",
+                        }}
+                      >
+                        Acciones
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredTutors.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                          <Typography color="text.secondary">
+                            No se encontraron tutores
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredTutors.map((tutor) => (
+                        <TableRow key={tutor.id} hover>
+                          <TableCell>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                              }}
+                            >
+                              <Avatar
+                                sx={{
+                                  bgcolor: "action.selected",
+                                  color: "text.secondary",
+                                  width: 32,
+                                  height: 32,
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                {tutor.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </Avatar>
+                              <Typography sx={{ fontWeight: "medium" }}>
+                                {tutor.name}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={translateTutorRole(tutor.role)}
+                              size="small"
+                              color={
+                                tutor.role === "Business" ? "primary" : "info"
+                              }
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell>{tutor.specialty || "-"}</TableCell>
+                          <TableCell>{tutor.availability || "-"}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={
+                                tutor.status === "Active"
+                                  ? "Activo"
+                                  : "Inactivo"
+                              }
+                              size="small"
+                              color={
+                                tutor.status === "Active"
+                                  ? "success"
+                                  : "default"
+                              }
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            {tutor.linkedin_url && (
+                              <Tooltip title="Ver LinkedIn">
+                                <IconButton
+                                  size="small"
+                                  component="a"
+                                  href={tutor.linkedin_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label={`Abrir LinkedIn de ${tutor.name}`}
+                                >
+                                  <LinkedInIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+
+                            <Tooltip title="Ver perfil">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                component={RouterLink}
+                                to={`/tutors/${tutor.id}`}
+                              >
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+
+                            <Tooltip title="Ver capacidad">
+                              <IconButton
+                                size="small"
+                                aria-label={`Ver capacidad de ${tutor.name}`}
+                                onClick={() => handleOpenCapacity(tutor)}
+                              >
+                                <AssessmentIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+
+                            <Tooltip title="Editar">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                aria-label={`Editar ${tutor.name}`}
+                                onClick={() => handleOpenEdit(tutor)}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+
+                            <Tooltip title="Eliminar">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                aria-label={`Eliminar ${tutor.name}`}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {pagination}
+            </>
+          ) : (
+            <>
+              <Grid container spacing={3} sx={{ mt: 1 }}>
                 {filteredTutors.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                  <Grid item xs={12}>
+                    <Box sx={{ py: 6, textAlign: "center" }}>
                       <Typography color="text.secondary">
                         No se encontraron tutores
                       </Typography>
-                    </TableCell>
-                  </TableRow>
+                    </Box>
+                  </Grid>
                 ) : (
                   filteredTutors.map((tutor) => (
-                    <TableRow key={tutor.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                          }}
-                        >
-                          <Avatar
-                            sx={{
-                              bgcolor: "action.selected",
-                              color: "text.secondary",
-                              width: 32,
-                              height: 32,
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            {tutor.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </Avatar>
-                          <Typography sx={{ fontWeight: "medium" }}>
-                            {tutor.name}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={translateTutorRole(tutor.role)}
-                          size="small"
-                          color={tutor.role === "Business" ? "primary" : "info"}
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>{tutor.specialty || "-"}</TableCell>
-                      <TableCell>{tutor.availability || "-"}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={tutor.status === "Active" ? "Activo" : "Inactivo"}
-                          size="small"
-                          color={tutor.status === "Active" ? "success" : "default"}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        {tutor.linkedin_url && (
-                          <Tooltip title="Ver LinkedIn">
-                            <IconButton
-                              size="small"
-                              component="a"
-                              href={tutor.linkedin_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={`Abrir LinkedIn de ${tutor.name}`}
-                            >
-                              <LinkedInIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-
-                        <Tooltip title="Ver perfil">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            component={RouterLink}
-                            to={`/tutors/${tutor.id}`}
-                          >
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title="Ver capacidad">
-                          <IconButton
-                            size="small"
-                            aria-label={`Ver capacidad de ${tutor.name}`}
-                            onClick={() => handleOpenCapacity(tutor)}
-                          >
-                            <AssessmentIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title="Editar">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            aria-label={`Editar ${tutor.name}`}
-                            onClick={() => handleOpenEdit(tutor)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title="Eliminar">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            aria-label={`Eliminar ${tutor.name}`}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredTutors.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(e, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
-              setPage(0);
-            }}
-            labelRowsPerPage="Filas por página:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-          />
-          </>
-        ) : (
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            {filteredTutors.length === 0 ? (
-              <Grid item xs={12}>
-                <Box sx={{ py: 6, textAlign: "center" }}>
-                  <Typography color="text.secondary">
-                    No se encontraron tutores
-                  </Typography>
-                </Box>
-              </Grid>
-            ) : (
-              filteredTutors.map((tutor) => (
-                <Grid item xs={12} sm={6} md={4} key={tutor.id}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      borderRadius: 2,
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Box
+                    <Grid item xs={12} sm={6} md={4} key={tutor.id}>
+                      <Card
+                        variant="outlined"
                         sx={{
+                          borderRadius: 2,
+                          height: "100%",
                           display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          mb: 2,
+                          flexDirection: "column",
                         }}
                       >
-                        <Avatar
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                              mb: 2,
+                            }}
+                          >
+                            <Avatar
+                              sx={{
+                                bgcolor: "primary.main",
+                                color: "primary.contrastText",
+                                width: 48,
+                                height: 48,
+                              }}
+                            >
+                              {tutor.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle1" fontWeight="bold">
+                                {tutor.name}
+                              </Typography>
+                              <Chip
+                                label={
+                                  tutor.role === "Business"
+                                    ? "Tutor de Negocio"
+                                    : "Tutor Técnico"
+                                }
+                                size="small"
+                                color={
+                                  tutor.role === "Business"
+                                    ? "secondary"
+                                    : "primary"
+                                }
+                                sx={{ mt: 0.5 }}
+                              />
+                            </Box>
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            paragraph
+                          >
+                            <strong>Especialidad:</strong> {tutor.specialty}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Disponibilidad:</strong>{" "}
+                            {tutor.availability}
+                          </Typography>
+                        </CardContent>
+                        <CardActions
                           sx={{
-                            bgcolor: "primary.main",
-                            color: "primary.contrastText",
-                            width: 48,
-                            height: 48,
+                            justifyContent: "space-between",
+                            px: 2,
+                            pb: 2,
+                            pt: 0,
                           }}
                         >
-                          {tutor.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {tutor.name}
-                          </Typography>
                           <Chip
-                            label={
-                              tutor.role === "Business"
-                                ? "Tutor de Negocio"
-                                : "Tutor Técnico"
-                            }
+                            label={translateStatus(tutor.status)}
                             size="small"
                             color={
-                              tutor.role === "Business"
-                                ? "secondary"
-                                : "primary"
+                              tutor.status === "Active" ? "success" : "default"
                             }
-                            sx={{ mt: 0.5 }}
                           />
-                        </Box>
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        paragraph
-                      >
-                        <strong>Especialidad:</strong> {tutor.specialty}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Disponibilidad:</strong> {tutor.availability}
-                      </Typography>
-                    </CardContent>
-                    <CardActions
-                      sx={{
-                        justifyContent: "space-between",
-                        px: 2,
-                        pb: 2,
-                        pt: 0,
-                      }}
-                    >
-                      <Chip
-                        label={translateStatus(tutor.status)}
-                        size="small"
-                        color={
-                          tutor.status === "Active" ? "success" : "default"
-                        }
-                      />
-                      <Box>
-                        {tutor.linkedin_url && (
-                          <Tooltip title="Ver LinkedIn">
-                            <IconButton
-                              size="small"
-                              component="a"
-                              href={tutor.linkedin_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={`Abrir LinkedIn de ${tutor.name}`}
-                            >
-                              <LinkedInIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        <Tooltip title="Ver perfil">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            component={RouterLink}
-                            to={`/tutors/${tutor.id}`}
-                          >
-                            Ver
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Ver capacidad">
-                          <IconButton
-                            size="small"
-                            aria-label={`Ver capacidad de ${tutor.name}`}
-                            onClick={() => handleOpenCapacity(tutor)}
-                          >
-                            <AssessmentIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Editar">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            aria-label={`Editar ${tutor.name}`}
-                            onClick={() => handleOpenEdit(tutor)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Eliminar">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            aria-label={`Eliminar ${tutor.name}`}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))
-            )}
-          </Grid>
-        )}
-      </Paper>
+                          <Box>
+                            {tutor.linkedin_url && (
+                              <Tooltip title="Ver LinkedIn">
+                                <IconButton
+                                  size="small"
+                                  component="a"
+                                  href={tutor.linkedin_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label={`Abrir LinkedIn de ${tutor.name}`}
+                                >
+                                  <LinkedInIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            <Tooltip title="Ver perfil">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                component={RouterLink}
+                                to={`/tutors/${tutor.id}`}
+                              >
+                                Ver
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Ver capacidad">
+                              <IconButton
+                                size="small"
+                                aria-label={`Ver capacidad de ${tutor.name}`}
+                                onClick={() => handleOpenCapacity(tutor)}
+                              >
+                                <AssessmentIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Editar">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                aria-label={`Editar ${tutor.name}`}
+                                onClick={() => handleOpenEdit(tutor)}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Eliminar">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                aria-label={`Eliminar ${tutor.name}`}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))
+                )}
+              </Grid>
+              {pagination}
+            </>
+          )}
+        </Paper>
       )}
 
       <GenericEditModal

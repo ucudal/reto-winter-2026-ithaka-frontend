@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -19,7 +19,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   TextField,
   Typography,
   Select,
@@ -30,46 +29,60 @@ import {
   CardContent,
   CardActions,
   Tooltip,
-} from '@mui/material'
-import { Link as RouterLink } from 'react-router-dom'
-import AddIcon from '@mui/icons-material/Add'
-import SearchIcon from '@mui/icons-material/Search'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
-import NavigateNextIcon from '@mui/icons-material/NavigateNext'
-import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
-import ViewModuleIcon from '@mui/icons-material/ViewModule'
-import ViewListIcon from '@mui/icons-material/ViewList'
-import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
-import LinkedInIcon from '@mui/icons-material/LinkedIn'
+} from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
-import { getStudents } from '../../api/endpoints/students'
-import EmptyState from '../../components/common/EmptyState'
+import { getStudents } from "../../api/endpoints/students";
+import EmptyState from "../../components/common/EmptyState";
+import PaginationControls from "../../components/common/PaginationControls";
 
 function Students() {
-  const [students, setStudents] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('name')
-  const [view, setView] = useState('list')
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("name");
+  const [view, setView] = useState("list");
 
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   useEffect(() => {
-    loadStudents()
-  }, [])
+    loadStudents();
+  }, [page, rowsPerPage]);
 
   async function loadStudents() {
     try {
-      setLoading(true)
-      setError("")
-      const data = await getStudents()
-      const items = Array.isArray(data) ? data : data?.items ?? []
-      setStudents(items)
+      setLoading(true);
+      setError("");
+      const data = await getStudents({
+        page: page + 1,
+        page_size: rowsPerPage,
+      });
+      const items = Array.isArray(data) ? data : (data?.items ?? []);
+
+      // El backend pagina pero no devuelve el total: si esta pagina vino vacia y
+      // no es la primera, volvemos una atras en vez de mostrar la tabla vacia.
+      if (items.length === 0 && page > 0) {
+        setPage((prev) => prev - 1);
+        return;
+      }
+
+      setStudents(items);
+      setHasNextPage(items.length === rowsPerPage);
     } catch (err) {
-      setError(err?.message || "No se pudieron cargar los alumnos.")
+      setError(err?.message || "No se pudieron cargar los alumnos.");
     } finally {
       setLoading(false);
     }
@@ -77,24 +90,32 @@ function Students() {
 
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
-      const valueToSearch =
-        student[filter]?.toString().toLowerCase() || ''
-      return valueToSearch.includes(search.toLowerCase())
-    })
-  }, [students, search, filter])
+      const valueToSearch = student[filter]?.toString().toLowerCase() || "";
+      return valueToSearch.includes(search.toLowerCase());
+    });
+  }, [students, search, filter]);
+
+  const pagination = (
+    <PaginationControls
+      page={page}
+      rowsPerPage={rowsPerPage}
+      hasNextPage={hasNextPage}
+      loadedRows={students.length}
+      onPageChange={setPage}
+      onRowsPerPageChange={(value) => {
+        setRowsPerPage(value);
+        setPage(0);
+      }}
+    />
+  );
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: "100%" }}>
       <Breadcrumbs
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">
           Inicio
         </Link>
         <Typography color="text.primary">Alumnos</Typography>
@@ -102,11 +123,11 @@ function Students() {
 
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
           gap: 2,
         }}
       >
@@ -147,7 +168,7 @@ function Students() {
       </Box>
 
       <Paper sx={{ p: 2, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'stretch' }}>
+        <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
           <TextField
             label="Buscar"
             placeholder="Ingrese un dato"
@@ -162,7 +183,7 @@ function Students() {
               ),
             }}
             sx={{
-              '& .MuiOutlinedInput-root': {
+              "& .MuiOutlinedInput-root": {
                 height: 60,
               },
             }}
@@ -176,7 +197,7 @@ function Students() {
             variant="filled"
             sx={{
               width: 280,
-              '& .MuiFilledInput-root': {
+              "& .MuiFilledInput-root": {
                 height: 60,
                 bgcolor: "action.hover",
                 "&:hover": {
@@ -192,7 +213,8 @@ function Students() {
                   borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
                 },
                 "&:after": {
-                  borderBottom: (theme) => `2px solid ${theme.palette.primary.main}`,
+                  borderBottom: (theme) =>
+                    `2px solid ${theme.palette.primary.main}`,
                 },
               },
               "& .MuiInputLabel-root": {
@@ -216,206 +238,317 @@ function Students() {
         )}
 
         {loading ? (
-          <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ py: 8, display: "flex", justifyContent: "center" }}>
             <CircularProgress />
           </Box>
-        ) : view === 'list' ? (
+        ) : view === "list" ? (
           <>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Usuario</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Carrera</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Estado</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>ID</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
-                    const initials = (student.name || 'U')
-                      .split(' ')
-                      .filter(Boolean)
-                      .map((word) => word[0])
-                      .join('')
-                      .toUpperCase()
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "background.default"
+                            : "grey.50",
+                      }}
+                    >
+                      Usuario
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "background.default"
+                            : "grey.50",
+                      }}
+                    >
+                      Email
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "background.default"
+                            : "grey.50",
+                      }}
+                    >
+                      Carrera
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "background.default"
+                            : "grey.50",
+                      }}
+                    >
+                      Estado
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "background.default"
+                            : "grey.50",
+                      }}
+                    >
+                      ID
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{
+                        fontWeight: "bold",
+                        bgcolor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "background.default"
+                            : "grey.50",
+                      }}
+                    >
+                      Acciones
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredStudents.length > 0 ? (
+                    filteredStudents.map((student) => {
+                      const initials = (student.name || "U")
+                        .split(" ")
+                        .filter(Boolean)
+                        .map((word) => word[0])
+                        .join("")
+                        .toUpperCase();
 
-                    return (
-                      <TableRow key={student.id} hover>
-                        <TableCell>
+                      return (
+                        <TableRow key={student.id} hover>
+                          <TableCell>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 2,
+                              }}
+                            >
+                              <Avatar
+                                sx={{
+                                  width: 36,
+                                  height: 36,
+                                  bgcolor: "primary.light",
+                                  color: "primary.main",
+                                  fontWeight: "bold",
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                {initials}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {student.name}
+                                </Typography>
+                                {student.is_graduation_project && (
+                                  <Chip
+                                    label="Proyecto Final"
+                                    size="small"
+                                    color="secondary"
+                                    variant="outlined"
+                                    sx={{
+                                      height: 18,
+                                      fontSize: "0.65rem",
+                                      mt: 0.2,
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>{student.email || "-"}</TableCell>
+                          <TableCell>{student.major || "-"}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label="Activo"
+                              color="success"
+                              size="small"
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell sx={{ color: "text.secondary" }}>
+                            {student.id}
+                          </TableCell>
+                          <TableCell align="right">
+                            {student.linkedin_url && (
+                              <Tooltip title="Ver LinkedIn">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  component="a"
+                                  href={student.linkedin_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <LinkedInIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                        <EmptyState
+                          title="No hay alumnos para mostrar"
+                          description="No se encontraron alumnos que coincidan con la búsqueda."
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {pagination}
+          </>
+        ) : (
+          <>
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              {filteredStudents.length === 0 ? (
+                <Grid item xs={12}>
+                  <Box sx={{ py: 6, textAlign: "center" }}>
+                    <EmptyState
+                      title="No hay alumnos para mostrar"
+                      description="No se encontraron alumnos que coincidan con la búsqueda."
+                    />
+                  </Box>
+                </Grid>
+              ) : (
+                filteredStudents.map((student) => {
+                  const initials = (student.name || "U")
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((part) => part[0])
+                    .join("")
+                    .toUpperCase();
+
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={student.id}>
+                      <Card
+                        variant="outlined"
+                        sx={{
+                          borderRadius: 2,
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                        }}
+                      >
+                        <CardContent sx={{ flexGrow: 1 }}>
                           <Box
                             sx={{
-                              display: 'flex',
-                              alignItems: 'center',
+                              display: "flex",
+                              alignItems: "center",
                               gap: 2,
+                              mb: 2,
                             }}
                           >
                             <Avatar
                               sx={{
-                                width: 36,
-                                height: 36,
-                                bgcolor: 'primary.light',
-                                color: 'primary.main',
-                                fontWeight: 'bold',
-                                fontSize: '0.875rem',
+                                bgcolor: "primary.main",
+                                color: "primary.contrastText",
+                                width: 44,
+                                height: 44,
                               }}
                             >
                               {initials}
                             </Avatar>
                             <Box>
-                              <Typography variant="body2" fontWeight="medium">
+                              <Typography variant="subtitle1" fontWeight="bold">
                                 {student.name}
                               </Typography>
-                              {student.is_graduation_project && (
-                                <Chip
-                                  label="Proyecto Final"
-                                  size="small"
-                                  color="secondary"
-                                  variant="outlined"
-                                  sx={{ height: 18, fontSize: '0.65rem', mt: 0.2 }}
-                                />
-                              )}
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                ID: {student.id}
+                              </Typography>
                             </Box>
                           </Box>
-                        </TableCell>
-                        <TableCell>{student.email || '-'}</TableCell>
-                        <TableCell>{student.major || '-'}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label="Activo"
-                            color="success"
-                            size="small"
-                            variant="outlined"
-                          />
-                        </TableCell>
-                        <TableCell sx={{ color: 'text.secondary' }}>
-                          {student.id}
-                        </TableCell>
-                        <TableCell align="right">
-                          {student.linkedin_url && (
-                            <Tooltip title="Ver LinkedIn">
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                component="a"
-                                href={student.linkedin_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                          <Stack spacing={1} sx={{ mt: 2 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <SchoolOutlinedIcon
+                                sx={{ fontSize: 18, color: "text.secondary" }}
+                              />
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
                               >
-                                <LinkedInIcon fontSize="small" />
+                                {student.major || "-"}
+                              </Typography>
+                            </Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <EmailOutlinedIcon
+                                sx={{ fontSize: 18, color: "text.secondary" }}
+                              />
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {student.email || "-"}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </CardContent>
+                        <CardActions
+                          sx={{ justifyContent: "space-between", px: 2, pb: 2 }}
+                        >
+                          <Chip label="Activo" size="small" color="success" />
+                          <Box>
+                            <Tooltip title="Editar">
+                              <IconButton size="small" color="primary">
+                                <EditIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                      <EmptyState
-                        title="No hay alumnos para mostrar"
-                        description="No se encontraron alumnos que coincidan con la búsqueda."
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredStudents.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(e, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10))
-              setPage(0)
-            }}
-            labelRowsPerPage="Filas por página:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-          />
+                            <Tooltip title="Eliminar">
+                              <IconButton size="small" color="error">
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  );
+                })
+              )}
+            </Grid>
+            {pagination}
           </>
-        ) : (
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            {filteredStudents.length === 0 ? (
-              <Grid item xs={12}>
-                <Box sx={{ py: 6, textAlign: "center" }}>
-                  <EmptyState
-                    title="No hay alumnos para mostrar"
-                    description="No se encontraron alumnos que coincidan con la búsqueda."
-                  />
-                </Box>
-              </Grid>
-            ) : (
-              filteredStudents.map((student) => {
-                const initials = (student.name || 'U')
-                  .split(' ')
-                  .filter(Boolean)
-                  .map((part) => part[0])
-                  .join('')
-                  .toUpperCase();
-
-                return (
-                  <Grid item xs={12} sm={6} md={4} key={student.id}>
-                    <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-                          <Avatar sx={{ bgcolor: "primary.main", color: "primary.contrastText", width: 44, height: 44 }}>
-                            {initials}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="bold">
-                              {student.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              ID: {student.id}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Stack spacing={1} sx={{ mt: 2 }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <SchoolOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                            <Typography variant="body2" color="text.secondary">{student.major || '-'}</Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <EmailOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                            <Typography variant="body2" color="text.secondary" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {student.email || '-'}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </CardContent>
-                      <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
-                        <Chip label="Activo" size="small" color="success" />
-                        <Box>
-                          <Tooltip title="Editar">
-                            <IconButton size="small" color="primary">
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Eliminar">
-                            <IconButton size="small" color="error">
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </CardActions>
-                    </Card>
-                  </Grid>
-                )
-              })
-            )}
-          </Grid>
         )}
       </Paper>
     </Box>
-  )
+  );
 }
 
-export default Students
+export default Students;

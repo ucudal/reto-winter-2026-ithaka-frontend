@@ -1,7 +1,7 @@
 import { apiClient } from "../client";
 
-export async function getTutors() {
-  const { data } = await apiClient.get("/api/tutors");
+export async function getTutors(params = {}) {
+  const { data } = await apiClient.get("/api/tutors", { params });
   return Array.isArray(data) ? data : (data?.items ?? []);
 }
 
@@ -29,4 +29,3 @@ export async function upsertTutor(payload) {
   const { data } = await apiClient.put("/api/tutors", payload);
   return data;
 }
-

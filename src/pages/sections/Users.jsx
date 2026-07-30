@@ -18,7 +18,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   TextField,
   Typography,
   Breadcrumbs,
@@ -32,7 +31,13 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import ConfirmModal from "../../components/ConfirmModal";
-import { getUsers, createUser, updateUser, deleteUser } from "../../api/endpoints/users";
+import PaginationControls from "../../components/common/PaginationControls";
+import {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+} from "../../api/endpoints/users";
 import { translateUserRole } from "../../utils/translate";
 
 const ROLE_OPTIONS = [
@@ -45,7 +50,10 @@ const ROLE_OPTIONS = [
 const ROLE_STYLES = {
   Coordinator: { label: translateUserRole("Coordinator"), color: "warning" },
   BusinessTutor: { label: translateUserRole("BusinessTutor"), color: "info" },
-  TechnicalTutor: { label: translateUserRole("TechnicalTutor"), color: "success" },
+  TechnicalTutor: {
+    label: translateUserRole("TechnicalTutor"),
+    color: "success",
+  },
   Student: { label: translateUserRole("Student"), color: "default" },
 };
 
@@ -73,6 +81,7 @@ export default function Users() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   // Dialog & Form states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -89,8 +98,18 @@ export default function Users() {
     try {
       setLoading(true);
       setError("");
-      const data = await getUsers();
-      setUsers(normalizeUsersResponse(data));
+      const data = await getUsers({ page: page + 1, page_size: rowsPerPage });
+      const items = normalizeUsersResponse(data);
+
+      // El backend pagina pero no devuelve el total: si esta pagina vino vacia y
+      // no es la primera, volvemos una atras en vez de mostrar la tabla vacia.
+      if (items.length === 0 && page > 0) {
+        setPage((prev) => prev - 1);
+        return;
+      }
+
+      setUsers(items);
+      setHasNextPage(items.length === rowsPerPage);
     } catch (err) {
       setError(err.message || "Error inesperado al cargar usuarios");
     } finally {
@@ -100,7 +119,7 @@ export default function Users() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const handleOpenCreateDialog = () => {
     setEditUserObj(null);
@@ -169,12 +188,7 @@ export default function Users() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">
           Inicio
         </Link>
         <Typography color="text.primary">Usuarios</Typography>
@@ -220,79 +234,77 @@ export default function Users() {
           </Box>
         ) : (
           <>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: "bold" }}>Usuario</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>Rol</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>ID</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                    Acciones
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => {
-                  const roleStyle = ROLE_STYLES[user.role] ?? ROLE_STYLES.Student;
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: "bold" }}>Usuario</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Rol</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>ID</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: "bold" }}>
+                      Acciones
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {users.map((user, index) => {
+                    const roleStyle =
+                      ROLE_STYLES[user.role] ?? ROLE_STYLES.Student;
 
-                  return (
-                    <TableRow
-                      key={user.id ?? `${user.email ?? "user"}-${index}`}
-                      hover
-                    >
-                      <TableCell sx={{ fontWeight: "medium" }}>
-                        {user.name || "Sin nombre"}
-                      </TableCell>
-                      <TableCell>{user.email || "-"}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={formatRole(user.role)}
-                          color={roleStyle.color}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell sx={{ color: "text.secondary" }}>
-                        {user.id ?? "-"}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleOpenEditDialog(user)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => setUserToDelete(user)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={users.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(e, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
-              setPage(0);
-            }}
-            labelRowsPerPage="Filas por página:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-          />
+                    return (
+                      <TableRow
+                        key={user.id ?? `${user.email ?? "user"}-${index}`}
+                        hover
+                      >
+                        <TableCell sx={{ fontWeight: "medium" }}>
+                          {user.name || "Sin nombre"}
+                        </TableCell>
+                        <TableCell>{user.email || "-"}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={formatRole(user.role)}
+                            color={roleStyle.color}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell sx={{ color: "text.secondary" }}>
+                          {user.id ?? "-"}
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleOpenEditDialog(user)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => setUserToDelete(user)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <PaginationControls
+              page={page}
+              rowsPerPage={rowsPerPage}
+              hasNextPage={hasNextPage}
+              loadedRows={users.length}
+              onPageChange={setPage}
+              onRowsPerPageChange={(value) => {
+                setRowsPerPage(value);
+                setPage(0);
+              }}
+            />
           </>
         )}
       </Paper>

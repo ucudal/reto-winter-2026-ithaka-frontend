@@ -12,7 +12,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   Chip,
   IconButton,
   Breadcrumbs,
@@ -52,10 +51,15 @@ import ViewListIcon from "@mui/icons-material/ViewList";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 
-import { getCohorts, createCohort, updateCohort } from "../../api/endpoints/cohorts";
+import {
+  getCohorts,
+  createCohort,
+  updateCohort,
+} from "../../api/endpoints/cohorts";
 import { translateStatus } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import EmptyState from "../../components/common/EmptyState";
+import PaginationControls from "../../components/common/PaginationControls";
 
 export default function Cohorts() {
   const navigate = useNavigate();
@@ -67,6 +71,7 @@ export default function Cohorts() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   const [filterYear, setFilterYear] = useState("");
   const [filterSemester, setFilterSemester] = useState("");
@@ -89,25 +94,27 @@ export default function Cohorts() {
     notes: "",
   });
 
+  // Filtros + paginacion reales: page es 0-based (MUI) y el backend es 1-based.
+  const currentFilters = () => ({
+    year: filterYear || undefined,
+    semester: filterSemester || undefined,
+    status: filterStatus || undefined,
+    page: page + 1,
+    page_size: rowsPerPage,
+  });
+
   useEffect(() => {
     if (filterYear && filterYear.length < 3) {
       return;
     }
     let ignore = false;
 
-    loadCohorts({
-      year: filterYear || undefined,
-      semester: filterSemester || undefined,
-      status: filterStatus || undefined,
-      page: 1,
-      page_size: 20,
-    },
-    () => ignore
-    );
+    loadCohorts(currentFilters(), () => ignore);
+
     return () => {
       ignore = true;
     };
-  }, [filterYear, filterSemester, filterStatus]);
+  }, [filterYear, filterSemester, filterStatus, page, rowsPerPage]);
 
   async function loadCohorts(filters = {}, shouldIgnore = () => false) {
     try {
@@ -116,7 +123,16 @@ export default function Cohorts() {
       const data = await getCohorts(filters);
       if (shouldIgnore()) return;
       const items = Array.isArray(data) ? data : (data?.items ?? []);
+
+      // El backend pagina pero no devuelve el total: si esta pagina vino vacia y
+      // no es la primera, volvemos una atras en vez de mostrar la tabla vacia.
+      if (items.length === 0 && page > 0) {
+        setPage((prev) => prev - 1);
+        return;
+      }
+
       setCohorts(items);
+      setHasNextPage(items.length === rowsPerPage);
     } catch (err) {
       if (shouldIgnore()) return;
       setError(err?.message || "No se pudieron cargar los cohortes.");
@@ -190,13 +206,7 @@ export default function Cohorts() {
       }
       setIsDialogOpen(false);
       setEditingCohortId(null);
-      loadCohorts({
-        year: filterYear || undefined,
-        semester: filterSemester || undefined,
-        status: filterStatus || undefined,
-        page: 1,
-        page_size: 20,
-      });
+      loadCohorts(currentFilters());
     } catch (err) {
       showToast(err?.message || "Error al guardar el cohorte", "error");
     } finally {
@@ -218,19 +228,30 @@ export default function Cohorts() {
       });
       showToast(
         `Cohorte marcado como ${translateStatus(newStatus)}`,
-        "success"
+        "success",
       );
-      loadCohorts({
-        year: filterYear || undefined,
-        semester: filterSemester || undefined,
-        status: filterStatus || undefined,
-        page: 1,
-        page_size: 20,
-      });
+      loadCohorts(currentFilters());
     } catch (err) {
-      showToast(err?.message || "Error al cambiar el estado del cohorte", "error");
+      showToast(
+        err?.message || "Error al cambiar el estado del cohorte",
+        "error",
+      );
     }
   };
+
+  const pagination = (
+    <PaginationControls
+      page={page}
+      rowsPerPage={rowsPerPage}
+      hasNextPage={hasNextPage}
+      loadedRows={cohorts.length}
+      onPageChange={setPage}
+      onRowsPerPageChange={(value) => {
+        setRowsPerPage(value);
+        setPage(0);
+      }}
+    />
+  );
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -238,7 +259,12 @@ export default function Cohorts() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">
+        <Link
+          component={RouterLink}
+          to="/dashboard"
+          underline="hover"
+          color="inherit"
+        >
           Inicio
         </Link>
         <Typography color="text.primary">Cohortes</Typography>
@@ -292,12 +318,22 @@ export default function Cohorts() {
       </Box>
 
       <Paper sx={{ p: 2, borderRadius: 2, mb: 3 }}>
-        <Box sx={{ display: "flex", gap: 2, alignItems: "stretch", flexWrap: "wrap" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            alignItems: "stretch",
+            flexWrap: "wrap",
+          }}
+        >
           <TextField
             label="Año"
             type="text"
             value={filterYear}
-            onChange={(e) => setFilterYear(e.target.value)}
+            onChange={(e) => {
+              setFilterYear(e.target.value);
+              setPage(0);
+            }}
             sx={{ width: 180 }}
           />
 
@@ -305,7 +341,10 @@ export default function Cohorts() {
             select
             label="Semestre"
             value={filterSemester}
-            onChange={(e) => setFilterSemester(e.target.value)}
+            onChange={(e) => {
+              setFilterSemester(e.target.value);
+              setPage(0);
+            }}
             sx={{ width: 180 }}
           >
             <MenuItem value="">Todos</MenuItem>
@@ -317,7 +356,10 @@ export default function Cohorts() {
             select
             label="Estado"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => {
+              setFilterStatus(e.target.value);
+              setPage(0);
+            }}
             sx={{ width: 220 }}
           >
             <MenuItem value="">Todos</MenuItem>
@@ -350,20 +392,103 @@ export default function Cohorts() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Año</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Semestre</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Fecha de Inicio</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Fecha de Fin</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Grupos</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Estado</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Notas</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: "bold", bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.default' : 'grey.50' }}>Acciones</TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "background.default"
+                          : "grey.50",
+                    }}
+                  >
+                    Año
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "background.default"
+                          : "grey.50",
+                    }}
+                  >
+                    Semestre
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "background.default"
+                          : "grey.50",
+                    }}
+                  >
+                    Fecha de Inicio
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "background.default"
+                          : "grey.50",
+                    }}
+                  >
+                    Fecha de Fin
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "background.default"
+                          : "grey.50",
+                    }}
+                  >
+                    Grupos
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "background.default"
+                          : "grey.50",
+                    }}
+                  >
+                    Estado
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "background.default"
+                          : "grey.50",
+                    }}
+                  >
+                    Notas
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "background.default"
+                          : "grey.50",
+                    }}
+                  >
+                    Acciones
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {cohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((cohort) => (
+                {cohorts.map((cohort) => (
                   <TableRow key={cohort.id} hover>
-                    <TableCell sx={{ fontWeight: "medium" }}>{cohort.year}</TableCell>
+                    <TableCell sx={{ fontWeight: "medium" }}>
+                      {cohort.year}
+                    </TableCell>
                     <TableCell>{cohort.semester}° semestre</TableCell>
                     <TableCell>{cohort.start_date}</TableCell>
                     <TableCell>{cohort.end_date || "-"}</TableCell>
@@ -372,7 +497,9 @@ export default function Cohorts() {
                       <Chip
                         label={translateStatus(cohort.status)}
                         size="small"
-                        color={cohort.status === "Active" ? "success" : "default"}
+                        color={
+                          cohort.status === "Active" ? "success" : "default"
+                        }
                       />
                     </TableCell>
                     <TableCell
@@ -401,40 +528,44 @@ export default function Cohorts() {
               </TableBody>
             </Table>
           </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={cohorts.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(e, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
-              setPage(0);
-            }}
-            labelRowsPerPage="Filas por página:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-          />
+          {pagination}
         </Paper>
       ) : (
         <Box>
           <Grid container spacing={3}>
-            {cohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((cohort) => (
+            {cohorts.map((cohort) => (
               <Grid item xs={12} sm={6} md={4} key={cohort.id}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 2,
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>
                       Cohorte {cohort.year} - {cohort.semester}° Semestre
                     </Typography>
                     <Stack spacing={1} sx={{ mt: 2 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <CalendarTodayIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <CalendarTodayIcon
+                          sx={{ fontSize: 18, color: "text.secondary" }}
+                        />
                         <Typography variant="body2" color="text.secondary">
-                          {cohort.start_date} a {cohort.end_date || "Finalización"}
+                          {cohort.start_date} a{" "}
+                          {cohort.end_date || "Finalización"}
                         </Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <PeopleOutlineIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <PeopleOutlineIcon
+                          sx={{ fontSize: 18, color: "text.secondary" }}
+                        />
                         <Typography variant="body2" color="text.secondary">
                           Grupos asignados: {cohort.group_count ?? 0}
                         </Typography>
@@ -442,12 +573,18 @@ export default function Cohorts() {
                     </Stack>
 
                     {cohort.notes && (
-                      <Typography variant="body2" sx={{ mt: 2, fontStyle: "italic" }} color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        sx={{ mt: 2, fontStyle: "italic" }}
+                        color="text.secondary"
+                      >
                         "{cohort.notes}"
                       </Typography>
                     )}
                   </CardContent>
-                  <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
+                  <CardActions
+                    sx={{ justifyContent: "space-between", px: 2, pb: 2 }}
+                  >
                     <Chip
                       label={translateStatus(cohort.status)}
                       size="small"
@@ -467,19 +604,16 @@ export default function Cohorts() {
               </Grid>
             ))}
           </Grid>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={cohorts.length}
-            rowsPerPage={rowsPerPage}
+          <PaginationControls
             page={page}
-            onPageChange={(e, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
+            rowsPerPage={rowsPerPage}
+            hasNextPage={hasNextPage}
+            loadedRows={cohorts.length}
+            onPageChange={setPage}
+            onRowsPerPageChange={(value) => {
+              setRowsPerPage(value);
               setPage(0);
             }}
-            labelRowsPerPage="Filas por página:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
             sx={{ mt: 2 }}
           />
         </Box>
@@ -551,19 +685,28 @@ export default function Cohorts() {
             )}
           </ListItemIcon>
           <ListItemText>
-            {selectedCohort?.status === "Active" ? "Dar de baja" : "Activar cohorte"}
+            {selectedCohort?.status === "Active"
+              ? "Dar de baja"
+              : "Activar cohorte"}
           </ListItemText>
         </MenuItem>
       </Menu>
 
       {/* Create / Edit Cohort Dialog */}
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+      >
         <form onSubmit={handleSubmit}>
           <DialogTitle>
             {editingCohortId ? "Editar cohorte" : "Agregar nuevo cohorte"}
           </DialogTitle>
           <DialogContent dividers>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+            >
               <TextField
                 label="Año"
                 name="year"
