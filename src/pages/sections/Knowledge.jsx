@@ -190,20 +190,15 @@ function Knowledge() {
     }
   };
 
-  const handleCreateMaterial = async (newMaterial) => {
-    try {
-      const createdMaterial = await createMaterial(newMaterial);
-
+  const handleCreateMaterial = (createdMaterial) => {
+    if (createdMaterial) {
       setMaterials((currentMaterials) => [
         createdMaterial,
         ...currentMaterials,
       ]);
-
-      setIsCreateModalOpen(false);
-
-    } catch (error) {
-      setError(error);
+      showToast("Material creado correctamente.", "success");
     }
+    setIsCreateModalOpen(false);
   };
 
   return (

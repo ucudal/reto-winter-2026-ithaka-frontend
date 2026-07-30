@@ -439,6 +439,7 @@ export default function Deliverables() {
             type="date"
             label="Fecha esperada de entrega"
             InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date().toISOString().split("T")[0] }}
             value={newDeliverable.expected_date}
             onChange={(e) =>
               setNewDeliverable({

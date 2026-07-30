@@ -10,7 +10,7 @@ import {
 } from '@mui/material'
 import { isValidUrl } from '../utils/validators'
 
-// import { apiClient } from '../api/client'
+import { createMaterial } from '../api/endpoints/materials'
 
 const emptyForm = {
   stage_id: '',
@@ -59,15 +59,11 @@ function CreateMaterialModal({ open, onCreate, onClose }) {
     setIsSubmitting(true)
 
     try {
-      // Llamada real a la API:
-      // const { data } = await apiClient.post('/materials', newMaterial)
-      // onCreate?.(data)
-
-      // Creación mockeada:
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      onCreate?.({ ...newMaterial, id: Date.now() })
-
+      const created = await createMaterial(newMaterial)
+      onCreate?.(created)
       onClose?.()
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err?.message || 'Error al crear material' }))
     } finally {
       setIsSubmitting(false)
     }
@@ -93,7 +89,7 @@ function CreateMaterialModal({ open, onCreate, onClose }) {
             type="number"
             value={formData.stage_id}
             onChange={handleChange}
-            inputProps={{ min: 1 }}
+            inputProps={{ min: 1, max: 10 }}
             required
             fullWidth
             disabled={isSubmitting}
