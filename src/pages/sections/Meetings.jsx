@@ -240,10 +240,12 @@ function Meetings() {
       if (ignore) return;
 
       if (groupsResult.status === "fulfilled") {
-        setGroups(groupsResult.value);
+        const val = groupsResult.value;
+        setGroups(Array.isArray(val) ? val : (val?.items ?? []));
       }
       if (tutorsResult.status === "fulfilled") {
-        setTutors(tutorsResult.value);
+        const val = tutorsResult.value;
+        setTutors(Array.isArray(val) ? val : (val?.items ?? []));
       }
     };
 
@@ -805,6 +807,7 @@ function Meetings() {
                 size="small"
                 required
                 InputProps={{ readOnly: isViewingMeeting }}
+                inputProps={{ min: new Date().toISOString().split("T")[0] }}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
@@ -989,7 +992,7 @@ function Meetings() {
               value={meetingForm.notes}
               onChange={handleNotesChange}
               modules={notesEditorModules}
-              readOnly={isViewingMeeting || user?.role === "Student"}
+              readOnly={user?.role === "Student"}
             />
           </Box>
         )}
@@ -1041,7 +1044,7 @@ function Meetings() {
                         meetingForm.attendance[participant],
                       )}
                       onChange={() => handleAttendanceChange(participant)}
-                      disabled={isViewingMeeting || user?.role === "Student"}
+                      disabled={user?.role === "Student"}
                       inputProps={{
                         "aria-label": `Marcar asistencia de ${getParticipantName(
                           findById(participants, participant) || {

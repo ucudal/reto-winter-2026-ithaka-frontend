@@ -1,7 +1,7 @@
 import { apiClient } from "../client";
 
-export async function getUsers() {
-  const { data } = await apiClient.get("/api/users");
+export async function getUsers(filters = {}) {
+  const { data } = await apiClient.get("/api/users", { params: filters });
   return data;
 }
 
@@ -17,5 +17,15 @@ export async function updateUser(userId, payload) {
 
 export async function deleteUser(userId) {
   const { data } = await apiClient.delete(`/api/users/${userId}`);
+  return data;
+}
+
+export async function updateMyProfile(payload) {
+  const { data } = await apiClient.put("/api/users/me", payload);
+  return data;
+}
+
+export async function changeMyPassword(payload) {
+  const { data } = await apiClient.put("/api/users/me/password", payload);
   return data;
 }

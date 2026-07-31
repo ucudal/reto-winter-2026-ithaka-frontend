@@ -37,7 +37,8 @@ import LinkIcon from "@mui/icons-material/Link";
 import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
-import { getMaterials, createMaterial } from "../../api/endpoints/materials";
+import { getMaterials, createMaterial, upsertMaterial, deleteMaterial } from "../../api/endpoints/materials";
+import { useToast } from "../../ToastContext";
 import ConfirmModal from "../../components/ConfirmModal";
 import CreateMaterialModal from "../../components/CreateMaterialModal";
 import EditMaterialModal from "../../components/EditMaterialModal";
@@ -91,6 +92,7 @@ function getPlatformDetails(url = "") {
 }
 
 function Knowledge() {
+  const { showToast } = useToast();
   const [materials, setMaterials] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -122,76 +124,81 @@ function Knowledge() {
     );
   }, [filterBy, materials, searchTerm]);
 
+  const [totalCount, setTotalCount] = useState(0);
+
   const loadMaterials = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const data = await getMaterials();
-      setMaterials(Array.isArray(data) ? data : [])
-
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        search: searchTerm || undefined,
+      };
+      const res = await getMaterials(params);
+      setMaterials(res?.items ?? []);
+      setTotalCount(res?.total ?? 0);
     } catch (requestError) {
       setError(requestError);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, searchTerm]);
 
   useEffect(() => {
     loadMaterials();
   }, [loadMaterials]);
 
-  const handleDeleteMaterial = () => {
+  const handleDeleteMaterial = async () => {
     if (!materialToDelete) return;
 
     const materialId = materialToDelete.id;
-
-    // Llamada real a la API:
-    // await apiClient.delete(`/materials/${materialId}`)
-
-    // Eliminación mockeada en el estado local:
-    setMaterials((currentMaterials) =>
-      currentMaterials.filter((material) => material.id !== materialId),
-    );
+    try {
+      await deleteMaterial(materialId);
+      showToast("Material eliminado correctamente.", "success");
+      loadMaterials();
+      setMaterialToDelete(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo eliminar el material.", "error");
+    }
   };
 
-  const handleEditMaterial = (updatedFields) => {
+  const handleEditMaterial = async (updatedFields) => {
     if (!materialToEdit) return;
 
     const materialId = materialToEdit.id;
-
-    // Llamada real a la API:
-    // const { data } = await apiClient.put(`/materials/${materialId}`, updatedFields)
-    // setMaterials((currentMaterials) =>
-    //   currentMaterials.map((material) =>
-    //     material.id === materialId ? data : material,
-    //   ),
-    // )
-
-    // Edición mockeada en el estado local:
-    setMaterials((currentMaterials) =>
-      currentMaterials.map((material) =>
-        material.id === materialId
-          ? { ...material, ...updatedFields }
-          : material,
-      ),
-    );
+    try {
+      const payload = {
+        id: materialId,
+        title: updatedFields.title || materialToEdit.title,
+        url: updatedFields.url || materialToEdit.url,
+        stage_id: updatedFields.stage_id
+          ? Number(updatedFields.stage_id)
+          : materialToEdit.stage_id ?? null,
+      };
+      const updatedData = await upsertMaterial(payload);
+      showToast("Material actualizado correctamente.", "success");
+      setMaterials((currentMaterials) =>
+        currentMaterials.map((material) =>
+          material.id === materialId ? { ...material, ...updatedData } : material,
+        ),
+      );
+      setMaterialToEdit(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo actualizar el material.", "error");
+    }
   };
 
-  const handleCreateMaterial = async (newMaterial) => {
-    try {
-      const createdMaterial = await createMaterial(newMaterial);
-
+  const handleCreateMaterial = (createdMaterial) => {
+    if (createdMaterial) {
       setMaterials((currentMaterials) => [
         createdMaterial,
         ...currentMaterials,
       ]);
-
-      setIsCreateModalOpen(false);
-
-    } catch (error) {
-      setError(error);
+      showToast("Material creado correctamente.", "success");
     }
+    setIsCreateModalOpen(false);
   };
 
   return (
@@ -377,9 +384,7 @@ function Knowledge() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMaterials
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((material) => (
+                filteredMaterials.map((material) => (
                   <TableRow key={material.id} hover>
                     <TableCell>{material.id}</TableCell>
                     <TableCell>{material.stage_id}</TableCell>
@@ -439,7 +444,7 @@ function Knowledge() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredMaterials.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}

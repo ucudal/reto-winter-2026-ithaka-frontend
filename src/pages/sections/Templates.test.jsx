@@ -7,6 +7,13 @@ import { getMaterials } from "../../api/endpoints/materials";
 
 vi.mock("../../api/endpoints/materials", () => ({
   getMaterials: vi.fn(),
+  createMaterial: vi.fn(),
+  upsertMaterial: vi.fn(),
+  deleteMaterial: vi.fn(),
+}));
+
+vi.mock("../../ToastContext", () => ({
+  useToast: () => ({ showToast: vi.fn() }),
 }));
 
 vi.mock("../../components/common/ErrorState", () => ({
@@ -120,10 +127,13 @@ describe("Templates", () => {
 
 
   it("filters templates by name", async () => {
-    getMaterials.mockResolvedValue(mockMaterials);
+    getMaterials.mockResolvedValueOnce(mockMaterials);
 
-    renderComponent();
-
+    render(
+      <MemoryRouter>
+        <Templates />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(
@@ -131,9 +141,19 @@ describe("Templates", () => {
       ).toBeInTheDocument();
     });
 
+    getMaterials.mockResolvedValueOnce({
+      items: [
+        {
+          id: 2,
+          title: "Template GitHub",
+          url: "https://github.com",
+          type: "Deliverable",
+        },
+      ],
+      total: 1,
+    });
 
     const input = screen.getByLabelText("Buscar");
-
 
     fireEvent.change(input, {
       target: {
@@ -141,15 +161,14 @@ describe("Templates", () => {
       },
     });
 
-
-    expect(
-      screen.getByText("Template GitHub")
-    ).toBeInTheDocument();
-
-
-    expect(
-      screen.queryByText("Template React")
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText("Template GitHub")
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Template React")
+      ).not.toBeInTheDocument();
+    });
   });
 
 

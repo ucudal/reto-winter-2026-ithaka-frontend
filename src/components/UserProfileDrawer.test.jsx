@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import UserProfileDrawer from './UserProfileDrawer'
 
 vi.mock('../utils/ProfileDetails', () => ({
@@ -11,6 +12,31 @@ vi.mock('../utils/ProfileDetails', () => ({
   ),
 }))
 
+// Mock API calls the drawer might trigger
+vi.mock('../api/endpoints/students', () => ({
+  getStudentById: vi.fn(() => Promise.resolve(null)),
+}))
+
+vi.mock('../api/endpoints/tutors', () => ({
+  getTutor: vi.fn(() => Promise.resolve(null)),
+  getTutors: vi.fn(() => Promise.resolve([])),
+  getTutorGroups: vi.fn(() => Promise.resolve([])),
+}))
+
+vi.mock('../api/endpoints/groups', () => ({
+  getGroupById: vi.fn(() => Promise.resolve(null)),
+  getGroups: vi.fn(() => Promise.resolve({ items: [], total: 0 })),
+  saveGroup: vi.fn(),
+  deleteGroup: vi.fn(),
+}))
+
+const renderDrawer = (props) =>
+  render(
+    <MemoryRouter>
+      <UserProfileDrawer {...props} />
+    </MemoryRouter>
+  )
+
 describe('UserProfileDrawer', () => {
   const userMock = {
     name: 'María Pérez',
@@ -18,115 +44,66 @@ describe('UserProfileDrawer', () => {
     avatarUrl: 'avatar.png',
   }
 
-  it('does not render when user is null', () => {
-    const { container } = render(
-      <UserProfileDrawer
-        user={null}
-        open
-        onClose={vi.fn()}
-      />
-    )
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
+  it('does not render when user is null', () => {
+    const { container } = renderDrawer({
+      user: null,
+      open: true,
+      onClose: vi.fn(),
+    })
     expect(container).toBeEmptyDOMElement()
   })
 
   it('renders user profile when open', () => {
-    render(
-      <UserProfileDrawer
-        user={userMock}
-        open
-        onClose={vi.fn()}
-      />
-    )
+    renderDrawer({ user: userMock, open: true, onClose: vi.fn() })
 
-    expect(
-      screen.getByText('Mi Perfil')
-    ).toBeInTheDocument()
-
-    expect(
-      screen.getByText('María Pérez')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Mi Perfil')).toBeInTheDocument()
+    expect(screen.getByText('María Pérez')).toBeInTheDocument()
   })
 
   it('shows translated role label', () => {
-    render(
-      <UserProfileDrawer
-        user={userMock}
-        open
-        onClose={vi.fn()}
-      />
-    )
+    renderDrawer({ user: userMock, open: true, onClose: vi.fn() })
 
-    expect(
-      screen.getByText('Tutor de Negocio')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Tutor de Negocio')).toBeInTheDocument()
   })
 
   it('shows original role when role is unknown', () => {
-    render(
-      <UserProfileDrawer
-        user={{
-          ...userMock,
-          role: 'Admin',
-        }}
-        open
-        onClose={vi.fn()}
-      />
-    )
+    renderDrawer({
+      user: { ...userMock, role: 'Admin' },
+      open: true,
+      onClose: vi.fn(),
+    })
 
-    expect(
-      screen.getByText('Admin')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Admin')).toBeInTheDocument()
   })
 
   it('renders profile details component', () => {
-    render(
-      <UserProfileDrawer
-        user={userMock}
-        open
-        onClose={vi.fn()}
-      />
-    )
+    renderDrawer({ user: userMock, open: true, onClose: vi.fn() })
 
-    expect(
-      screen.getByTestId('profile-details')
-    ).toBeInTheDocument()
+    expect(screen.getByTestId('profile-details')).toBeInTheDocument()
   })
 
   it('calls onClose when close button is clicked', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
 
-    render(
-      <UserProfileDrawer
-        user={userMock}
-        open
-        onClose={onClose}
-      />
-    )
+    renderDrawer({ user: userMock, open: true, onClose })
 
     await user.click(
-      screen.getByRole('button', {
-        name: 'CERRAR',
-      })
+      screen.getByRole('button', { name: /cerrar/i })
     )
 
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  it('renders disabled edit button', () => {
-    render(
-      <UserProfileDrawer
-        user={userMock}
-        open
-        onClose={vi.fn()}
-      />
-    )
+  it('renders account settings link', () => {
+    renderDrawer({ user: userMock, open: true, onClose: vi.fn() })
 
     expect(
-      screen.getByRole('button', {
-        name: 'EDITAR',
-      })
-    ).toBeDisabled()
+      screen.getByRole('link', { name: /ajustes de cuenta/i })
+    ).toBeInTheDocument()
   })
 })
