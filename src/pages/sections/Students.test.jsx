@@ -8,8 +8,9 @@ import { ToastProvider } from '../../ToastContext'
 
 vi.mock('../../api/endpoints/students', () => ({
   getStudents: vi.fn(),
+  createStudent: vi.fn(),
+  updateStudent: vi.fn(),
   deleteStudent: vi.fn(),
-  upsertStudent: vi.fn(),
 }))
 
 vi.mock('../../api/endpoints/groups', () => ({
