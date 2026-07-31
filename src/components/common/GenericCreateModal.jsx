@@ -8,6 +8,7 @@ import {
   TextField,
   MenuItem,
   Grid,
+  Autocomplete,
 } from "@mui/material";
 
 import ReactQuill from "react-quill";
@@ -140,6 +141,41 @@ export default function GenericCreateModal({
           </TextField>
         );
 
+
+      case "autocomplete": {
+        const options = field.options ?? [];
+        const isMultiple = Boolean(field.multiple);
+        const rawValue = formData[field.name] ?? (isMultiple ? [] : "");
+        const value = isMultiple
+          ? options.filter((option) => rawValue.includes(option.value))
+          : options.find((option) => option.value === rawValue) ?? null;
+
+        return (
+          <Autocomplete
+            multiple={isMultiple}
+            options={options}
+            value={value}
+            getOptionLabel={(option) => option.label ?? ""}
+            isOptionEqualToValue={(option, val) => option.value === val.value}
+            onChange={(event, newValue) => {
+              const nextValue = isMultiple
+                ? newValue.map((option) => option.value)
+                : newValue?.value ?? "";
+              setFormData((prev) => ({ ...prev, [field.name]: nextValue }));
+              setErrors((prev) => ({ ...prev, [field.name]: "" }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={field.label}
+                required={field.required}
+                error={Boolean(errors[field.name])}
+                helperText={errors[field.name]}
+              />
+            )}
+          />
+        );
+      }
 
       case "textarea":
         return (

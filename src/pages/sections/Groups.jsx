@@ -196,22 +196,26 @@ function Groups() {
       label: "Cohorte",
       type: "select",
       required: true,
-      options: cohorts.map((c) => ({
-        value: c.id,
-        label: `${c.year} - ${c.semester}° semestre`,
-      })),
+      options: cohorts
+        .filter((c) => c.status === "Active" || c.id === editingGroup?.cohortId)
+        .map((c) => ({
+          value: c.id,
+          label: `${c.year} - ${c.semester}° semestre`,
+        })),
     },
     { name: "idea", label: "Idea de proyecto", type: "textarea" },
     {
       name: "student_ids",
       label: "Alumnos",
-      type: "select",
+      type: "autocomplete",
       multiple: true,
       required: true,
-      options: students.map((student) => ({
-        value: student.id,
-        label: student.group_id ? `${student.name} (Grupo #${student.group_id})` : student.name,
-      })),
+      options: students
+        .filter((student) => !student.group_id || student.group_id === editingGroup?.id)
+        .map((student) => ({
+          value: student.id,
+          label: student.name,
+        })),
     },
   ];
 

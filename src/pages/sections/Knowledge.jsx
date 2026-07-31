@@ -384,9 +384,7 @@ function Knowledge() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMaterials
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((material) => (
+                filteredMaterials.map((material) => (
                   <TableRow key={material.id} hover>
                     <TableCell>{material.id}</TableCell>
                     <TableCell>{material.stage_id}</TableCell>
