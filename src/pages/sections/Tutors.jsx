@@ -57,9 +57,11 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import {
   getTutors,
   upsertTutor,
+  deleteTutor,
   getTutorCapacity,
   getTutorGroups,
 } from "../../api/endpoints/tutors";
+import { createUser } from "../../api/endpoints/users";
 import { translateStatus, translateTutorRole } from "../../utils/translate";
 import { useToast } from "../../ToastContext";
 import GenericEditModal from "../../components/common/GenericEditModal";
@@ -90,7 +92,17 @@ const TUTOR_FIELDS = [
     ],
   },
   { name: "specialty", label: "Especialidad", type: "text", grid: 12 },
-  { name: "availability", label: "Disponibilidad", type: "text", grid: 12 },
+  {
+    name: "availability",
+    label: "Disponibilidad",
+    type: "text",
+    required: true,
+    grid: 12,
+    validate: (value) =>
+      /^\d+$/.test(String(value).trim())
+        ? "Ingresá días/horarios, no un número suelto"
+        : "",
+  },
   { name: "linkedin_url", label: "LinkedIn (URL)", type: "text", grid: 12 },
   {
     name: "max_capacity",
@@ -100,6 +112,21 @@ const TUTOR_FIELDS = [
     grid: 12,
     validate: (value) =>
       Number(value) < 0 ? "Debe ser un número positivo" : "",
+  },
+];
+
+const TUTOR_ACCOUNT_FIELDS = [
+  {
+    name: "email",
+    label: "Email (opcional, crea cuenta de acceso)",
+    type: "text",
+    grid: 12,
+  },
+  {
+    name: "password",
+    label: "Contraseña (si creás cuenta de acceso)",
+    type: "password",
+    grid: 12,
   },
 ];
 
@@ -120,6 +147,8 @@ export default function Tutors() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   
   const [saving, setSaving] = useState(false);
+  const [tutorToDelete, setTutorToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [capacityOpen, setCapacityOpen] = useState(false);
   const [capacityLoading, setCapacityLoading] = useState(false);
@@ -127,12 +156,21 @@ export default function Tutors() {
   const [capacityGroups, setCapacityGroups] = useState([]);
   const [capacityTutor, setCapacityTutor] = useState(null);
 
+  const [totalCount, setTotalCount] = useState(0);
+
   const loadTutors = async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await getTutors();
-      setTutors(data || []);
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        search: searchTerm || undefined,
+        status: "Active",
+      };
+      const res = await getTutors(params);
+      setTutors(res?.items ?? []);
+      setTotalCount(res?.total ?? 0);
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los tutores.");
     } finally {
@@ -142,7 +180,7 @@ export default function Tutors() {
 
   useEffect(() => {
     loadTutors();
-  }, []);
+  }, [page, rowsPerPage, searchTerm]);
 
   const handleOpenCreate = () => {
     setEditingTutor(null);
@@ -154,9 +192,33 @@ export default function Tutors() {
   };
   const handleCloseModal = () => setModalOpen(false);
 
+  const handleDeleteTutor = async () => {
+    if (!tutorToDelete) return;
+    try {
+      setDeleting(true);
+      await deleteTutor(tutorToDelete);
+      setTutors((prev) => prev.filter((t) => t.id !== tutorToDelete.id));
+      showToast("Tutor eliminado correctamente.", "success");
+      setTutorToDelete(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo eliminar el tutor.", "error");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleSaveTutor = async (data) => {
     const { id, ...values } = data;
     const isEdit = Boolean(id);
+
+    if (!isEdit && ((values.email && !values.password) || (!values.email && values.password))) {
+      showToast(
+        "Para crear una cuenta de acceso completá email y contraseña.",
+        "error",
+      );
+      return;
+    }
+
     const payload = {
       id: id ?? null,
       name: values.name,
@@ -170,6 +232,17 @@ export default function Tutors() {
 
     try {
       setSaving(true);
+
+      if (!isEdit && values.email && values.password) {
+        const newUser = await createUser({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          role: values.role === "Business" ? "BusinessTutor" : "TechnicalTutor",
+        });
+        payload.user_id = newUser.id;
+      }
+
       await upsertTutor(payload);
       showToast(
         isEdit
@@ -228,9 +301,6 @@ export default function Tutors() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link component={RouterLink} to="/" underline="hover" color="inherit">
-          Inicio
-        </Link>
         <Typography color="text.primary">Tutores</Typography>
       </Breadcrumbs>
 
@@ -553,6 +623,7 @@ export default function Tutors() {
                             size="small"
                             color="error"
                             aria-label={`Eliminar ${tutor.name}`}
+                            onClick={() => setTutorToDelete(tutor)}
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
@@ -567,7 +638,7 @@ export default function Tutors() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredTutors.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -719,6 +790,7 @@ export default function Tutors() {
                             size="small"
                             color="error"
                             aria-label={`Eliminar ${tutor.name}`}
+                            onClick={() => setTutorToDelete(tutor)}
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
@@ -738,7 +810,7 @@ export default function Tutors() {
         open={modalOpen}
         onClose={handleCloseModal}
         title={editingTutor ? "Editar tutor" : "Agregar tutor"}
-        fields={TUTOR_FIELDS}
+        fields={editingTutor ? TUTOR_FIELDS : [...TUTOR_FIELDS, ...TUTOR_ACCOUNT_FIELDS]}
         record={editingTutor}
         onSubmit={handleSaveTutor}
         loading={saving}
@@ -840,6 +912,32 @@ export default function Tutors() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseCapacity}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(tutorToDelete)}
+        onClose={() => setTutorToDelete(null)}
+      >
+        <DialogTitle>Eliminar tutor</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Estás seguro de que deseas eliminar al tutor{" "}
+            <strong>{tutorToDelete?.name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTutorToDelete(null)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteTutor}
+            disabled={deleting}
+          >
+            {deleting ? "Eliminando..." : "Eliminar"}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

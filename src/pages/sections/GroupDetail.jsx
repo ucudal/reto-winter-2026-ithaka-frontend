@@ -117,16 +117,25 @@ export default function GroupDetail() {
         setLoading(true);
         setError("");
 
-        const [groupData, deliverablesData] = await Promise.all([
+        const [groupRes, deliverablesRes] = await Promise.allSettled([
           getGroupById(Number(id)),
           getGroupDeliverables(Number(id)),
         ]);
 
         if (ignore) return;
 
-        setGroup(groupData);
-        setCohort(groupData.cohort);
-        setDeliverables(deliverablesData || []);
+        if (groupRes.status === "fulfilled") {
+          setGroup(groupRes.value);
+          setCohort(groupRes.value?.cohort);
+        } else {
+          setError(groupRes.reason?.message || "No se pudo cargar la información del grupo.");
+        }
+
+        if (deliverablesRes.status === "fulfilled") {
+          setDeliverables(deliverablesRes.value || []);
+        } else {
+          setDeliverables([]);
+        }
       } catch (err) {
         if (!ignore) {
           setError(err?.message || "No se pudo cargar el grupo.");
@@ -260,8 +269,8 @@ export default function GroupDetail() {
     if (tutors.length === 0) {
       try {
         setLoadingTutors(true);
-        const tutorsData = await getTutors();
-        setTutors(tutorsData || []);
+        const tutorsData = await getTutors({ page_size: 100, status: "Active" });
+        setTutors(tutorsData?.items || []);
       } catch (err) {
         console.error("Error al cargar tutores:", err);
         setTutorsLoadFailed(true);
@@ -323,9 +332,6 @@ export default function GroupDetail() {
       {/* Header */}
       <Box sx={{ mb: 1.5 }}>
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 0.5 }}>
-          <Link component={RouterLink} to="/" underline="hover" color="inherit" variant="body2">
-            Inicio
-          </Link>
           <Link component={RouterLink} to="/groups" underline="hover" color="inherit" variant="body2">
             Grupos
           </Link>

@@ -6,7 +6,6 @@ import {
   CircularProgress,
   IconButton,
   InputAdornment,
-  Link,
   MenuItem,
   Paper,
   Table,
@@ -26,20 +25,26 @@ import {
   CardActions,
   Chip,
   Tooltip,
+  TablePagination,
 } from '@mui/material'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import EditIcon from '@mui/icons-material/Edit'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import ViewModuleIcon from '@mui/icons-material/ViewModule'
 import ViewListIcon from '@mui/icons-material/ViewList'
+import DeleteIcon from '@mui/icons-material/Delete'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import CloudQueueIcon from '@mui/icons-material/CloudQueue'
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material'
 import EmptyState from '../../components/common/EmptyState'
 import ErrorState from '../../components/common/ErrorState'
 import GenericCreateModal from "../../components/common/GenericCreateModal";
-import { getMaterials } from "../../api/endpoints/materials";
+import GenericEditModal from "../../components/common/GenericEditModal";
+import { getMaterials, createMaterial, upsertMaterial, deleteMaterial } from "../../api/endpoints/materials";
+import { useToast } from "../../ToastContext";
 
 function getPlatformIcon(platform = "") {
   const lower = platform.toLowerCase();
@@ -51,7 +56,7 @@ function getPlatformIcon(platform = "") {
       </Box>
     );
   }
-  if (lower === "sharepoint" || lower === "sharepoint") {
+  if (lower === "sharepoint") {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <CloudQueueIcon fontSize="small" sx={{ color: "#0078D4" }} />
@@ -59,7 +64,12 @@ function getPlatformIcon(platform = "") {
       </Box>
     );
   }
-  return <span>{platform}</span>;
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <InsertDriveFileIcon fontSize="small" sx={{ color: "action.active" }} />
+      <span>{platform || "Documento"}</span>
+    </Box>
+  );
 }
 
 function getPlatformLabel(url = "") {
@@ -76,7 +86,7 @@ function getPlatformLabel(url = "") {
   if (normalized.includes("youtube.com") || normalized.includes("youtu.be")) {
     return "YouTube";
   }
-  return "Enlace";
+  return "Documento";
 }
 
 function mapMaterialToTemplate(material) {
@@ -87,10 +97,12 @@ function mapMaterialToTemplate(material) {
     type: material.type || "Material",
     description: material.url || material.description || "",
     content: material.url || material.description || "",
+    stage_id: material.stage_id ?? "",
   };
 }
 
 function Templates() {
+  const { showToast } = useToast();
   const navigate = useNavigate()
   const [templates, setTemplates] = useState([]);
   const [search, setSearch] = useState('')
@@ -98,6 +110,10 @@ function Templates() {
   const [view, setView] = useState('list')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true
@@ -107,12 +123,17 @@ function Templates() {
       setError(null)
 
       try {
-        const materials = await getMaterials()
+        const params = {
+          page: page + 1,
+          page_size: rowsPerPage,
+          search: search || undefined,
+        };
+        const res = await getMaterials(params)
         if (!isMounted) return
-        const mappedTemplates = Array.isArray(materials)
-          ? materials.map(mapMaterialToTemplate)
-          : []
+        const list = res?.items ?? (Array.isArray(res) ? res : []);
+        const mappedTemplates = list.map(mapMaterialToTemplate)
         setTemplates(mappedTemplates)
+        setTotalCount(res?.total ?? list.length)
       } catch (err) {
         if (!isMounted) return
         setError(err?.message || 'No se pudieron cargar los templates.')
@@ -127,7 +148,7 @@ function Templates() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [page, rowsPerPage, search])
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
@@ -138,21 +159,10 @@ function Templates() {
   }, [templates, search, filter])
 
   const [openModal, setOpenModal] = useState(false);
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    )
-  }
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   if (error) {
     return <ErrorState title='Error cargando templates' message={error} />
@@ -163,6 +173,12 @@ function Templates() {
       name: "name",
       label: "Nombre",
       type: "text",
+      required: true,
+    },
+    {
+      name: "stage_id",
+      label: "Etapa",
+      type: "number",
       required: true,
     },
     {
@@ -178,17 +194,59 @@ function Templates() {
       required: true,
     },
   ];
-  const handleCreateTemplate = (data) => {
-    const newTemplate = {
-      id: Date.now(),
-      platform: "Drive",
-      type: "Deliverable",
-      ...data,
-    };
 
-    setTemplates((prev) => [...prev, newTemplate]);
+  const handleCreateTemplate = async (data) => {
+    try {
+      const created = await createMaterial({
+        name: data.name,
+        description: data.description,
+        content: data.content,
+        stage_id: Number(data.stage_id),
+      });
+      showToast("Template creado correctamente.", "success");
+      const mapped = mapMaterialToTemplate(created || { ...data, id: Date.now() });
+      setTemplates((prev) => [mapped, ...prev]);
+      setOpenModal(false);
+    } catch (err) {
+      showToast(err?.message || "No se pudo crear el template.", "error");
+    }
+  };
 
-    setOpenModal(false);
+  const handleUpdateTemplate = async (data) => {
+    try {
+      setSaving(true);
+      const updated = await upsertMaterial({
+        id: Number(data.id),
+        title: data.name,
+        url: data.content || data.description || "",
+        stage_id: Number(data.stage_id),
+      });
+      showToast("Template actualizado correctamente.", "success");
+      const mapped = mapMaterialToTemplate(updated || { ...data });
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === mapped.id ? mapped : t)),
+      );
+      setEditingTemplate(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo actualizar el template.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!templateToDelete) return;
+    try {
+      setDeleting(true);
+      await deleteMaterial(templateToDelete.id);
+      showToast("Template eliminado correctamente.", "success");
+      setTemplates((prev) => prev.filter((t) => t.id !== templateToDelete.id));
+      setTemplateToDelete(null);
+    } catch (err) {
+      showToast(err?.message || "No se pudo eliminar el template.", "error");
+    } finally {
+      setDeleting(false);
+    }
   };
   return (
     <Box sx={{ width: '100%' }}>
@@ -196,14 +254,6 @@ function Templates() {
         separator={<NavigateNextIcon fontSize='small' />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to='/'
-          underline='hover'
-          color='inherit'
-        >
-          Inicio
-        </Link>
         <Typography color='text.primary'>
           Templates
         </Typography>
@@ -336,19 +386,48 @@ function Templates() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredTemplates.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                      <CircularProgress size={32} />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredTemplates.length > 0 ? (
                   filteredTemplates.map((template) => (
                     <TableRow key={template.id} hover>
                       <TableCell sx={{ fontWeight: "medium" }}>{template.name}</TableCell>
                       <TableCell>{getPlatformIcon(template.platform)}</TableCell>
                       <TableCell>{template.type}</TableCell>
                       <TableCell align='right'>
-                        <IconButton
-                          color='primary'
-                          onClick={() => navigate(`/templates/${template.id}`)}
-                        >
-                          <EditIcon />
-                        </IconButton>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+                          <Tooltip title="Ver / Copiar plantilla (Word)">
+                            <IconButton
+                              color='info'
+                              size="small"
+                              onClick={() => navigate(`/templates/${template.id}`)}
+                            >
+                              <VisibilityIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Editar datos">
+                            <IconButton
+                              color='primary'
+                              size="small"
+                              onClick={() => setEditingTemplate(template)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Eliminar">
+                            <IconButton
+                              color='error'
+                              size="small"
+                              onClick={() => setTemplateToDelete(template)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))
@@ -365,52 +444,105 @@ function Templates() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
         </Paper>
       ) : (
-        <Grid container spacing={3}>
-          {filteredTemplates.length === 0 ? (
-            <Grid item xs={12}>
-              <Box sx={{ py: 6, textAlign: "center" }}>
-                <EmptyState
-                  title='No hay templates'
-                  description='No se encontraron plantillas.'
-                />
-              </Box>
-            </Grid>
-          ) : (
-            filteredTemplates.map((template) => (
-              <Grid item xs={12} sm={6} md={4} key={template.id}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
-                      {template.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {template.description}
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
-                      <Chip label={template.type} size="small" color="primary" variant="outlined" />
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        {getPlatformIcon(template.platform)}
-                      </Box>
-                    </Box>
-                  </CardContent>
-                  <CardActions sx={{ justifyContent: "flex-end", px: 2, pb: 2 }}>
-                    <Tooltip title="Editar">
-                      <IconButton
-                        color='primary'
-                        onClick={() => navigate(`/templates/${template.id}`)}
-                        size="small"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </CardActions>
-                </Card>
+        <Box>
+          <Grid container spacing={3}>
+            {loading ? (
+              <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                <CircularProgress size={32} />
               </Grid>
-            ))
-          )}
-        </Grid>
+            ) : filteredTemplates.length === 0 ? (
+              <Grid item xs={12}>
+                <Box sx={{ py: 6, textAlign: "center" }}>
+                  <EmptyState
+                    title='No hay templates'
+                    description='No se encontraron plantillas.'
+                  />
+                </Box>
+              </Grid>
+            ) : (
+              filteredTemplates.map((template) => (
+                <Grid item xs={12} sm={6} md={4} key={template.id}>
+                  <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        {template.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {template.description}
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
+                        <Chip label={template.type} size="small" color="primary" variant="outlined" />
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          {getPlatformIcon(template.platform)}
+                        </Box>
+                      </Box>
+                    </CardContent>
+                    <CardActions sx={{ justifyContent: "flex-end", px: 2, pb: 2 }}>
+                      <Tooltip title="Ver / Copiar plantilla (Word)">
+                        <IconButton
+                          color='info'
+                          onClick={() => navigate(`/templates/${template.id}`)}
+                          size="small"
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Editar datos">
+                        <IconButton
+                          color='primary'
+                          onClick={() => setEditingTemplate(template)}
+                          size="small"
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Eliminar">
+                        <IconButton
+                          color='error'
+                          onClick={() => setTemplateToDelete(template)}
+                          size="small"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))
+            )}
+          </Grid>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            sx={{ mt: 2 }}
+          />
+        </Box>
       )}
       <GenericCreateModal
         open={openModal}
@@ -424,9 +556,44 @@ function Templates() {
         }}
         onSubmit={handleCreateTemplate}
       />
+
+      <GenericEditModal
+        open={Boolean(editingTemplate)}
+        onClose={() => setEditingTemplate(null)}
+        title="Editar Template"
+        fields={templateFields}
+        record={editingTemplate}
+        onSubmit={handleUpdateTemplate}
+        loading={saving}
+      />
+
+      <Dialog
+        open={Boolean(templateToDelete)}
+        onClose={() => setTemplateToDelete(null)}
+      >
+        <DialogTitle>Eliminar plantilla</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Estás seguro de que deseas eliminar la plantilla{" "}
+            <strong>{templateToDelete?.name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTemplateToDelete(null)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteTemplate}
+            disabled={deleting}
+          >
+            {deleting ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
-
 }
 
 export default Templates

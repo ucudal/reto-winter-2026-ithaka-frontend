@@ -6,7 +6,6 @@ import {
   Chip,
   IconButton,
   Breadcrumbs,
-  Link,
   Tabs,
   Tab,
   Grid,
@@ -23,6 +22,8 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  TablePagination,
+  Link,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -41,6 +42,8 @@ export default function Deliverables() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTab, setCurrentTab] = useState("ALL");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedDeliverableId, setSelectedDeliverableId] = useState(null);
@@ -278,95 +281,114 @@ export default function Deliverables() {
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={2}>
-        {filteredDeliverables.map((item) => (
-          <Grid item xs={12} sm={6} md={4} key={item.id}>
-            <Card
-              variant="outlined"
-              sx={{
-                borderRadius: 2,
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                "&:hover": {
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                },
-              }}
-            >
-              <CardContent>
-                <Box
+        <Box>
+          <Grid container spacing={2}>
+            {filteredDeliverables
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((item) => (
+              <Grid item xs={12} sm={6} md={4} key={item.id}>
+                <Card
+                  variant="outlined"
                   sx={{
+                    borderRadius: 2,
+                    height: "100%",
                     display: "flex",
+                    flexDirection: "column",
                     justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    mb: 1.5,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                    "&:hover": {
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    },
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight="bold"
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        mb: 1.5,
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight="bold"
+                      >
+                        ENTREGABLE #{item.id}
+                      </Typography>
+                      {renderStatusChip(item.status)}
+                    </Box>
+
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      sx={{ fontSize: "1.05rem", fontWeight: "bold", mb: 1 }}
+                    >
+                      {item.stage_name}
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                        color: "text.secondary",
+                      }}
+                    >
+                      <GroupsIcon fontSize="small" />
+                      <Typography variant="body2">{item.group_name}</Typography>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        color: "text.secondary",
+                      }}
+                    >
+                      <CalendarTodayIcon fontSize="small" />
+                      <Typography variant="body2">
+                        Fecha límite: <strong>{item.expected_date}</strong>
+                      </Typography>
+                    </Box>
+                  </CardContent>
+
+                  <CardActions
+                    sx={{ justifyContent: "flex-end", px: 2, pb: 2, pt: 0 }}
                   >
-                    ENTREGABLE #{item.id}
-                  </Typography>
-                  {renderStatusChip(item.status)}
-                </Box>
-
-                <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{ fontSize: "1.05rem", fontWeight: "bold", mb: 1 }}
-                >
-                  {item.stage_name}
-                </Typography>
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mb: 1,
-                    color: "text.secondary",
-                  }}
-                >
-                  <GroupsIcon fontSize="small" />
-                  <Typography variant="body2">{item.group_name}</Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    color: "text.secondary",
-                  }}
-                >
-                  <CalendarTodayIcon fontSize="small" />
-                  <Typography variant="body2">
-                    Fecha límite: <strong>{item.expected_date}</strong>
-                  </Typography>
-                </Box>
-              </CardContent>
-
-              <CardActions
-                sx={{ justifyContent: "flex-end", px: 2, pb: 2, pt: 0 }}
-              >
-                <Tooltip title="Cambiar estado del entregable">
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={(e) => handleOpenStatusMenu(e, item.id)}
-                  >
-                    <EditNoteIcon />
-                  </IconButton>
-                </Tooltip>
-              </CardActions>
-            </Card>
+                    <Tooltip title="Cambiar estado del entregable">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={(e) => handleOpenStatusMenu(e, item.id)}
+                      >
+                        <EditNoteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
-        ))}
-      </Grid>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredDeliverables.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            sx={{ mt: 2 }}
+          />
+        </Box>
       )}
 
       <Menu
@@ -427,6 +449,7 @@ export default function Deliverables() {
             type="date"
             label="Fecha esperada de entrega"
             InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date().toISOString().split("T")[0] }}
             value={newDeliverable.expected_date}
             onChange={(e) =>
               setNewDeliverable({

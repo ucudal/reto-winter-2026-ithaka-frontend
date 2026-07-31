@@ -9,7 +9,6 @@ import {
   CircularProgress,
   IconButton,
   InputAdornment,
-  Link,
   MenuItem,
   Paper,
   Stack,
@@ -31,7 +30,6 @@ import {
   CardActions,
   Tooltip,
 } from '@mui/material'
-import { Link as RouterLink } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import EditIcon from '@mui/icons-material/Edit'
@@ -43,10 +41,21 @@ import ViewListIcon from '@mui/icons-material/ViewList'
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
 import LinkedInIcon from '@mui/icons-material/LinkedIn'
 
-import { getStudents } from '../../api/endpoints/students'
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material'
+import { getStudents, createStudent, updateStudent, deleteStudent } from '../../api/endpoints/students'
 import EmptyState from '../../components/common/EmptyState'
+import GenericCreateModal from '../../components/common/GenericCreateModal'
+import GenericEditModal from '../../components/common/GenericEditModal'
+import { useToast } from '../../ToastContext'
+
+const STUDENT_FIELDS = [
+  { name: 'name', label: 'Nombre completo', type: 'text', required: true, grid: 12 },
+  { name: 'email', label: 'Correo electrónico', type: 'text', required: true, grid: 12 },
+  { name: 'major', label: 'Carrera', type: 'text', required: true, grid: 12 },
+]
 
 function Students() {
+  const { showToast } = useToast()
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -54,20 +63,35 @@ function Students() {
   const [filter, setFilter] = useState('name')
   const [view, setView] = useState('list')
 
+  const [createOpen, setCreateOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+
+  const [editingStudent, setEditingStudent] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  const [studentToDelete, setStudentToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [totalCount, setTotalCount] = useState(0)
 
   useEffect(() => {
     loadStudents()
-  }, [])
+  }, [page, rowsPerPage, search])
 
   async function loadStudents() {
     try {
       setLoading(true)
       setError("")
-      const data = await getStudents()
-      const items = Array.isArray(data) ? data : data?.items ?? []
-      setStudents(items)
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        search: search || undefined,
+      }
+      const data = await getStudents(params)
+      setStudents(data?.items ?? [])
+      setTotalCount(data?.total ?? 0)
     } catch (err) {
       setError(err?.message || "No se pudieron cargar los alumnos.")
     } finally {
@@ -75,13 +99,56 @@ function Students() {
     }
   }
 
-  const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
-      const valueToSearch =
-        student[filter]?.toString().toLowerCase() || ''
-      return valueToSearch.includes(search.toLowerCase())
-    })
-  }, [students, search, filter])
+  const handleCreateStudent = async (formData) => {
+    try {
+      setCreating(true)
+      await createStudent({
+        name: formData.name,
+        email: formData.email,
+        major: formData.major,
+      })
+      showToast('Alumno creado correctamente.', 'success')
+      setCreateOpen(false)
+      await loadStudents()
+    } catch (err) {
+      showToast(err?.message || 'No se pudo crear el alumno.', 'error')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleUpdateStudent = async (formData) => {
+    try {
+      setSaving(true)
+      await updateStudent(formData.id, {
+        name: formData.name,
+        email: formData.email,
+        major: formData.major,
+      })
+      showToast('Alumno actualizado correctamente.', 'success')
+      setEditingStudent(null)
+      await loadStudents()
+    } catch (err) {
+      showToast(err?.message || 'No se pudo actualizar el alumno.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteStudent = async () => {
+    if (!studentToDelete) return
+    try {
+      setDeleting(true)
+      await deleteStudent(studentToDelete.id)
+      showToast('Alumno eliminado correctamente.', 'success')
+      setStudentToDelete(null)
+      await loadStudents()
+    } catch (err) {
+      showToast(err?.message || 'No se pudo eliminar el alumno.', 'error')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -89,14 +156,6 @@ function Students() {
         separator={<NavigateNextIcon fontSize="small" />}
         sx={{ mb: 1 }}
       >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-        >
-          Inicio
-        </Link>
         <Typography color="text.primary">Alumnos</Typography>
       </Breadcrumbs>
 
@@ -139,6 +198,7 @@ function Students() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
+            onClick={() => setCreateOpen(true)}
             sx={{ height: 40 }}
           >
             Nuevo alumno
@@ -234,8 +294,8 @@ function Students() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => {
+                {students.length > 0 ? (
+                  students.map((student) => {
                     const initials = (student.name || 'U')
                       .split(' ')
                       .filter(Boolean)
@@ -295,20 +355,40 @@ function Students() {
                           {student.id}
                         </TableCell>
                         <TableCell align="right">
-                          {student.linkedin_url && (
-                            <Tooltip title="Ver LinkedIn">
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+                            {student.linkedin_url && (
+                              <Tooltip title="Ver LinkedIn">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  component="a"
+                                  href={student.linkedin_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <LinkedInIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            <Tooltip title="Editar">
                               <IconButton
                                 size="small"
                                 color="primary"
-                                component="a"
-                                href={student.linkedin_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                onClick={() => setEditingStudent(student)}
                               >
-                                <LinkedInIcon fontSize="small" />
+                                <EditIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                          )}
+                            <Tooltip title="Eliminar">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => setStudentToDelete(student)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     )
@@ -329,7 +409,7 @@ function Students() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredStudents.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(e, newPage) => setPage(newPage)}
@@ -342,8 +422,9 @@ function Students() {
           />
           </>
         ) : (
+          <>
           <Grid container spacing={3} sx={{ mt: 1 }}>
-            {filteredStudents.length === 0 ? (
+            {students.length === 0 ? (
               <Grid item xs={12}>
                 <Box sx={{ py: 6, textAlign: "center" }}>
                   <EmptyState
@@ -353,7 +434,7 @@ function Students() {
                 </Box>
               </Grid>
             ) : (
-              filteredStudents.map((student) => {
+              students.map((student) => {
                 const initials = (student.name || 'U')
                   .split(' ')
                   .filter(Boolean)
@@ -395,12 +476,20 @@ function Students() {
                         <Chip label="Activo" size="small" color="success" />
                         <Box>
                           <Tooltip title="Editar">
-                            <IconButton size="small" color="primary">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => setEditingStudent(student)}
+                            >
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Eliminar">
-                            <IconButton size="small" color="error">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => setStudentToDelete(student)}
+                            >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -412,8 +501,69 @@ function Students() {
               })
             )}
           </Grid>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10))
+              setPage(0)
+            }}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          />
+        </>
         )}
       </Paper>
+
+      <GenericCreateModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Nuevo Alumno"
+        fields={STUDENT_FIELDS}
+        initialValues={{ name: '', email: '', major: '' }}
+        onSubmit={handleCreateStudent}
+        loading={creating}
+      />
+
+      <GenericEditModal
+        open={Boolean(editingStudent)}
+        onClose={() => setEditingStudent(null)}
+        title="Editar Alumno"
+        fields={STUDENT_FIELDS}
+        record={editingStudent}
+        onSubmit={handleUpdateStudent}
+        loading={saving}
+      />
+
+      <Dialog
+        open={Boolean(studentToDelete)}
+        onClose={() => setStudentToDelete(null)}
+      >
+        <DialogTitle>Eliminar alumno</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Estás seguro de que deseas eliminar al alumno{" "}
+            <strong>{studentToDelete?.name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStudentToDelete(null)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteStudent}
+            disabled={deleting}
+          >
+            {deleting ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

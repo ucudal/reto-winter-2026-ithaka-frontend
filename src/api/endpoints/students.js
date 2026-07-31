@@ -1,9 +1,12 @@
 import { apiClient, cachedGet } from '../client'
 import { clearCache } from '../../utils/cache'
 
-export async function getStudents() {
-  const { data } = await cachedGet('/api/students')
-  return data
+export async function getStudents(filters = {}) {
+  const { data } = await cachedGet('/api/students', { params: filters })
+  if (Array.isArray(data)) {
+    return { items: data, total: data.length }
+  }
+  return { items: data?.items ?? [], total: data?.total ?? 0 }
 }
 
 export async function getStudentById(id) {

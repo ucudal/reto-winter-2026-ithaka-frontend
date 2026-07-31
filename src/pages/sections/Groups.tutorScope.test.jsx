@@ -37,7 +37,7 @@ describe('Groups Component (tutor scope - BUG-17)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getStudents).mockResolvedValue([]);
+    vi.mocked(getStudents).mockResolvedValue({ items: [], total: 0 });
     vi.mocked(getTutors).mockResolvedValue([]);
     vi.mocked(getCohorts).mockResolvedValue(mockCohorts);
   });
@@ -75,10 +75,13 @@ describe('Groups Component (tutor scope - BUG-17)', () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { role: 'Coordinator', tutor: null },
     });
-    vi.mocked(getGroups).mockResolvedValue([
-      { id: 1, name: 'Grupo Alpha', status: 'Active' },
-      { id: 2, name: 'Grupo Beta', status: 'Active' },
-    ]);
+    vi.mocked(getGroups).mockResolvedValue({
+      items: [
+        { id: 1, name: 'Grupo Alpha', status: 'Active', cohort_id: 1 },
+        { id: 2, name: 'Grupo Beta', status: 'Active', cohort_id: 1 },
+      ],
+      total: 2,
+    });
 
     render(
       <MemoryRouter>
