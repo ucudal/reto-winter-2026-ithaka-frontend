@@ -258,7 +258,7 @@ export default function Users() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.map((user, index) => {
+                {users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => {
                   const roleStyle = ROLE_STYLES[user.role] ?? ROLE_STYLES.Student;
 
                   return (

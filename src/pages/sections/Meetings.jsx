@@ -992,7 +992,7 @@ function Meetings() {
               value={meetingForm.notes}
               onChange={handleNotesChange}
               modules={notesEditorModules}
-              readOnly={user?.role === "Student"}
+              readOnly={isViewingMeeting || user?.role === "Student"}
             />
           </Box>
         )}
@@ -1044,7 +1044,7 @@ function Meetings() {
                         meetingForm.attendance[participant],
                       )}
                       onChange={() => handleAttendanceChange(participant)}
-                      disabled={user?.role === "Student"}
+                      disabled={isViewingMeeting || user?.role === "Student"}
                       inputProps={{
                         "aria-label": `Marcar asistencia de ${getParticipantName(
                           findById(participants, participant) || {

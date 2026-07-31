@@ -48,6 +48,9 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import SearchIcon from "@mui/icons-material/Search";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+
+import TutorsCapacityPanel from "../../components/TutorsCapacityPanel.jsx";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
@@ -136,6 +139,7 @@ export default function Tutors() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProperty, setFilterProperty] = useState("name");
   const [view, setView] = useState("list");
+  const [showCapacity, setShowCapacity] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTutor, setEditingTutor] = useState(null); // null => crear
@@ -343,6 +347,15 @@ export default function Tutors() {
           </FormControl>
 
           <Button
+            variant="outlined"
+            startIcon={<MonitorHeartIcon />}
+            sx={{ height: 40 }}
+            onClick={() => setShowCapacity((prev) => !prev)}
+          >
+            {showCapacity ? "Tutores" : "Capacidad"}
+          </Button>
+
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ height: 40 }}
@@ -353,6 +366,9 @@ export default function Tutors() {
         </Box>
       </Box>
 
+      {showCapacity ? (
+        <TutorsCapacityPanel />
+      ) : (
       <Paper sx={{ p: 2, borderRadius: 2 }}>
         <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "stretch" }}>
           <TextField
@@ -788,6 +804,7 @@ export default function Tutors() {
           </Grid>
         )}
       </Paper>
+      )}
 
       <GenericEditModal
         open={modalOpen}

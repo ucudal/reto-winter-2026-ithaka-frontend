@@ -215,19 +215,6 @@ function Groups() {
     },
   ];
 
-  const filteredGroups = useMemo(() => {
-    return groups.filter((group) => {
-      const matchesSearch =
-        group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.idea?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.major?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesStatus = statusFilter === "" || group.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [groups, searchTerm, statusFilter]);
-
   const statusOptions = useMemo(
     () => [...new Set(groups.map((g) => g.status).filter(Boolean))],
     [groups],
@@ -396,6 +383,7 @@ function Groups() {
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
           />
         </>
+
       ) : (
         <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
           <Table>
